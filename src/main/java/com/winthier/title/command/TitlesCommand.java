@@ -44,11 +44,15 @@ public class TitlesCommand implements CommandExecutor {
                     sb.append(plugin.format(" &6%s&r: %s (%s&r)", entry.getKey(), entry.getValue(), ChatColor.translateAlternateColorCodes('&', entry.getValue())));
                 }
                 sender.sendMessage(sb.toString());
-            } else if ("Create".equalsIgnoreCase(args[0]) && args.length == 3) {
+            } else if ("Create".equalsIgnoreCase(args[0]) && args.length >= 3) {
                 String name = args[1];
-                String title = args[2];
+                StringBuilder sb = new StringBuilder(args[2]);
+                for (int i = 3; i < args.length; ++i) {
+                    sb.append(" ").append(args[i]);
+                }
+                String title = sb.toString();
                 plugin.database.setTitle(name, title);
-                plugin.send(sender, "&eTitle created.");
+                plugin.send(sender, "&eTitle %s created: " + title, name);
             } else if ("Unlock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
