@@ -4,9 +4,12 @@ import com.winthier.title.command.*;
 import com.winthier.title.listener.*;
 import com.winthier.title.sql.Database;
 import java.util.List;
+import java.util.UUID;
 import javax.persistence.PersistenceException;
+import lombok.Getter;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -16,9 +19,11 @@ public class TitlePlugin extends JavaPlugin {
     public Chat chat;
     public final Database database = new Database(this);
     private final PlayerListener playerListener = new PlayerListener(this);
+    @Getter static TitlePlugin instance;
 
     @Override
     public void onEnable() {
+        instance = this;
         if (!setupChat()) {
             throw new RuntimeException("Could not initialize Vault chat.");
         }
@@ -85,13 +90,32 @@ public class TitlePlugin extends JavaPlugin {
             chat.setPlayerPrefix(player, null);
             return;
         }
-        String title = database.getTitle(name);
+        Title title = database.getTitle(name);
         if (title == null) {
             getLogger().info(player.getName() + " had unknown title " + name + ".");
             database.setPlayerTitle(player, null);
             chat.setPlayerPrefix(player, null);
             return;
         }
-        chat.setPlayerPrefix(player, ChatColor.translateAlternateColorCodes('&', title));
+        chat.setPlayerPrefix(player, title.formatted());
+    }
+
+    private Title getDefaultPlayerTitle(UUID uuid) {
+        OfflinePlayer player = getServer().getOfflinePlayer(uuid);
+        String prefix = chat.getPlayerPrefix((String)null, player);
+        if (prefix == null) prefix = "";
+        return new Title("default", prefix, "");
+    }
+
+    public Title getPlayerTitle(UUID uuid) {
+        String titleName = database.getPlayerTitle(uuid);
+        if (titleName == null) return getDefaultPlayerTitle(uuid);
+        Title title = database.getTitle(titleName);
+        if (title == null) return getDefaultPlayerTitle(uuid);
+        return title;
+    }
+
+    public Title getPlayerTitle(OfflinePlayer player) {
+        return getPlayerTitle(player.getUniqueId());
     }
 }

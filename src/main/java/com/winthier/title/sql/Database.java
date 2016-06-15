@@ -1,10 +1,12 @@
 package com.winthier.title.sql;
 
+import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.bukkit.OfflinePlayer;
 
 public class Database {
@@ -52,10 +54,10 @@ public class Database {
         plugin.getDatabase().save(info);
     }
 
-    public String getTitle(final String name) {
+    public Title getTitle(final String name) {
         TitleInfo info = plugin.getDatabase().find(TitleInfo.class).where().eq("name", name).findUnique();
         if (info == null) return null;
-        return info.getTitle();
+        return new Title(info.getName(), info.getTitle(), info.getDescription());
     }
 
     public void unlockTitle(OfflinePlayer player, String name) {
@@ -86,10 +88,14 @@ public class Database {
         plugin.getDatabase().save(info);
     }
 
-    public String getPlayerTitle(OfflinePlayer player) {
-        PlayerInfo info = plugin.getDatabase().find(PlayerInfo.class).where().eq("uuid", player.getUniqueId()).findUnique();
+    public String getPlayerTitle(UUID uuid) {
+        PlayerInfo info = plugin.getDatabase().find(PlayerInfo.class).where().eq("uuid", uuid).findUnique();
         if (info == null) return null;
         return info.getTitle();
+    }
+
+    public String getPlayerTitle(OfflinePlayer player) {
+        return getPlayerTitle(player.getUniqueId());
     }
 
     public boolean playerHasTitle(OfflinePlayer player, String name) {

@@ -23,4 +23,5 @@ public class TitleInfo {
     @Id Integer id;
     @NotEmpty String name;
     @NotEmpty String title;
+    String description;
 }

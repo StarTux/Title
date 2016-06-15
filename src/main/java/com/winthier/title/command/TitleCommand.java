@@ -1,5 +1,6 @@
 package com.winthier.title.command;
 
+import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,12 +59,12 @@ public class TitleCommand implements CommandExecutor {
                         throw new CommandException("You don't have that title.");
                     }
                     plugin.database.setPlayerTitle(player, title);
-                    String result = plugin.database.getTitle(title);
+                    Title result = plugin.database.getTitle(title);
                     if (result == null) {
                         plugin.getLogger().warning(player.getName() + " managed to set unknown title " + title + ".");
                         throw new CommandException("You don't have that title.");
                     }
-                    plugin.send(player, "&bSet title to &r%s&b.", ChatColor.translateAlternateColorCodes('&', result));
+                    plugin.send(player, "&bSet title to &r%s&b.", result.formatted());
                 }
                 plugin.updatePlayer(player);
             } else {
