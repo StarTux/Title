@@ -35,7 +35,8 @@ public class TitleCommand implements CommandExecutor {
                 plugin.send(sender, "");
                 String name = plugin.database.getPlayerTitle(player);
                 Map<String, String> titles = plugin.database.listTitles(player);
-                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", plugin.chat.getPlayerPrefix(player));
+                Title title = plugin.getPlayerTitle(player.getUniqueId());
+                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", title.formatted());
                 List<Object> message = new ArrayList<>();
                 message.add(button("&r[&7Default&r]",
                                    "&7Click to reset your\n&7title to the default",

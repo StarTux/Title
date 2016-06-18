@@ -103,6 +103,8 @@ public class TitlePlugin extends JavaPlugin {
     private Title getDefaultPlayerTitle(UUID uuid) {
         OfflinePlayer player = getServer().getOfflinePlayer(uuid);
         String prefix = chat.getPlayerPrefix((String)null, player);
+        Title title = database.getTitleByFormat(prefix);
+        if (title != null) return title;
         if (prefix == null) prefix = "";
         return new Title("default", prefix, "");
     }

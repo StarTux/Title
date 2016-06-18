@@ -60,6 +60,12 @@ public class Database {
         return new Title(info.getName(), info.getTitle(), info.getDescription());
     }
 
+    public Title getTitleByFormat(final String format) {
+        TitleInfo info = plugin.getDatabase().find(TitleInfo.class).where().eq("title", format).findUnique();
+        if (info == null) return null;
+        return new Title(info.getName(), info.getTitle(), info.getDescription());
+    }
+
     public void unlockTitle(OfflinePlayer player, String name) {
         if (playerHasTitle(player, name)) return;
         UnlockedInfo info = new UnlockedInfo();
