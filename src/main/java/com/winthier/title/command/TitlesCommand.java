@@ -53,6 +53,18 @@ public class TitlesCommand implements CommandExecutor {
                 String title = sb.toString();
                 plugin.database.setTitle(name, title);
                 plugin.send(sender, "&eTitle %s created: " + title, name);
+            } else if (("Desc".equalsIgnoreCase(args[0])|| "Description".equalsIgnoreCase(args[0])) && args.length >= 3) {
+                String name = args[1];
+                StringBuilder sb = new StringBuilder(args[2]);
+                for (int i = 3; i < args.length; ++i) {
+                    sb.append(" ").append(args[i]);
+                }
+                String description = sb.toString();
+                if (plugin.database.setDescription(name, description)) {
+                    plugin.send(sender, "&eSet description for title %s:&r %s", name, description);
+                } else {
+                    plugin.send(sender, "&cTitle not found: %s", name);
+                }
             } else if ("Unlock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];

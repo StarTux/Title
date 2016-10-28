@@ -20,6 +20,7 @@ commands:
       /<command> unlock <player> <title> - Unlock a title for a player
       /<command> lock <player> <title> - Lock a title for a player
       /<command> create <name> <title> - Create or update a title
+      /<command> desc <name> <title> - Set description for a title
       /<command> set <player> <title> - Set a title for a player
       /<command> reset <player> - Reset the title of a player
       /<command> update - Update all online players

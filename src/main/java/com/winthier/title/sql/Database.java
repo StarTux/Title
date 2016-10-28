@@ -54,6 +54,14 @@ public class Database {
         plugin.getDatabase().save(info);
     }
 
+    public boolean setDescription(final String name, final String description) {
+        TitleInfo info = plugin.getDatabase().find(TitleInfo.class).where().eq("name", name).findUnique();
+        if (info == null) return false;
+        info.setDescription(description);
+        plugin.getDatabase().save(info);
+        return true;
+    }
+
     public Title getTitle(final String name) {
         TitleInfo info = plugin.getDatabase().find(TitleInfo.class).where().eq("name", name).findUnique();
         if (info == null) return null;
