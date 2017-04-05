@@ -3,8 +3,7 @@ description: Manage custom player titles
 author: StarTux
 version: 0.1
 main: com.winthier.title.TitlePlugin
-depend: [ Vault, PlayerCache ]
-database: true
+depend: [ SQL, Vault, PlayerCache ]
 commands:
   title:
     description: Select your in-game title

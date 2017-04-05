@@ -1,9 +1,6 @@
 package com.winthier.title.sql;
 
-import com.avaje.ebean.annotation.CreatedTimestamp;
-import com.avaje.ebean.validation.Length;
-import com.avaje.ebean.validation.NotEmpty;
-import com.avaje.ebean.validation.NotNull;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -21,7 +18,7 @@ import lombok.Setter;
 @Setter
 public class TitleInfo {
     @Id Integer id;
-    @NotEmpty String name;
-    @NotEmpty String title;
+    @Column(nullable = false) String name;
+    @Column(nullable = false) String title;
     String description;
 }

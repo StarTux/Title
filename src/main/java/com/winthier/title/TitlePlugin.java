@@ -24,23 +24,12 @@ public class TitlePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        if (!database.init()) {
+            getLogger().warning("Database init failed! Refusing to work.");
+            return;
+        }
         if (!setupChat()) {
             throw new RuntimeException("Could not initialize Vault chat.");
-        }
-        try {
-            for (Class<?> clazz : database.getDatabaseClasses()) {
-                getDatabase().find(clazz).findRowCount();
-            }
-        } catch (PersistenceException ex) {
-            getLogger().info("Installing database due to first time usage");
-            try {
-                installDDL();
-            } catch (PersistenceException pe) {
-                getLogger().warning("Error installing database. Disabling plugin");
-                pe.printStackTrace();
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
         }
         getCommand("Title").setExecutor(new TitleCommand(this));
         getCommand("Titles").setExecutor(new TitlesCommand(this));
@@ -58,11 +47,6 @@ public class TitlePlugin extends JavaPlugin {
         }
 
         return (chat != null);
-    }
-
-    @Override
-    public List<Class<?>> getDatabaseClasses() {
-        return new Database(this).getDatabaseClasses();
     }
 
     public static String format(String msg, Object... args) {

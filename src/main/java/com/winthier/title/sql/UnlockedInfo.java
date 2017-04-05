@@ -1,10 +1,7 @@
 package com.winthier.title.sql;
 
-import com.avaje.ebean.annotation.CreatedTimestamp;
-import com.avaje.ebean.validation.Length;
-import com.avaje.ebean.validation.NotEmpty;
-import com.avaje.ebean.validation.NotNull;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -22,6 +19,6 @@ import lombok.Setter;
 @Setter
 public class UnlockedInfo {
     @Id Integer id;
-    @NotNull UUID player;
-    @NotEmpty String title;
+    @Column(nullable = false) UUID player;
+    @Column(nullable = false) String title;
 }
