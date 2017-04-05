@@ -40,6 +40,7 @@ public class Database {
         for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player.getUniqueId()).findList()) {
             names.add(unlocked.getTitle());
         }
+        if (names.isEmpty()) return result;
         for (TitleInfo title : db.find(TitleInfo.class).where().in("name", names).findList()) {
             result.put(title.getName(), title.getTitle());
         }
