@@ -1,5 +1,6 @@
 package com.winthier.title.sql;
 
+import com.winthier.title.Title;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -12,7 +13,7 @@ import lombok.Setter;
  * Every title has a name and a title string, which is what it's
  * displayed at.
  */
-@Entity()
+@Entity
 @Table(name = "titles", uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})})
 @Getter
 @Setter
@@ -21,4 +22,8 @@ public class TitleInfo {
     @Column(nullable = false) String name;
     @Column(nullable = false) String title;
     String description;
+
+    public Title toTitle() {
+        return new Title(name, title, description);
+    }
 }

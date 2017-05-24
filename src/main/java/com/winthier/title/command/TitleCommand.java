@@ -34,18 +34,18 @@ public class TitleCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player expected");
                 plugin.send(sender, "");
                 String name = plugin.database.getPlayerTitle(player);
-                Map<String, String> titles = plugin.database.listTitles(player);
-                Title title = plugin.getPlayerTitle(player.getUniqueId());
-                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", title.formatted());
+                List<Title> titles = plugin.database.listTitles(player.getUniqueId());
+                Title currentTitle = plugin.getPlayerTitle(player.getUniqueId());
+                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", currentTitle.formatted());
                 List<Object> message = new ArrayList<>();
                 message.add(button("&r[&7Default&r]",
                                    "&7Click to reset your\n&7title to the default",
                                    "/title default"));
-                for (Map.Entry<String, String> entry : titles.entrySet()) {
+                for (Title title: titles) {
                     message.add(" ");
-                    message.add(button("&r["+entry.getValue()+"&r]",
-                                       "&7Click to change your\n&7title to "+entry.getValue(),
-                                       "/title "+entry.getKey()));
+                    message.add(button("&r[" + title.getTitle() + "&r]",
+                                       "&7Click to change your\n&7title to " + title.getTitle(),
+                                       "/title " + title.getName()));
                 }
                 tellRaw(player, message);
                 plugin.send(sender, "");
@@ -67,7 +67,6 @@ public class TitleCommand implements CommandExecutor {
                     }
                     plugin.send(player, "&bSet title to &r%s&b.", result.formatted());
                 }
-                plugin.updatePlayer(player);
             } else {
                 return false;
             }

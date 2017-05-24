@@ -1,6 +1,7 @@
 package com.winthier.title.command;
 
 import com.winthier.playercache.PlayerCache;
+import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.Map;
 import java.util.UUID;
@@ -35,8 +36,8 @@ public class TitlesCommand implements CommandExecutor {
                 return false;
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 1) {
                 StringBuilder sb = new StringBuilder(plugin.format("&eAll titles:"));
-                for (Map.Entry<String, String> entry : plugin.database.listTitles().entrySet()) {
-                    sb.append("\n").append(plugin.format("&6%s&r: %s (%s&r)", entry.getKey(), entry.getValue(), ChatColor.translateAlternateColorCodes('&', entry.getValue())));
+                for (Title title: plugin.database.listTitles()) {
+                    sb.append("\n").append(plugin.format("&6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
                 }
                 sender.sendMessage(sb.toString());
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 2) {
@@ -45,14 +46,14 @@ public class TitlesCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 String name = plugin.database.getPlayerTitle(player);
                 StringBuilder sb = new StringBuilder().append(ChatColor.YELLOW).append("Titles of ").append(playerName).append(":");
-                for (Map.Entry<String, String> entry : plugin.database.listTitles(player).entrySet()) {
+                for (Title title: plugin.database.listTitles(player.getUniqueId())) {
                     sb.append("\n").append(ChatColor.YELLOW);
-                    if (name != null && name.equalsIgnoreCase(entry.getKey())) {
+                    if (name != null && name.equalsIgnoreCase(title.getName())) {
                         sb.append("+");
                     } else {
                         sb.append("-");
                     }
-                    sb.append(plugin.format(" &6%s&r: %s (%s&r)", entry.getKey(), entry.getValue(), ChatColor.translateAlternateColorCodes('&', entry.getValue())));
+                    sb.append(plugin.format(" &6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
                 }
                 sender.sendMessage(sb.toString());
             } else if ("Create".equalsIgnoreCase(args[0]) && args.length >= 3) {
@@ -102,19 +103,12 @@ public class TitlesCommand implements CommandExecutor {
                 if (!plugin.database.playerHasTitle(player, titleName)) throw new CommandException("This title is locked.");
                 plugin.database.setPlayerTitle(player, titleName);
                 plugin.send(sender, "&eSet title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
-                if (player.isOnline()) plugin.updatePlayer(player.getPlayer());
             } else if ("Reset".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 plugin.database.setPlayerTitle(player, null);
                 plugin.send(sender, "Reset title of player %s (%s).", playerName, player.getUniqueId());
-                if (player.isOnline()) plugin.updatePlayer(player.getPlayer());
-            } else if ("Update".equalsIgnoreCase(args[0]) && args.length == 1) {
-                for (Player player : plugin.getServer().getOnlinePlayers()) {
-                    plugin.updatePlayer(player);
-                }
-                plugin.send(sender, "&ePlayer titles updated.");
             } else {
                 return false;
             }

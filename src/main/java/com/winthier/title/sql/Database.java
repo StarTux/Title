@@ -4,9 +4,7 @@ import com.winthier.sql.SQLDatabase;
 import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.OfflinePlayer;
 
@@ -26,23 +24,23 @@ public class Database {
         return db.createAllTables();
     }
 
-    public Map<String, String> listTitles() {
-        Map<String, String> result = new LinkedHashMap<String, String>();
+    public List<Title> listTitles() {
+        List<Title> result = new ArrayList<>();
         for (TitleInfo title : db.find(TitleInfo.class).findList()) {
-            result.put(title.getName(), title.getTitle());
+            result.add(title.toTitle());
         }
         return result;
     }
 
-    public Map<String, String> listTitles(OfflinePlayer player) {
-        Map<String, String> result = new LinkedHashMap<String, String>();
-        List<String> names = new ArrayList<String>();
-        for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player.getUniqueId()).findList()) {
+    public List<Title> listTitles(UUID player) {
+        List<Title> result = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player).findList()) {
             names.add(unlocked.getTitle());
         }
         if (names.isEmpty()) return result;
         for (TitleInfo title : db.find(TitleInfo.class).where().in("name", names).findList()) {
-            result.put(title.getName(), title.getTitle());
+            result.add(title.toTitle());
         }
         return result;
     }
