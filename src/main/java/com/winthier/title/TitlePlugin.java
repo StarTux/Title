@@ -14,23 +14,27 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+@Getter
 public class TitlePlugin extends JavaPlugin {
-    public final Database database = new Database(this);
+    private final Database db = new Database(this);
     @Getter static TitlePlugin instance;
+    private Vault vault;
 
     @Override
     public void onEnable() {
         instance = this;
-        if (!database.init()) {
+        if (!db.init()) {
             getLogger().warning("Database init failed! Refusing to work.");
             return;
         }
         getCommand("Title").setExecutor(new TitleCommand(this));
         getCommand("Titles").setExecutor(new TitlesCommand(this));
-    }
-
-    @Override
-    public void onDisable() {
+        if (getServer().getPluginManager().getPlugin("Vault") != null) {
+            vault = new Vault(this);
+            getLogger().info("Vault detected!");
+        } else {
+            getLogger().info("Vault NOT detected!");
+        }
     }
 
     public static String format(String msg, Object... args) {
@@ -45,14 +49,15 @@ public class TitlePlugin extends JavaPlugin {
     }
 
     private Title getDefaultPlayerTitle(UUID uuid) {
-        // TODO
-        return new Title("default", "", "");
+        List<Title> titles = db.listTitles(uuid);
+        if (titles.isEmpty()) new Title("default", "", "");
+        return titles.get(0);
     }
 
     public Title getPlayerTitle(UUID uuid) {
-        String titleName = database.getPlayerTitle(uuid);
+        String titleName = db.getPlayerTitle(uuid);
         if (titleName == null) return getDefaultPlayerTitle(uuid);
-        Title title = database.getTitle(titleName);
+        Title title = db.getTitle(titleName);
         if (title == null) return getDefaultPlayerTitle(uuid);
         return title;
     }

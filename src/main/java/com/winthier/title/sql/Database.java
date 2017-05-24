@@ -6,7 +6,7 @@ import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 public class Database {
     public final TitlePlugin plugin;
@@ -39,8 +39,22 @@ public class Database {
             names.add(unlocked.getTitle());
         }
         if (names.isEmpty()) return result;
-        for (TitleInfo title : db.find(TitleInfo.class).where().in("name", names).findList()) {
-            result.add(title.toTitle());
+        Player online = plugin.getServer().getPlayer(player);
+        for (TitleInfo title : db.find(TitleInfo.class).findList()) {
+            if (names.contains(title.getName())) {
+                result.add(title.toTitle());
+            } else {
+                final String permission = "title.unlock." + title.getName();
+                if (online != null) {
+                    if (online.isPermissionSet(permission) && online.hasPermission(permission)) {
+                        result.add(title.toTitle());
+                    }
+                } else if (plugin.getVault() != null) {
+                    if (plugin.getVault().hasPermission(player, permission)) {
+                        result.add(title.toTitle());
+                    }
+                }
+            }
         }
         return result;
     }
@@ -75,10 +89,10 @@ public class Database {
         return new Title(info.getName(), info.getTitle(), info.getDescription());
     }
 
-    public void unlockTitle(OfflinePlayer player, String name) {
-        if (playerHasTitle(player, name)) return;
+    public void unlockTitle(UUID uuid, String name) {
+        if (db.find(UnlockedInfo.class).where().eq("player", uuid).eq("title", name).findUnique() != null) return;
         UnlockedInfo info = new UnlockedInfo();
-        info.setPlayer(player.getUniqueId());
+        info.setPlayer(uuid);
         info.setTitle(name);
         db.save(info);
     }
@@ -86,18 +100,18 @@ public class Database {
     /**
      * @return true if something was deleted, false if not.
      */
-    public boolean lockTitle(OfflinePlayer player, String name) {
-        UnlockedInfo info = db.find(UnlockedInfo.class).where().eq("player", player.getUniqueId()).eq("title", name).findUnique();
+    public boolean lockTitle(UUID uuid, String name) {
+        UnlockedInfo info = db.find(UnlockedInfo.class).where().eq("player", uuid).eq("title", name).findUnique();
         if (info == null) return false;
         db.delete(info);
         return true;
     }
 
-    public void setPlayerTitle(OfflinePlayer player, String name) {
-        PlayerInfo info = db.find(PlayerInfo.class).where().eq("uuid", player.getUniqueId()).findUnique();
+    public void setPlayerTitle(UUID uuid, String name) {
+        PlayerInfo info = db.find(PlayerInfo.class).where().eq("uuid", uuid).findUnique();
         if (info == null) {
             info = new PlayerInfo();
-            info.setUuid(player.getUniqueId());
+            info.setUuid(uuid);
         }
         info.setTitle(name);
         db.save(info);
@@ -109,11 +123,10 @@ public class Database {
         return info.getTitle();
     }
 
-    public String getPlayerTitle(OfflinePlayer player) {
-        return getPlayerTitle(player.getUniqueId());
-    }
-
-    public boolean playerHasTitle(OfflinePlayer player, String name) {
-        return db.find(UnlockedInfo.class).where().eq("player", player.getUniqueId()).eq("title", name).findUnique() != null;
+    public boolean playerHasTitle(UUID uuid, String name) {
+        for (Title title: listTitles(uuid)) {
+            if (title.getName().equals(name)) return true;
+        }
+        return false;
     }
 }

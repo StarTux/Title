@@ -36,7 +36,7 @@ public class TitlesCommand implements CommandExecutor {
                 return false;
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 1) {
                 StringBuilder sb = new StringBuilder(plugin.format("&eAll titles:"));
-                for (Title title: plugin.database.listTitles()) {
+                for (Title title: plugin.getDb().listTitles()) {
                     sb.append("\n").append(plugin.format("&6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
                 }
                 sender.sendMessage(sb.toString());
@@ -44,9 +44,9 @@ public class TitlesCommand implements CommandExecutor {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                String name = plugin.database.getPlayerTitle(player);
+                String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
                 StringBuilder sb = new StringBuilder().append(ChatColor.YELLOW).append("Titles of ").append(playerName).append(":");
-                for (Title title: plugin.database.listTitles(player.getUniqueId())) {
+                for (Title title: plugin.getDb().listTitles(player.getUniqueId())) {
                     sb.append("\n").append(ChatColor.YELLOW);
                     if (name != null && name.equalsIgnoreCase(title.getName())) {
                         sb.append("+");
@@ -63,7 +63,7 @@ public class TitlesCommand implements CommandExecutor {
                     sb.append(" ").append(args[i]);
                 }
                 String title = sb.toString();
-                plugin.database.setTitle(name, title);
+                plugin.getDb().setTitle(name, title);
                 plugin.send(sender, "&eTitle %s created: " + title, name);
             } else if (("Desc".equalsIgnoreCase(args[0])|| "Description".equalsIgnoreCase(args[0])) && args.length >= 3) {
                 String name = args[1];
@@ -72,7 +72,7 @@ public class TitlesCommand implements CommandExecutor {
                     sb.append(" ").append(args[i]);
                 }
                 String description = sb.toString();
-                if (plugin.database.setDescription(name, description)) {
+                if (plugin.getDb().setDescription(name, description)) {
                     plugin.send(sender, "&eSet description for title %s:&r %s", name, description);
                 } else {
                     plugin.send(sender, "&cTitle not found: %s", name);
@@ -82,8 +82,8 @@ public class TitlesCommand implements CommandExecutor {
                 String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.database.getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                plugin.database.unlockTitle(player, titleName);
+                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
+                plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
 
                 plugin.send(sender, "&eUnlocked title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
             } else if ("Lock".equalsIgnoreCase(args[0]) && args.length == 3) {
@@ -91,23 +91,23 @@ public class TitlesCommand implements CommandExecutor {
                 String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.database.getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                if (!plugin.database.lockTitle(player, titleName)) throw new CommandException("Player never had this title.");
+                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
+                if (!plugin.getDb().lockTitle(player.getUniqueId(), titleName)) throw new CommandException("Player never had this title.");
                 plugin.send(sender, "&eLocked title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
             } else if ("Set".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.database.getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                if (!plugin.database.playerHasTitle(player, titleName)) throw new CommandException("This title is locked.");
-                plugin.database.setPlayerTitle(player, titleName);
+                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
+                if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) throw new CommandException("This title is locked.");
+                plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
                 plugin.send(sender, "&eSet title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
             } else if ("Reset".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                plugin.database.setPlayerTitle(player, null);
+                plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
                 plugin.send(sender, "Reset title of player %s (%s).", playerName, player.getUniqueId());
             } else {
                 return false;

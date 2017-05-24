@@ -33,8 +33,8 @@ public class TitleCommand implements CommandExecutor {
             if (args.length == 0) {
                 if (player == null) throw new CommandException("Player expected");
                 plugin.send(sender, "");
-                String name = plugin.database.getPlayerTitle(player);
-                List<Title> titles = plugin.database.listTitles(player.getUniqueId());
+                String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
+                List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
                 Title currentTitle = plugin.getPlayerTitle(player.getUniqueId());
                 plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", currentTitle.formatted());
                 List<Object> message = new ArrayList<>();
@@ -53,14 +53,14 @@ public class TitleCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player expected");
                 final String title = args[0];
                 if ("default".equalsIgnoreCase(title)) {
-                    plugin.database.setPlayerTitle(player, null);
+                    plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
                     plugin.send(player, "&bUsing default title.");
                 } else {
-                    if (!plugin.database.playerHasTitle(player, title)) {
+                    if (!plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
                         throw new CommandException("You don't have that title.");
                     }
-                    plugin.database.setPlayerTitle(player, title);
-                    Title result = plugin.database.getTitle(title);
+                    plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
+                    Title result = plugin.getDb().getTitle(title);
                     if (result == null) {
                         plugin.getLogger().warning(player.getName() + " managed to set unknown title " + title + ".");
                         throw new CommandException("You don't have that title.");

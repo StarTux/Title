@@ -4,6 +4,7 @@ author: StarTux
 version: 0.1
 main: com.winthier.title.TitlePlugin
 depend: [ SQL, PlayerCache ]
+softdepend: [ Vault ]
 commands:
   title:
     description: Select your in-game title
