@@ -1,7 +1,5 @@
 package com.winthier.title;
 
-import com.winthier.title.command.TitleCommand;
-import com.winthier.title.command.TitlesCommand;
 import com.winthier.title.sql.Database;
 import java.util.List;
 import java.util.UUID;
@@ -31,9 +29,6 @@ public class TitlePlugin extends JavaPlugin {
         getCommand("Titles").setExecutor(new TitlesCommand(this));
         if (getServer().getPluginManager().getPlugin("Vault") != null) {
             vault = new Vault(this);
-            getLogger().info("Vault detected!");
-        } else {
-            getLogger().info("Vault NOT detected!");
         }
     }
 
@@ -48,18 +43,18 @@ public class TitlePlugin extends JavaPlugin {
         sender.sendMessage(msg);
     }
 
-    private Title getDefaultPlayerTitle(UUID uuid) {
-        List<Title> titles = db.listTitles(uuid);
-        if (titles.isEmpty()) new Title("default", "", "");
-        return titles.get(0);
-    }
-
     public Title getPlayerTitle(UUID uuid) {
+        List<Title> titles = db.listTitles(uuid);
         String titleName = db.getPlayerTitle(uuid);
-        if (titleName == null) return getDefaultPlayerTitle(uuid);
-        Title title = db.getTitle(titleName);
-        if (title == null) return getDefaultPlayerTitle(uuid);
-        return title;
+        if (titleName != null) {
+            for (Title title: titles) {
+                if (title.getName().equals(titleName)) {
+                    return title;
+                }
+            }
+        }
+        if (titles.isEmpty()) return new Title("?", "?", "?");
+        return titles.get(0);
     }
 
     public Title getPlayerTitle(OfflinePlayer player) {

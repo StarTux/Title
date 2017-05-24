@@ -1,8 +1,6 @@
-package com.winthier.title.command;
+package com.winthier.title;
 
 import com.winthier.playercache.PlayerCache;
-import com.winthier.title.Title;
-import com.winthier.title.TitlePlugin;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.ChatColor;
@@ -85,7 +83,7 @@ public class TitlesCommand implements CommandExecutor {
                 if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
                 plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
 
-                plugin.send(sender, "&eUnlocked title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
+                plugin.send(sender, "&eUnlocked title %s for player %s.", titleName, playerName);
             } else if ("Lock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
@@ -93,7 +91,7 @@ public class TitlesCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
                 if (!plugin.getDb().lockTitle(player.getUniqueId(), titleName)) throw new CommandException("Player never had this title.");
-                plugin.send(sender, "&eLocked title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
+                plugin.send(sender, "&eLocked title %s for player %s.", titleName, playerName);
             } else if ("Set".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
@@ -102,13 +100,22 @@ public class TitlesCommand implements CommandExecutor {
                 if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
                 if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) throw new CommandException("This title is locked.");
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
-                plugin.send(sender, "&eSet title %s for player %s (%s).", titleName, playerName, player.getUniqueId());
+                plugin.send(sender, "&eSet title %s for player %s.", titleName, playerName);
+            } else if ("UnlockSet".equalsIgnoreCase(args[0]) && args.length == 3) {
+                String playerName = args[1];
+                String titleName = args[2];
+                OfflinePlayer player = findPlayer(playerName);
+                if (player == null) throw new CommandException("Player not found: " + playerName);
+                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
+                plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
+                plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
+                plugin.send(sender, "&eUnlocked and set title %s for player %s.", titleName, playerName);
             } else if ("Reset".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
-                plugin.send(sender, "Reset title of player %s (%s).", playerName, player.getUniqueId());
+                plugin.send(sender, "Reset title of player %s.", playerName);
             } else {
                 return false;
             }

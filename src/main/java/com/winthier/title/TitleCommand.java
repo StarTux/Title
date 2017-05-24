@@ -1,7 +1,5 @@
-package com.winthier.title.command;
+package com.winthier.title;
 
-import com.winthier.title.Title;
-import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

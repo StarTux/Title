@@ -79,7 +79,7 @@ public class Database {
 
     public Title getTitle(final String name) {
         TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
-        if (info == null) return null;
+        if (info == null || !info.getName().equals(name)) return null;
         return new Title(info.getName(), info.getTitle(), info.getDescription());
     }
 
