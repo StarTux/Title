@@ -38,13 +38,12 @@ public class Database {
         for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player).findList()) {
             names.add(unlocked.getTitle());
         }
-        if (names.isEmpty()) return result;
         Player online = plugin.getServer().getPlayer(player);
         for (TitleInfo title : db.find(TitleInfo.class).findList()) {
             if (names.contains(title.getName())) {
                 result.add(title.toTitle());
             } else {
-                final String permission = "title.unlock." + title.getName();
+                final String permission = ("title.unlock." + title.getName()).toLowerCase();
                 if (online != null) {
                     if (online.isPermissionSet(permission) && online.hasPermission(permission)) {
                         result.add(title.toTitle());
