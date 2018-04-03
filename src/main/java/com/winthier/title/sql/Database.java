@@ -58,6 +58,14 @@ public class Database {
         return result;
     }
 
+    public List<UUID> listPlayers(Title title) {
+        List<UUID> result = new ArrayList<>();
+        for (UnlockedInfo unlocked: db.find(UnlockedInfo.class).where().eq("title", title.getName()).findList()) {
+            result.add(unlocked.player);
+        }
+        return result;
+    }
+
     public void setTitle(final String name, final String title) {
         TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
         if (info == null) {

@@ -1,6 +1,9 @@
 package com.winthier.title;
 
 import com.winthier.playercache.PlayerCache;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.ChatColor;
@@ -54,6 +57,35 @@ public class TitlesCommand implements CommandExecutor {
                     sb.append(plugin.format(" &6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
                 }
                 sender.sendMessage(sb.toString());
+            } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
+                String titleName = args[1];
+                Title title = plugin.getDb().getTitle(titleName);
+                List<UUID> players = plugin.getDb().listPlayers(title);
+                StringBuilder sb = new StringBuilder("Owners of title \"").append(title.getName()).append("(").append(players.size()).append(")");
+                for (UUID uuid: players) {
+                    String name = PlayerCache.nameForUuid(uuid);
+                    if (name == null) name = uuid.toString();
+                    sb.append(" ").append(name);
+                }
+                sender.sendMessage(sb.toString());
+            } else if ("RankTitles".equalsIgnoreCase(args[0]) && args.length == 1) {
+                class Rank {
+                    Title title = null;
+                    int count = 0;
+                }
+                List<Rank> ranks = new ArrayList<>();
+                for (Title title: plugin.getDb().listTitles()) {
+                    Rank rank = new Rank();
+                    rank.title = title;
+                    rank.count = plugin.getDb().listPlayers(title).size();
+                    ranks.add(rank);
+                }
+                Collections.sort(ranks, (b, a) -> Integer.compare(a.count, b.count));
+                int rankIter = 1;
+                sender.sendMessage("Ranking of titles by ownership (" + ranks.size() + ")");
+                for (Rank rank: ranks) {
+                    sender.sendMessage("" + rankIter++ + ") " + rank.count + " " + rank.title.getName());
+                }
             } else if ("Create".equalsIgnoreCase(args[0]) && args.length >= 3) {
                 String name = args[1];
                 StringBuilder sb = new StringBuilder(args[2]);
