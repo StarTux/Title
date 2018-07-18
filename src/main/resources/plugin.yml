@@ -2,6 +2,7 @@ name: Title
 description: Manage custom player titles
 author: StarTux
 version: 0.1
+api-version: 1.13
 main: com.winthier.title.TitlePlugin
 depend: [ SQL, PlayerCache ]
 softdepend: [ Vault ]
