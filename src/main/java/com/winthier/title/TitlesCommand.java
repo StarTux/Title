@@ -148,6 +148,9 @@ public class TitlesCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
                 plugin.send(sender, "Reset title of player %s.", playerName);
+            } else if ("Reload".equalsIgnoreCase(args[0]) && args.length == 1) {
+                plugin.getDb().init();
+                plugin.send(sender, "Database reloaded.");
             } else {
                 return false;
             }
