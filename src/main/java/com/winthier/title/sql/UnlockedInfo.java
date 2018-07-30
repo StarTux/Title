@@ -20,5 +20,5 @@ import lombok.Setter;
 public class UnlockedInfo {
     @Id Integer id;
     @Column(nullable = false) UUID player;
-    @Column(nullable = false) String title;
+    @Column(nullable = false, length = 32) String title;
 }

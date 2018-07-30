@@ -19,8 +19,8 @@ import lombok.Setter;
 @Setter
 public class TitleInfo {
     @Id Integer id;
-    @Column(nullable = false) String name;
-    @Column(nullable = false) String title;
+    @Column(nullable = false, length = 32) String name;
+    @Column(nullable = false, length = 64) String title;
     String description;
 
     public Title toTitle() {
