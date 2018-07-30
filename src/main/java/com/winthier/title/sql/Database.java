@@ -48,10 +48,6 @@ public class Database {
                     if (online.isPermissionSet(permission) && online.hasPermission(permission)) {
                         result.add(title.toTitle());
                     }
-                } else if (plugin.getVault() != null) {
-                    if (plugin.getVault().hasPermission(player, permission)) {
-                        result.add(title.toTitle());
-                    }
                 }
             }
         }

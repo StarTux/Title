@@ -16,7 +16,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TitlePlugin extends JavaPlugin {
     private final Database db = new Database(this);
     @Getter static TitlePlugin instance;
-    private Vault vault;
 
     @Override
     public void onEnable() {
@@ -27,9 +26,6 @@ public class TitlePlugin extends JavaPlugin {
         }
         getCommand("Title").setExecutor(new TitleCommand(this));
         getCommand("Titles").setExecutor(new TitlesCommand(this));
-        if (getServer().getPluginManager().getPlugin("Vault") != null) {
-            vault = new Vault(this);
-        }
     }
 
     public static String format(String msg, Object... args) {
