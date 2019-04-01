@@ -17,7 +17,7 @@ import lombok.Setter;
 @Table(name = "titles", uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})})
 @Getter
 @Setter
-public class TitleInfo {
+public final class TitleInfo {
     @Id Integer id;
     @Column(nullable = false, length = 32) String name;
     @Column(nullable = false, length = 64) String title;

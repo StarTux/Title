@@ -1,19 +1,16 @@
 package com.winthier.title;
 
+import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.PluginCommand;
+import cn.nukkit.plugin.PluginBase;
+import cn.nukkit.utils.TextFormat;
 import com.winthier.title.sql.Database;
 import java.util.List;
 import java.util.UUID;
-import javax.persistence.PersistenceException;
 import lombok.Getter;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
-public class TitlePlugin extends JavaPlugin {
+public final class TitlePlugin extends PluginBase {
     private final Database db = new Database(this);
     @Getter static TitlePlugin instance;
 
@@ -24,12 +21,12 @@ public class TitlePlugin extends JavaPlugin {
             getLogger().warning("Database init failed! Refusing to work.");
             return;
         }
-        getCommand("Title").setExecutor(new TitleCommand(this));
-        getCommand("Titles").setExecutor(new TitlesCommand(this));
+        ((PluginCommand)getCommand("title")).setExecutor(new TitleCommand(this));
+        ((PluginCommand)getCommand("titles")).setExecutor(new TitlesCommand(this));
     }
 
     public static String format(String msg, Object... args) {
-        msg = ChatColor.translateAlternateColorCodes('&', msg);
+        msg = TextFormat.colorize(msg);
         if (args.length > 0) msg = String.format(msg, args);
         return msg;
     }
@@ -51,9 +48,5 @@ public class TitlePlugin extends JavaPlugin {
         }
         if (titles.isEmpty()) return new Title("?", "?", "?");
         return titles.get(0);
-    }
-
-    public Title getPlayerTitle(OfflinePlayer player) {
-        return getPlayerTitle(player.getUniqueId());
     }
 }

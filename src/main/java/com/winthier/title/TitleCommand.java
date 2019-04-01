@@ -1,27 +1,27 @@
 package com.winthier.title;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import cn.nukkit.Player;
+import cn.nukkit.command.Command;
+import cn.nukkit.command.CommandExecutor;
+import cn.nukkit.command.CommandSender;
+import cn.nukkit.utils.TextFormat;
 import java.util.List;
-import java.util.Map;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandException;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.json.simple.JSONValue;
 
-public class TitleCommand implements CommandExecutor {
+public final class TitleCommand implements CommandExecutor {
     public final TitlePlugin plugin;
 
     public TitleCommand(TitlePlugin plugin) {
         this.plugin = plugin;
     }
 
+    static class CommandException extends Exception {
+        CommandException(String msg) {
+            super(msg);
+        }
+    }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String args[]) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         final Player player = sender instanceof Player ? (Player)sender : null;
         if (player == null) {
             sender.sendMessage("Player expected");
@@ -34,18 +34,14 @@ public class TitleCommand implements CommandExecutor {
                 String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
                 List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
                 Title currentTitle = plugin.getPlayerTitle(player.getUniqueId());
-                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", currentTitle.formatted());
-                List<Object> message = new ArrayList<>();
-                message.add(button("&r[&7Default&r]",
-                                   "&7Click to reset your\n&7title to the default",
-                                   "/title default"));
+                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3)", currentTitle.formatted());
+                StringBuilder sb = new StringBuilder();
+                sb.append(TextFormat.colorize("&r[&7Default&r]"));
                 for (Title title: titles) {
-                    message.add(" ");
-                    message.add(button("&r[" + title.getTitle() + "&r]",
-                                       "&7Click to change your\n&7title to " + title.getTitle(),
-                                       "/title " + title.getName()));
+                    sb.append(" ");
+                    sb.append(TextFormat.colorize("&r[" + title.getTitle() + "&r]"));
                 }
-                tellRaw(player, message);
+                player.sendMessage(sb.toString());
                 plugin.send(sender, "");
             } else if (args.length == 1) {
                 if (player == null) throw new CommandException("Player expected");
@@ -69,34 +65,8 @@ public class TitleCommand implements CommandExecutor {
                 return false;
             }
         } catch (CommandException ce) {
-            sender.sendMessage("" + ChatColor.RED + ce.getMessage());
+            sender.sendMessage("" + TextFormat.RED + ce.getMessage());
         }
         return true;
-    }
-
-    Object button(String chat, String tooltip, String command)
-    {
-        Map<String, Object> map = new HashMap<>();
-        map.put("text", plugin.format(chat));
-        Map<String, Object> map2 = new HashMap<>();
-        map.put("clickEvent", map2);
-        map2.put("action", "run_command");
-        map2.put("value", command);
-        map2 = new HashMap<>();
-        map.put("hoverEvent", map2);
-        map2.put("action", "show_text");
-        map2.put("value", plugin.format(tooltip));
-        return map;
-    }
-
-    static void tellRaw(Player player, Object json) {
-        String js;
-        try {
-            js = JSONValue.toJSONString(json);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "minecraft:tellraw " + player.getName() + " " + js);
     }
 }

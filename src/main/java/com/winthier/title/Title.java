@@ -1,15 +1,15 @@
 package com.winthier.title;
 
+import cn.nukkit.utils.TextFormat;
 import lombok.Value;
-import org.bukkit.ChatColor;
 
 @Value
-public class Title {
+public final class Title {
     String name;
     String title;
     String description;
 
     public String formatted() {
-        return ChatColor.translateAlternateColorCodes('&', title);
+        return TextFormat.colorize(title);
     }
 }

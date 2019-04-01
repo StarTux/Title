@@ -1,14 +1,14 @@
 package com.winthier.title.sql;
 
+import cn.nukkit.Player;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.entity.Player;
 
-public class Database {
+public final class Database {
     public final TitlePlugin plugin;
     private SQLDatabase db;
 
@@ -38,7 +38,7 @@ public class Database {
         for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player).findList()) {
             names.add(unlocked.getTitle());
         }
-        Player online = plugin.getServer().getPlayer(player);
+        Player online = plugin.getServer().getPlayer(player).orElse(null);
         for (TitleInfo title : db.find(TitleInfo.class).findList()) {
             if (names.contains(title.getName())) {
                 result.add(title.toTitle());
