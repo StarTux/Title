@@ -1,28 +1,30 @@
 package com.winthier.title;
 
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONValue;
 
-public class TitleCommand implements CommandExecutor {
+public final class TitleCommand implements TabExecutor {
     public final TitlePlugin plugin;
+    Gson gson = new Gson();
 
-    public TitleCommand(TitlePlugin plugin) {
+    public TitleCommand(final TitlePlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String args[]) {
-        final Player player = sender instanceof Player ? (Player)sender : null;
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) {
             sender.sendMessage("Player expected");
             return true;
@@ -74,8 +76,22 @@ public class TitleCommand implements CommandExecutor {
         return true;
     }
 
-    Object button(String chat, String tooltip, String command)
-    {
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command,
+                                      String label, String[] args) {
+        if (!(sender instanceof Player)) return null;
+        Player player = (Player) sender;
+        if (args.length == 0) return null;
+        if (args.length == 1) {
+            return plugin.getDb().listTitles(player.getUniqueId()).stream()
+                .map(Title::getName)
+                .filter(s -> s.startsWith(args[0]))
+                .collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    Object button(String chat, String tooltip, String command) {
         Map<String, Object> map = new HashMap<>();
         map.put("text", plugin.format(chat));
         Map<String, Object> map2 = new HashMap<>();
@@ -89,14 +105,15 @@ public class TitleCommand implements CommandExecutor {
         return map;
     }
 
-    static void tellRaw(Player player, Object json) {
+    void tellRaw(Player player, Object json) {
         String js;
         try {
-            js = JSONValue.toJSONString(json);
+            js = gson.toJson(json);
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "minecraft:tellraw " + player.getName() + " " + js);
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(),
+                                           "minecraft:tellraw " + player.getName() + " " + js);
     }
 }

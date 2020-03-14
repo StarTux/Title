@@ -3,17 +3,14 @@ package com.winthier.title;
 import com.winthier.title.sql.Database;
 import java.util.List;
 import java.util.UUID;
-import javax.persistence.PersistenceException;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
-public class TitlePlugin extends JavaPlugin {
+public final class TitlePlugin extends JavaPlugin {
     private final Database db = new Database(this);
     @Getter static TitlePlugin instance;
 

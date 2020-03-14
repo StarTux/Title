@@ -4,7 +4,7 @@ import lombok.Value;
 import org.bukkit.ChatColor;
 
 @Value
-public class Title {
+public final class Title {
     String name;
     String title;
     String description;

@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.UUID;
 import org.bukkit.entity.Player;
 
-public class Database {
+public final class Database {
     public final TitlePlugin plugin;
     private SQLDatabase db;
 
-    public Database(TitlePlugin plugin) {
+    public Database(final TitlePlugin plugin) {
         this.plugin = plugin;
     }
 

@@ -4,7 +4,6 @@ import com.winthier.playercache.PlayerCache;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -12,12 +11,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
-public class TitlesCommand implements CommandExecutor {
+public final class TitlesCommand implements CommandExecutor {
     public final TitlePlugin plugin;
 
-    public TitlesCommand(TitlePlugin plugin) {
+    public TitlesCommand(final TitlePlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -31,7 +29,7 @@ public class TitlesCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String args[]) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         try {
             if (args.length == 0) {
                 return false;
@@ -95,7 +93,8 @@ public class TitlesCommand implements CommandExecutor {
                 String title = sb.toString();
                 plugin.getDb().setTitle(name, title);
                 plugin.send(sender, "&eTitle %s created: " + title, name);
-            } else if (("Desc".equalsIgnoreCase(args[0])|| "Description".equalsIgnoreCase(args[0])) && args.length >= 3) {
+            } else if (("Desc".equalsIgnoreCase(args[0])
+                        || "Description".equalsIgnoreCase(args[0])) && args.length >= 3) {
                 String name = args[1];
                 StringBuilder sb = new StringBuilder(args[2]);
                 for (int i = 3; i < args.length; ++i) {
