@@ -94,8 +94,14 @@ public final class TitlesCommand implements CommandExecutor {
                 plugin.getDb().setTitle(name, title);
                 plugin.send(sender, "&eTitle %s created: " + title, name);
             } else if (("Desc".equalsIgnoreCase(args[0])
-                        || "Description".equalsIgnoreCase(args[0])) && args.length >= 3) {
+                        || "Description".equalsIgnoreCase(args[0])) && args.length >= 2) {
                 String name = args[1];
+                if (args.length == 2) {
+                    Title title = plugin.getDb().getTitle(name);
+                    if (title == null) throw new CommandException("Title not found: " + name);
+                    sender.sendMessage("Description of title '" +  title.getName() + "': " + title.getDescription());
+                    return true;
+                }
                 StringBuilder sb = new StringBuilder(args[2]);
                 for (int i = 3; i < args.length; ++i) {
                     sb.append(" ").append(args[i]);
@@ -132,6 +138,18 @@ public final class TitlesCommand implements CommandExecutor {
                 if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) throw new CommandException("This title is locked.");
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
                 plugin.send(sender, "&eSet title %s for player %s.", titleName, playerName);
+            } else if ("Has".equalsIgnoreCase(args[0]) && args.length == 3) {
+                String playerName = args[1];
+                String titleName = args[2];
+                OfflinePlayer player = findPlayer(playerName);
+                if (player == null) throw new CommandException("Player not found: " + playerName);
+                Title title = plugin.getDb().getTitle(titleName);
+                if (title == null) throw new CommandException("Unknown title: " + titleName);
+                if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) {
+                    sender.sendMessage(player.getName() + " has title: " + title.formatted());
+                } else {
+                    sender.sendMessage(player.getName() + " does not have title: " + title.getName());
+                }
             } else if ("UnlockSet".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
