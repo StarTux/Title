@@ -145,7 +145,7 @@ public final class TitlesCommand implements CommandExecutor {
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 Title title = plugin.getDb().getTitle(titleName);
                 if (title == null) throw new CommandException("Unknown title: " + titleName);
-                if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) {
+                if (plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) {
                     sender.sendMessage(player.getName() + " has title: " + title.formatted());
                 } else {
                     sender.sendMessage(player.getName() + " does not have title: " + title.getName());
