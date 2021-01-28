@@ -5,14 +5,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 
-public final class TitlesCommand implements CommandExecutor {
+public final class TitlesCommand implements TabExecutor {
     public final TitlePlugin plugin;
 
     public TitlesCommand(final TitlePlugin plugin) {
@@ -28,33 +35,55 @@ public final class TitlesCommand implements CommandExecutor {
         return null;
     }
 
+    private void button(ComponentBuilder cb, Title title) {
+        cb.append(title.formatted());
+        BaseComponent[] tooltip = TextComponent
+            .fromLegacyText(plugin.format("%s\n&7%s\n&r%s",
+                                          title.formatted(), title.getName(), title.formattedDescription()));
+        cb.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        cb.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/title:titles info " + title.getName()));
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         try {
             if (args.length == 0) {
                 return false;
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 1) {
-                StringBuilder sb = new StringBuilder(plugin.format("&eAll titles:"));
+                ComponentBuilder cb = new ComponentBuilder();
+                cb.append(plugin.format("&eAll titles:"));
                 for (Title title: plugin.getDb().listTitles()) {
-                    sb.append("\n").append(plugin.format("&6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
+                    cb.append(" ");
+                    button(cb, title);
                 }
-                sender.sendMessage(sb.toString());
+                sender.sendMessage(cb.create());
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
-                StringBuilder sb = new StringBuilder().append(ChatColor.YELLOW).append("Titles of ").append(playerName).append(":");
+                ComponentBuilder cb = new ComponentBuilder()
+                    .append("Titles of " + playerName + ":").color(ChatColor.YELLOW);
                 for (Title title: plugin.getDb().listTitles(player.getUniqueId())) {
-                    sb.append("\n").append(ChatColor.YELLOW);
+                    cb.append(" ").reset();
                     if (name != null && name.equalsIgnoreCase(title.getName())) {
-                        sb.append("+");
+                        cb.append("[").color(ChatColor.WHITE);
+                        button(cb, title);
+                        cb.append("]").color(ChatColor.WHITE);
                     } else {
-                        sb.append("-");
+                        button(cb, title);
                     }
-                    sb.append(plugin.format(" &6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
                 }
-                sender.sendMessage(sb.toString());
+                sender.sendMessage(cb.create());
+            } else if ("info".equalsIgnoreCase(args[0])) {
+                if (args.length != 2) return false;
+                String name = args[1];
+                Title title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                sender.sendMessage(plugin.format("&6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
+                if (title.getDescription() != null) {
+                    sender.sendMessage(plugin.format("&7Description:&r %s", title.formattedDescription()));
+                }
             } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String titleName = args[1];
                 Title title = plugin.getDb().getTitle(titleName);
@@ -150,15 +179,49 @@ public final class TitlesCommand implements CommandExecutor {
                 } else {
                     sender.sendMessage(player.getName() + " does not have title: " + title.getName());
                 }
-            } else if ("UnlockSet".equalsIgnoreCase(args[0]) && args.length == 3) {
+            } else if ("UnlockSet".equalsIgnoreCase(args[0])) {
+                if (args.length < 3) return false;
                 String playerName = args[1];
-                String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
+                for (int i = 2; i < args.length; i += 1) {
+                    String titleName = args[i];
+                    if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
+                }
+                for (int i = 2; i < args.length; i += 1) {
+                    String titleName = args[i];
+                    boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
+                    if (res) {
+                        plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
+                        plugin.send(sender, "&aUnlocked and set title %s for player %s.", titleName, playerName);
+                        return true;
+                    }
+                }
+                String titleName = args[args.length - 1];
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
-                plugin.send(sender, "&eUnlocked and set title %s for player %s.", titleName, playerName);
+                plugin.send(sender, "&e%s already has title %s.", playerName, titleName);
+            } else if ("Search".equalsIgnoreCase(args[0]) && args.length >= 2) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(args[1]);
+                for (int i = 2; i < args.length; i += 1) {
+                    sb.append(args[i]);
+                }
+                String term = sb.toString().toLowerCase();
+                List<Title> matches = new ArrayList<>();
+                for (Title title : plugin.getDb().listTitles()) {
+                    if (title.getName().toLowerCase().contains(term)
+                        || title.stripped().toLowerCase().contains(term)
+                        || title.strippedDescription().toLowerCase().contains(term)) {
+                        matches.add(title);
+                    }
+                }
+                if (matches.isEmpty()) throw new CommandException("No match: " + term);
+                ComponentBuilder cb = new ComponentBuilder("" + ChatColor.YELLOW + matches.size() + " titles matching: ");
+                for (Title title : matches) {
+                    cb.append(" ").reset();
+                    button(cb, title);
+                }
+                sender.sendMessage(cb.create());
             } else if ("Reset".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
@@ -175,5 +238,53 @@ public final class TitlesCommand implements CommandExecutor {
             sender.sendMessage("" + ChatColor.RED + ce.getMessage());
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 0) return null;
+        String cmd = args[0].toLowerCase();
+        if (args.length == 1) {
+            return Stream.of("list", "info", "listplayers", "ranktitles", "create", "desc",
+                             "unlock", "lock", "set", "has", "unlockset", "reset", "reload",
+                             "search")
+                .filter(s -> s.contains(cmd))
+                .collect(Collectors.toList());
+        }
+        String arg = args[args.length - 1];
+        switch (cmd) {
+        case "list":
+        case "reset":
+            if (args.length == 2) return null; // player
+            return Collections.emptyList();
+        case "info":
+        case "listplayers":
+        case "desc":
+            if (args.length == 2) return completeTitles(arg);
+            return Collections.emptyList();
+        case "has":
+        case "lock":
+        case "unlock":
+        case "set":
+            if (args.length == 2) return null; // player
+            if (args.length == 3) return completeTitles(arg);
+            return Collections.emptyList();
+        case "unlockset":
+            if (args.length == 2) return null; // player
+            return completeTitles(arg);
+        case "create":
+        case "reload":
+        case "ranktitles":
+        case "search":
+        default:
+            return Collections.emptyList();
+        }
+    }
+
+    List<String> completeTitles(String arg) {
+        return plugin.getDb().listTitles().stream()
+            .filter(t -> t.getName().contains(arg))
+            .map(Title::getName)
+            .collect(Collectors.toList());
     }
 }

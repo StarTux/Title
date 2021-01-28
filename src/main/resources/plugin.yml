@@ -17,20 +17,22 @@ commands:
   titles:
     description: Titles admin interface
     usage: |-
-      /titles list - List all titles
-      /titles list <player> - List titles of a player
-      /titles listplayers <player> - List players who own a title
-      /titles ranktitles <player> - Rank titles by ownership
-      /titles has <player> <title> - Check if player has title
-      /titles unlock <player> <title> - Unlock a title for a player
-      /titles lock <player> <title> - Lock a title for a player
-      /titles create <name> <title> - Create or update a title
-      /titles desc <name> - View title description
-      /titles desc <name> <title> - Set description for a title
-      /titles set <player> <title> - Set a title for a player
-      /titles unlockset <player> - Unlock and set title for a player
-      /titles reset <player> - Reset the title of a player
-      /titles reload - Reload database
+      §e /titles list§8 - §7List all titles
+      §e /titles list <player>§8 - §7List titles of a player
+      §e /titles info <title>§8 - §7Print title info
+      §e /titles listplayers <title>§8 - §7List players who own a title
+      §e /titles ranktitles§8 - §7Rank titles by ownership
+      §e /titles has <player> <title>§8 - §7Check if player has title
+      §e /titles unlock <player> <title>§8 - §7Unlock a title for a player
+      §e /titles lock <player> <title>§8 - §7Lock a title for a player
+      §e /titles create <name> <title>§8 - §7Create or update a title
+      §e /titles desc <name>§8 - §7View title description
+      §e /titles desc <name> <title>§8 - §7Set description for a title
+      §e /titles set <player> <title>§8 - §7Set a title for a player
+      §e /titles unlockset <player> <title...>§8 - §7Unlock and set title for a player. The first unowned title will be picked, the rest ignored.
+      §e /titles search <term>§8 - §7Search for matching title or description
+      §e /titles reset <player>§8 - §7Reset the title of a player
+      §e /titles reload§8 - §7Reload database
     permission: title.admin
 permissions:
   title.title:

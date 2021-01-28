@@ -92,12 +92,13 @@ public final class Database {
         return new Title(info.getName(), info.getTitle(), info.getDescription());
     }
 
-    public void unlockTitle(UUID uuid, String name) {
-        if (db.find(UnlockedInfo.class).where().eq("player", uuid).eq("title", name).findUnique() != null) return;
+    public boolean unlockTitle(UUID uuid, String name) {
+        if (db.find(UnlockedInfo.class).where().eq("player", uuid).eq("title", name).findUnique() != null) return false;
         UnlockedInfo info = new UnlockedInfo();
         info.setPlayer(uuid);
         info.setTitle(name);
         db.save(info);
+        return true;
     }
 
     /**
