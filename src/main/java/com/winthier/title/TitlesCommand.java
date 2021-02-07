@@ -198,7 +198,6 @@ public final class TitlesCommand implements TabExecutor {
                     }
                 }
                 String titleName = args[args.length - 1];
-                plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
                 plugin.send(sender, "&e%s already has title %s.", playerName, titleName);
             } else if ("Search".equalsIgnoreCase(args[0]) && args.length >= 2) {
                 StringBuilder sb = new StringBuilder();
