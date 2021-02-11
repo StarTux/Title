@@ -14,6 +14,4 @@ public class PlayerInfo {
     private UUID uuid;
     @Column(length = 32, nullable = true)
     private String title;
-    @Column(length = 32, nullable = true)
-    private String playerListTitle;
 }
