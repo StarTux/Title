@@ -1,13 +1,10 @@
 package com.winthier.title;
 
-import com.google.gson.Gson;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
@@ -16,7 +13,6 @@ import org.bukkit.entity.Player;
 
 public final class TitleCommand implements TabExecutor {
     public final TitlePlugin plugin;
-    Gson gson = new Gson();
 
     public TitleCommand(final TitlePlugin plugin) {
         this.plugin = plugin;
@@ -33,33 +29,51 @@ public final class TitleCommand implements TabExecutor {
             if (args.length == 0) {
                 if (player == null) throw new CommandException("Player expected");
                 plugin.send(sender, "");
-                String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
+                String name = plugin.getDb().getPlayerTitleName(player.getUniqueId());
                 List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
-                Title currentTitle = plugin.getPlayerTitle(player.getUniqueId());
-                plugin.send(sender, "&3&lYour Titles &3(Current: &r%s&r&3) &7&oClick to switch", currentTitle.formatted());
-                List<Object> message = new ArrayList<>();
-                message.add(button("&r[&7Default&r]",
-                                   "&7Click to reset your\n&7title to the default",
-                                   "/title default"));
-                for (Title title: titles) {
-                    message.add(" ");
-                    message.add(button("&r[" + title.getTitle() + "&r]",
-                                       "&7Click to change your\n&7title to " + title.getTitle(),
-                                       "/title " + title.getName()));
+                if (titles.isEmpty()) {
+                    player.sendMessage(ChatColor.RED + "No titles to show!");
+                    return true;
                 }
-                tellRaw(player, message);
+                Collections.sort(titles);
+                Title currentTitle = plugin.getDb().getPlayerTitle(player.getUniqueId());
+                player.sendMessage(Msg.builder(plugin.format("&3&lYour Titles &3(Current: &r"))
+                                   .append(currentTitle != null ? currentTitle.getTitleComponent() : Msg.text(""))
+                                   .append(plugin.format("&r&3) &7&oClick to switch"))
+                                   .create());
+                ComponentBuilder cb = new ComponentBuilder();
+                for (Title title : titles) {
+                    cb.append(" ").reset();
+                    cb.append("[");
+                    cb.append(title.getTitleComponent());
+                    ComponentBuilder tooltip = new ComponentBuilder(title.getTitleComponent());
+                    if (title.getDescription() != null) {
+                        tooltip.append("\n").reset().append(title.formattedDescription());
+                    }
+                    if (title.getPlayerListPrefix() != null) {
+                        tooltip.append("\n").reset().append("Player List ").color(ChatColor.GRAY)
+                            .append(title.formattedPlayerListPrefix());
+                    }
+                    tooltip.append("\n").reset().append("Click to use this title").color(ChatColor.AQUA).italic(true);
+                    cb.event(Msg.hover(tooltip.create()));
+                    cb.event(Msg.click("/title " + title.getName()));
+                    cb.append("]").reset();
+                }
+                sender.sendMessage(cb.create());
                 plugin.send(sender, "");
             } else if (args.length == 1) {
                 if (player == null) throw new CommandException("Player expected");
                 final String title = args[0];
                 if ("default".equalsIgnoreCase(title)) {
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
+                    plugin.updatePlayerListName(player);
                     plugin.send(player, "&bUsing default title.");
                 } else {
                     if (!plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
                         throw new CommandException("You don't have that title.");
                     }
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
+                    plugin.updatePlayerListName(player);
                     Title result = plugin.getDb().getTitle(title);
                     if (result == null) {
                         plugin.getLogger().warning(player.getName() + " managed to set unknown title " + title + ".");
@@ -89,31 +103,5 @@ public final class TitleCommand implements TabExecutor {
                 .collect(Collectors.toList());
         }
         return null;
-    }
-
-    Object button(String chat, String tooltip, String command) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("text", plugin.format(chat));
-        Map<String, Object> map2 = new HashMap<>();
-        map.put("clickEvent", map2);
-        map2.put("action", "run_command");
-        map2.put("value", command);
-        map2 = new HashMap<>();
-        map.put("hoverEvent", map2);
-        map2.put("action", "show_text");
-        map2.put("value", plugin.format(tooltip));
-        return map;
-    }
-
-    void tellRaw(Player player, Object json) {
-        String js;
-        try {
-            js = gson.toJson(json);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(),
-                                           "minecraft:tellraw " + player.getName() + " " + js);
     }
 }

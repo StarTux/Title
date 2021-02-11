@@ -18,6 +18,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
 
 public final class TitlesCommand implements TabExecutor {
     public final TitlePlugin plugin;
@@ -36,7 +37,7 @@ public final class TitlesCommand implements TabExecutor {
     }
 
     private void button(ComponentBuilder cb, Title title) {
-        cb.append(title.formatted());
+        cb.append(title.getTitleComponent());
         BaseComponent[] tooltip = TextComponent
             .fromLegacyText(plugin.format("%s\n&7%s\n&r%s",
                                           title.formatted(), title.getName(), title.formattedDescription()));
@@ -61,7 +62,7 @@ public final class TitlesCommand implements TabExecutor {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
-                String name = plugin.getDb().getPlayerTitle(player.getUniqueId());
+                String name = plugin.getDb().getPlayerTitleName(player.getUniqueId());
                 ComponentBuilder cb = new ComponentBuilder()
                     .append("Titles of " + playerName + ":").color(ChatColor.YELLOW);
                 for (Title title: plugin.getDb().listTitles(player.getUniqueId())) {
@@ -166,6 +167,7 @@ public final class TitlesCommand implements TabExecutor {
                 if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
                 if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) throw new CommandException("This title is locked.");
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
+                if (player instanceof Player) plugin.updatePlayerListName((Player) player);
                 plugin.send(sender, "&eSet title %s for player %s.", titleName, playerName);
             } else if ("Has".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
@@ -175,9 +177,9 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(titleName);
                 if (title == null) throw new CommandException("Unknown title: " + titleName);
                 if (plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) {
-                    sender.sendMessage(player.getName() + " has title: " + title.formatted());
+                    sender.sendMessage(Msg.builder(player.getName() + " has title: ").append(title.getTitleComponent()).create());
                 } else {
-                    sender.sendMessage(player.getName() + " does not have title: " + title.getName());
+                    sender.sendMessage(Msg.builder(player.getName() + " does not have title: ").append(title.getTitleComponent()).create());
                 }
             } else if ("UnlockSet".equalsIgnoreCase(args[0])) {
                 if (args.length < 3) return false;
@@ -193,6 +195,7 @@ public final class TitlesCommand implements TabExecutor {
                     boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
                     if (res) {
                         plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
+                        if (player instanceof Player) plugin.updatePlayerListName((Player) player);
                         plugin.send(sender, "&aUnlocked and set title %s for player %s.", titleName, playerName);
                         return true;
                     }
@@ -226,6 +229,7 @@ public final class TitlesCommand implements TabExecutor {
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
+                if (player instanceof Player) plugin.updatePlayerListName((Player) player);
                 plugin.send(sender, "Reset title of player %s.", playerName);
             } else if ("Reload".equalsIgnoreCase(args[0]) && args.length == 1) {
                 plugin.getDb().init();

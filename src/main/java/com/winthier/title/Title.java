@@ -1,28 +1,52 @@
 package com.winthier.title;
 
-import lombok.Value;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 
-@Value
-public final class Title {
-    String name;
-    String title;
-    String description;
+public interface Title extends Comparable<Title> {
+    String getName();
 
-    public String formatted() {
-        return ChatColor.translateAlternateColorCodes('&', title);
+    String getTitle();
+
+    String getDescription();
+
+    int getPriority();
+
+    String getTitleJson();
+
+    String getPlayerListPrefix();
+
+    default String formatted() {
+        return ChatColor.translateAlternateColorCodes('&', getTitle());
     }
 
-    public String formattedDescription() {
-        if (description == null) return "";
-        return ChatColor.translateAlternateColorCodes('&', description);
+    default String formattedDescription() {
+        if (getDescription() == null) return "";
+        return ChatColor.translateAlternateColorCodes('&', getDescription());
     }
 
-    public String stripped() {
+    default String stripped() {
         return ChatColor.stripColor(formatted());
     }
 
-    public String strippedDescription() {
+    default String strippedDescription() {
         return ChatColor.stripColor(formattedDescription());
+    }
+
+    default String formattedPlayerListPrefix() {
+        return getPlayerListPrefix() != null ? Msg.colorize(getPlayerListPrefix()) : "";
+    }
+
+    default TextComponent getTitleComponent() {
+        return getTitleJson() != null
+            ? new TextComponent(Msg.toComponent(getTitleJson()))
+            : new TextComponent(formatted());
+    }
+
+    @Override
+    default int compareTo(Title other) {
+        int prio = Integer.compare(other.getPriority(), getPriority()); // reverse!
+        if (prio != 0) return prio;
+        return getName().compareToIgnoreCase(other.getName());
     }
 }

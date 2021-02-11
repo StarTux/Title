@@ -25,11 +25,8 @@ public final class Database {
     }
 
     public List<Title> listTitles() {
-        List<Title> result = new ArrayList<>();
-        for (TitleInfo title : db.find(TitleInfo.class).findList()) {
-            result.add(title.toTitle());
-        }
-        return result;
+        List<? extends Title> list = db.find(TitleInfo.class).findList();
+        return (List<Title>) list;
     }
 
     public List<Title> listTitles(UUID player) {
@@ -39,14 +36,14 @@ public final class Database {
             names.add(unlocked.getTitle());
         }
         Player online = plugin.getServer().getPlayer(player);
-        for (TitleInfo title : db.find(TitleInfo.class).findList()) {
+        for (Title title : listTitles()) {
             if (names.contains(title.getName())) {
-                result.add(title.toTitle());
+                result.add(title);
             } else {
-                final String permission = ("title.unlock." + title.getName()).toLowerCase();
                 if (online != null) {
+                    final String permission = "title.unlock." + title.getName().toLowerCase();
                     if (online.isPermissionSet(permission) && online.hasPermission(permission)) {
-                        result.add(title.toTitle());
+                        result.add(title);
                     }
                 }
             }
@@ -80,16 +77,8 @@ public final class Database {
         return true;
     }
 
-    public Title getTitle(final String name) {
-        TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
-        if (info == null || !info.getName().equals(name)) return null;
-        return new Title(info.getName(), info.getTitle(), info.getDescription());
-    }
-
-    public Title getTitleByFormat(final String format) {
-        TitleInfo info = db.find(TitleInfo.class).where().eq("title", format).findUnique();
-        if (info == null) return null;
-        return new Title(info.getName(), info.getTitle(), info.getDescription());
+    public Title getTitle(String name) {
+        return db.find(TitleInfo.class).where().eq("name", name).findUnique();
     }
 
     public boolean unlockTitle(UUID uuid, String name) {
@@ -121,10 +110,18 @@ public final class Database {
         db.save(info);
     }
 
-    public String getPlayerTitle(UUID uuid) {
-        PlayerInfo info = db.find(PlayerInfo.class).where().eq("uuid", uuid).findUnique();
-        if (info == null) return null;
-        return info.getTitle();
+    public PlayerInfo getPlayerInfo(UUID uuid) {
+        return db.find(PlayerInfo.class).where().eq("uuid", uuid).findUnique();
+    }
+
+    public String getPlayerTitleName(UUID uuid) {
+        PlayerInfo playerInfo = getPlayerInfo(uuid);
+        return playerInfo != null ? playerInfo.getTitle() : null;
+    }
+
+    public Title getPlayerTitle(UUID uuid) {
+        String name = getPlayerTitleName(uuid);
+        return name != null ? getTitle(name) : null;
     }
 
     public boolean playerHasTitle(UUID uuid, String name) {
