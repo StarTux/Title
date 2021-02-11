@@ -1,19 +1,24 @@
+main: com.winthier.title.TitlePlugin
 name: Title
 description: Manage custom player titles
+
 author: StarTux
 version: 0.1
 api-version: 1.13
 website: https://cavetale.com
-main: com.winthier.title.TitlePlugin
+
 depend: [ SQL, PlayerCache ]
 softdepend: []
+
 commands:
+
   title:
     description: Select your in-game title
     usage: |-
-      /title - List your available titles
-      /title <title> - Set your title
+      §b/title§8 - §7List your available titles
+      §b/title <title>§8 - §7Set your title
     permission: title.title
+
   titles:
     description: Titles admin interface
     usage: |-
@@ -34,10 +39,22 @@ commands:
       §e /titles reset <player>§8 - §7Reset the title of a player
       §e /titles reload§8 - §7Reload database
     permission: title.admin
+
+  shine:
+    description: Use your shine
+    usage: §b/shine
+    permission: title.shine
+
 permissions:
+
   title.title:
     description: Use the "/title" command
     default: op
+
   title.admin:
     description: Use admin commands
+    default: op
+
+  title.shine:
+    description: Use your shine
     default: op

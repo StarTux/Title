@@ -27,6 +27,8 @@ public final class TitleInfo implements Title {
     private String titleJson;
     @Column(nullable = true, length = 255)
     private String playerListPrefix;
+    @Column(nullable = true, length = 255)
+    private String shine;
 
     public TitleInfo() { }
 

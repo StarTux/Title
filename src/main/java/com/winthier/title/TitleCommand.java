@@ -1,6 +1,5 @@
 package com.winthier.title;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.md_5.bungee.api.ChatColor;
@@ -22,7 +21,7 @@ public final class TitleCommand implements TabExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) {
-            sender.sendMessage("Player expected");
+            sender.sendMessage("[title:title] player expected");
             return true;
         }
         try {
@@ -35,7 +34,6 @@ public final class TitleCommand implements TabExecutor {
                     player.sendMessage(ChatColor.RED + "No titles to show!");
                     return true;
                 }
-                Collections.sort(titles);
                 Title currentTitle = plugin.getDb().getPlayerTitle(player.getUniqueId());
                 player.sendMessage(Msg.builder(plugin.format("&3&lYour Titles &3(Current: &r"))
                                    .append(currentTitle != null ? currentTitle.getTitleComponent() : Msg.text(""))
@@ -63,23 +61,19 @@ public final class TitleCommand implements TabExecutor {
                 plugin.send(sender, "");
             } else if (args.length == 1) {
                 if (player == null) throw new CommandException("Player expected");
-                final String title = args[0];
-                if ("default".equalsIgnoreCase(title)) {
+                final String name = args[0];
+                if ("default".equalsIgnoreCase(name)) {
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
                     plugin.updatePlayerListName(player);
                     plugin.send(player, "&bUsing default title.");
                 } else {
-                    if (!plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
+                    Title title = plugin.getDb().getTitle(name);
+                    if (title == null || !plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
                         throw new CommandException("You don't have that title.");
                     }
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
                     plugin.updatePlayerListName(player);
-                    Title result = plugin.getDb().getTitle(title);
-                    if (result == null) {
-                        plugin.getLogger().warning(player.getName() + " managed to set unknown title " + title + ".");
-                        throw new CommandException("You don't have that title.");
-                    }
-                    plugin.send(player, "&bSet title to &r%s&b.", result.formatted());
+                    player.sendMessage(Msg.builder("Set title to ").color(ChatColor.AQUA).append(title.getTitleComponent()).create());
                 }
             } else {
                 return false;

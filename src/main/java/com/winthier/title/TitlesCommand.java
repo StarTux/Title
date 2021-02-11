@@ -146,11 +146,20 @@ public final class TitlesCommand implements TabExecutor {
                 String playerName = args[1];
                 String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
-                if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
-
-                plugin.send(sender, "&eUnlocked title %s for player %s.", titleName, playerName);
+                if (player == null) {
+                    throw new CommandException("Player not found: " + playerName);
+                }
+                playerName = player.getName();
+                Title title = plugin.getDb().getTitle(titleName);
+                if (title == null) {
+                    throw new CommandException("Unknown title: " + titleName);
+                }
+                if (plugin.getDb().unlockTitle(player.getUniqueId(), title)) {
+                    sender.sendMessage(Msg.builder("Unlocked title for " + playerName + ": ").color(ChatColor.YELLOW)
+                                       .append(title.getTitleComponent()).create());
+                } else {
+                    sender.sendMessage(Msg.builder(playerName + " already had title: ").color(ChatColor.RED).append(title.getTitleComponent()).create());
+                }
             } else if ("Lock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
@@ -163,12 +172,24 @@ public final class TitlesCommand implements TabExecutor {
                 String playerName = args[1];
                 String titleName = args[2];
                 OfflinePlayer player = findPlayer(playerName);
-                if (player == null) throw new CommandException("Player not found: " + playerName);
-                if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                if (!plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) throw new CommandException("This title is locked.");
-                plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
-                if (player instanceof Player) plugin.updatePlayerListName((Player) player);
-                plugin.send(sender, "&eSet title %s for player %s.", titleName, playerName);
+                if (player == null) {
+                    throw new CommandException("Player not found: " + playerName);
+                }
+                Title title = plugin.getDb().getTitle(titleName);
+                if (title == null) {
+                    throw new CommandException("Unknown title: " + titleName);
+                }
+                if (!plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
+                    throw new CommandException("This title is locked.");
+                }
+                plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
+                if (player instanceof Player) {
+                    plugin.updatePlayerListName((Player) player);
+                }
+                sender.sendMessage(Msg.builder("Set title ").color(ChatColor.YELLOW)
+                                   .append(title.getTitleComponent()).append("").reset()
+                                   .append(" for player ").color(ChatColor.YELLOW).append(playerName)
+                                   .create());
             } else if ("Has".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
@@ -176,7 +197,7 @@ public final class TitlesCommand implements TabExecutor {
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 Title title = plugin.getDb().getTitle(titleName);
                 if (title == null) throw new CommandException("Unknown title: " + titleName);
-                if (plugin.getDb().playerHasTitle(player.getUniqueId(), titleName)) {
+                if (plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
                     sender.sendMessage(Msg.builder(player.getName() + " has title: ").append(title.getTitleComponent()).create());
                 } else {
                     sender.sendMessage(Msg.builder(player.getName() + " does not have title: ").append(title.getTitleComponent()).create());
@@ -185,16 +206,22 @@ public final class TitlesCommand implements TabExecutor {
                 if (args.length < 3) return false;
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
-                if (player == null) throw new CommandException("Player not found: " + playerName);
+                if (player == null) {
+                    throw new CommandException("Player not found: " + playerName);
+                }
                 for (int i = 2; i < args.length; i += 1) {
                     String titleName = args[i];
                     if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
                 }
                 for (int i = 2; i < args.length; i += 1) {
                     String titleName = args[i];
-                    boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), titleName);
+                    Title title = plugin.getDb().getTitle(titleName);
+                    if (title == null) {
+                        throw new CommandException("Title not found: " + titleName);
+                    }
+                    boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), title);
                     if (res) {
-                        plugin.getDb().setPlayerTitle(player.getUniqueId(), titleName);
+                        plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
                         if (player instanceof Player) plugin.updatePlayerListName((Player) player);
                         plugin.send(sender, "&aUnlocked and set title %s for player %s.", titleName, playerName);
                         return true;

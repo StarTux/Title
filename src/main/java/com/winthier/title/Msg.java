@@ -62,6 +62,8 @@ public final class Msg {
                 Object font = map.get("font");
                 if (font instanceof String) component.setFont((String) font);
                 result[i++] = component;
+            } else if (o instanceof String) {
+                result[i++] = new TextComponent((String) o);
             } else {
                 result[i++] = new TextComponent("");
             }
@@ -71,5 +73,22 @@ public final class Msg {
 
     public static String colorize(String in) {
         return ChatColor.translateAlternateColorCodes('&', in);
+    }
+
+    public static String toCamelCase(String in) {
+        return in.substring(0, 1).toUpperCase()
+            + in.substring(1).toLowerCase();
+    }
+
+    public static String toCamelCase(String[] in) {
+        String[] out = new String[in.length];
+        for (int i = 0; i < in.length; i += 1) {
+            out[i] = toCamelCase(in[i]);
+        }
+        return String.join(" ", out);
+    }
+
+    public static String toCamelCase(Enum en) {
+        return toCamelCase(en.name().split("_"));
     }
 }

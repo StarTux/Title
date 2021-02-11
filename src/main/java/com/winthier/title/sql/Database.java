@@ -4,13 +4,19 @@ import com.winthier.sql.SQLDatabase;
 import com.winthier.title.Title;
 import com.winthier.title.TitlePlugin;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.entity.Player;
 
 public final class Database {
     public final TitlePlugin plugin;
     private SQLDatabase db;
+    private List<Title> titlesCache = new ArrayList<>();
+    private Map<UUID, Title> playerTitleCache = new HashMap<>();
+    private Map<UUID, List<Title>> playerUnlockedCache = new HashMap<>();
 
     public Database(final TitlePlugin plugin) {
         this.plugin = plugin;
@@ -26,6 +32,8 @@ public final class Database {
 
     public List<Title> listTitles() {
         List<? extends Title> list = db.find(TitleInfo.class).findList();
+        Collections.sort(list);
+        titlesCache = (List<Title>) list;
         return (List<Title>) list;
     }
 
@@ -48,6 +56,8 @@ public final class Database {
                 }
             }
         }
+        Collections.sort(result);
+        playerUnlockedCache.put(player, result);
         return result;
     }
 
@@ -64,16 +74,19 @@ public final class Database {
         if (info == null) {
             info = new TitleInfo();
             info.setName(name);
+            info.setTitle(title);
+            db.insert(info);
+        } else {
+            info.setTitle(title);
+            db.update(info, "title");
         }
-        info.setTitle(title);
-        db.save(info);
     }
 
     public boolean setDescription(final String name, final String description) {
         TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
         if (info == null) return false;
         info.setDescription(description);
-        db.save(info);
+        db.update(info, "description");
         return true;
     }
 
@@ -81,13 +94,9 @@ public final class Database {
         return db.find(TitleInfo.class).where().eq("name", name).findUnique();
     }
 
-    public boolean unlockTitle(UUID uuid, String name) {
-        if (db.find(UnlockedInfo.class).where().eq("player", uuid).eq("title", name).findUnique() != null) return false;
-        UnlockedInfo info = new UnlockedInfo();
-        info.setPlayer(uuid);
-        info.setTitle(name);
-        db.save(info);
-        return true;
+    public boolean unlockTitle(UUID uuid, Title title) {
+        UnlockedInfo info = new UnlockedInfo(uuid, title.getName());
+        return 0 != db.insertIgnore(info);
     }
 
     /**
@@ -100,14 +109,18 @@ public final class Database {
         return true;
     }
 
-    public void setPlayerTitle(UUID uuid, String name) {
+    public void setPlayerTitle(UUID uuid, Title title) {
         PlayerInfo info = db.find(PlayerInfo.class).where().eq("uuid", uuid).findUnique();
         if (info == null) {
             info = new PlayerInfo();
             info.setUuid(uuid);
+            info.setTitle(title.getName());
+            db.insert(info);
+        } else {
+            info.setTitle(title.getName());
+            db.update(info, "title");
         }
-        info.setTitle(name);
-        db.save(info);
+        playerTitleCache.put(uuid, title);
     }
 
     public PlayerInfo getPlayerInfo(UUID uuid) {
@@ -121,13 +134,31 @@ public final class Database {
 
     public Title getPlayerTitle(UUID uuid) {
         String name = getPlayerTitleName(uuid);
-        return name != null ? getTitle(name) : null;
+        Title title = name != null ? getTitle(name) : null;
+        if (title == null) {
+            List<Title> titles = listTitles(uuid);
+            title = !titles.isEmpty()
+                ? titles.get(0)
+                : new TitleInfo("?", "?", "?");
+        }
+        playerTitleCache.put(uuid, title);
+        return title;
     }
 
-    public boolean playerHasTitle(UUID uuid, String name) {
-        for (Title title: listTitles(uuid)) {
-            if (title.getName().equals(name)) return true;
-        }
-        return false;
+    public boolean playerHasTitle(UUID uuid, Title title) {
+        return db.find(UnlockedInfo.class)
+            .eq("player", uuid)
+            .eq("title", title.getName())
+            .findUnique()
+            != null;
+    }
+
+    public void clearCache(UUID uuid) {
+        playerTitleCache.remove(uuid);
+        playerUnlockedCache.remove(uuid);
+    }
+
+    public Title getCachedTitle(UUID uuid) {
+        return playerTitleCache.get(uuid);
     }
 }

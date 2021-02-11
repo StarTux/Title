@@ -16,6 +16,8 @@ public interface Title extends Comparable<Title> {
 
     String getPlayerListPrefix();
 
+    String getShine();
+
     default String formatted() {
         return ChatColor.translateAlternateColorCodes('&', getTitle());
     }
