@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class Database {
@@ -43,7 +44,7 @@ public final class Database {
         for (UnlockedInfo unlocked : db.find(UnlockedInfo.class).where().eq("player", player).findList()) {
             names.add(unlocked.getTitle());
         }
-        Player online = plugin.getServer().getPlayer(player);
+        Player online = Bukkit.getPlayer(player);
         for (Title title : listTitles()) {
             if (names.contains(title.getName())) {
                 result.add(title);
@@ -150,6 +151,13 @@ public final class Database {
     }
 
     public boolean playerHasTitle(UUID uuid, Title title) {
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null) {
+            final String permission = "title.unlock." + title.getName().toLowerCase();
+            if (online.isPermissionSet(permission) && online.hasPermission(permission)) {
+                return true;
+            }
+        }
         return db.find(UnlockedInfo.class)
             .eq("player", uuid)
             .eq("title", title.getName())
