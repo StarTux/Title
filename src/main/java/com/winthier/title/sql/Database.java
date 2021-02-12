@@ -120,7 +120,11 @@ public final class Database {
             info.setTitle(title != null ? title.getName() : null);
             db.update(info, "title");
         }
-        playerTitleCache.put(uuid, null);
+        if (title != null) {
+            playerTitleCache.put(uuid, title);
+        } else {
+            playerTitleCache.remove(uuid);
+        }
     }
 
     public PlayerInfo getPlayerInfo(UUID uuid) {
