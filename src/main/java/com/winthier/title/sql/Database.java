@@ -114,13 +114,13 @@ public final class Database {
         if (info == null) {
             info = new PlayerInfo();
             info.setUuid(uuid);
-            info.setTitle(title.getName());
+            info.setTitle(title != null ? title.getName() : null);
             db.insert(info);
         } else {
-            info.setTitle(title.getName());
+            info.setTitle(title != null ? title.getName() : null);
             db.update(info, "title");
         }
-        playerTitleCache.put(uuid, title);
+        playerTitleCache.put(uuid, null);
     }
 
     public PlayerInfo getPlayerInfo(UUID uuid) {
