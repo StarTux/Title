@@ -81,9 +81,25 @@ public final class TitlesCommand implements TabExecutor {
                 String name = args[1];
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
-                sender.sendMessage(plugin.format("&6%s&r: %s (%s&r)", title.getName(), title.getTitle(), title.formatted()));
+                sender.sendMessage(Msg.builder("Name:").color(ChatColor.GRAY).append(" ").reset()
+                                   .append(title.getName()).insertion(title.getName()).create());
+                sender.sendMessage(Msg.builder("Title:").color(ChatColor.GRAY).append(" ").reset()
+                                   .append(title.formatted()).insertion(title.getTitle()).create());
+                if (title.getTitleJson() != null) {
+                    sender.sendMessage(Msg.builder("Component:").color(ChatColor.GRAY).append(" ").reset()
+                                       .append(title.getTitleComponent()).insertion(title.getTitleJson()).create());
+                }
+                if (title.getPlayerListPrefix() != null) {
+                    sender.sendMessage(Msg.builder("Player List:").color(ChatColor.GRAY).append(" ").reset()
+                                       .append(title.formattedPlayerListPrefix()).insertion(title.getPlayerListPrefix()).create());
+                }
                 if (title.getDescription() != null) {
-                    sender.sendMessage(plugin.format("&7Description:&r %s", title.formattedDescription()));
+                    sender.sendMessage(Msg.builder("Description:").color(ChatColor.GRAY).append(" ").reset()
+                                       .append(title.formattedDescription()).insertion(title.getDescription()).create());
+                }
+                if (title.getShine() != null) {
+                    sender.sendMessage(Msg.builder("Shine:").color(ChatColor.GRAY).append(" ").reset()
+                                       .append(title.getShine()).insertion(title.getShine()).create());
                 }
             } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String titleName = args[1];
