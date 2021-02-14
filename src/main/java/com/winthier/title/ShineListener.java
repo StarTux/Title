@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.player.PlayerElytraBoostEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.AbstractArrow;
@@ -16,15 +17,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 @RequiredArgsConstructor
 public final class ShineListener implements Listener {
     private final TitlePlugin plugin;
+    private NamespacedKey shineKey;
 
     public ShineListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
+        shineKey = new NamespacedKey(plugin, "shine");
         return this;
     }
 
@@ -70,6 +74,8 @@ public final class ShineListener implements Listener {
     void onProjectileHit(ProjectileHitEvent event) {
         if (!(event.getEntity() instanceof AbstractArrow)) return;
         Projectile proj = event.getEntity();
+        if (proj.getPersistentDataContainer().has(shineKey, PersistentDataType.BYTE)) return;
+        proj.getPersistentDataContainer().set(shineKey, PersistentDataType.BYTE, (byte) 1);
         if (!(proj.getShooter() instanceof Player)) return;
         Player player = (Player) proj.getShooter();
         Shine shine = getShine(player);
