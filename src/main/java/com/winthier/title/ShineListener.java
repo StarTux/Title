@@ -3,6 +3,7 @@ package com.winthier.title;
 import com.destroystokyo.paper.event.player.PlayerElytraBoostEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -59,6 +60,7 @@ public final class ShineListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.SPECTATOR) return;
         Shine shine = getShine(player);
         if (shine == null) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
