@@ -1,6 +1,7 @@
 package com.winthier.title;
 
 import lombok.Value;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.util.Vector;
@@ -35,8 +36,31 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case STAR: {
+            double[][] points = {
+                {0.00, 1.00}, {-0.14, 0.87}, {0.14, 0.87}, {-0.14, 0.73}, {0.14, 0.73},
+                {-0.29, 0.60}, {0.29, 0.60}, {-0.29, 0.47}, {0.29, 0.47}, {-1.00, 0.33},
+                {-0.86, 0.33}, {-0.71, 0.33}, {-0.57, 0.33}, {-0.43, 0.33}, {0.43, 0.33},
+                {0.57, 0.33}, {0.71, 0.33}, {0.86, 0.33}, {1.00, 0.33}, {-1.00, 0.20},
+                {1.00, 0.20}, {-0.86, 0.07}, {-0.14, 0.07}, {0.14, 0.07}, {0.86, 0.07},
+                {-0.71, -0.07}, {-0.14, -0.07}, {0.14, -0.07}, {0.71, -0.07},
+                {-0.57, -0.20}, {-0.14, -0.20}, {0.14, -0.20}, {0.57, -0.20},
+                {-0.71, -0.33}, {0.71, -0.33}, {-0.71, -0.47}, {0.71, -0.47},
+                {-0.86, -0.60}, {0.00, -0.60}, {0.86, -0.60}, {-0.86, -0.73},
+                {-0.29, -0.73}, {-0.14, -0.73}, {0.14, -0.73}, {0.29, -0.73},
+                {0.86, -0.73}, {-1.00, -0.87}, {-0.57, -0.87}, {-0.43, -0.87},
+                {0.43, -0.87}, {0.57, -0.87}, {1.00, -0.87}, {-1.00, -1.00},
+                {-0.86, -1.00}, {-0.71, -1.00}, {0.71, -1.00}, {0.86, -1.00},
+                {1.00, -1.00}
+            };
+            for (double[] p : points) {
+                Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(255, 255, 0), 2.0f);
+                showParticle(Particle.REDSTONE, dust, 2, p[0] * 1.25, p[1] * 1.25);
+            }
+            break;
+        }
         case HEART:
-        default:
+        default: {
             double[][] points = {
                 {-0.60, 1.00},
                 {-0.40, 1.00},
@@ -67,6 +91,7 @@ public final class ShinePlace {
                 showParticle(Particle.HEART, null, 8, p[0], p[1]);
             }
             break;
+        }
         }
     }
 

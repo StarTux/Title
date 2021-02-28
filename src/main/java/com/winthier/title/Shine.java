@@ -3,7 +3,8 @@ package com.winthier.title;
 import net.md_5.bungee.api.ChatColor;
 
 public enum Shine {
-    HEART(ChatColor.of("#FF69B4"));
+    HEART(ChatColor.of("#FF69B4")),
+    STAR(ChatColor.of("#FFD700"));
 
     public final String humanName;
     public final ChatColor color;
