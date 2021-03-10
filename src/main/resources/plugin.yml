@@ -21,6 +21,7 @@ commands:
 
   titles:
     description: Titles admin interface
+    permission: title.admin
     usage: |-
       §e /titles list§8 - §7List all titles
       §e /titles list <player>§8 - §7List titles of a player
@@ -31,14 +32,35 @@ commands:
       §e /titles unlock <player> <title>§8 - §7Unlock a title for a player
       §e /titles lock <player> <title>§8 - §7Lock a title for a player
       §e /titles create <name> <title>§8 - §7Create or update a title
-      §e /titles desc <name>§8 - §7View title description
       §e /titles desc <name> <title>§8 - §7Set description for a title
+      §e /titles json <name> <json>§8 - §7Set title json
+      §e /titles prefix <name> <prefix>§8 - §7Set player list prefix
+      §e /titles shine <name> <shine>§8 - §7Set title shine
+      §e /titles prio <name> <number>§8 - §7Set title priority
       §e /titles set <player> <title>§8 - §7Set a title for a player
       §e /titles unlockset <player> <title...>§8 - §7Unlock and set title for a player. The first unowned title will be picked, the rest ignored.
       §e /titles search <term>§8 - §7Search for matching title or description
       §e /titles reset <player>§8 - §7Reset the title of a player
       §e /titles reload§8 - §7Reload database
-    permission: title.admin
+
+  gradient:
+    description: Make a gradient
+    permission: title.gradient
+    usage: |-
+      USAGE
+        /gradient OPTIONS TITLE
+      OPTIONS
+        -c COLORS Define color gradient
+        -i italic
+        -b bold
+        -u underlined
+        -d debug
+      COLORS
+        Comma separated list of hex colors
+        Hex color: RRGGBB
+        Colors example: 808080,FF00FF,00000FF
+      EXAMPLE
+        /gradient -c 000000,FFFFFF -- Hello World
 
   shine:
     description: Use your shine
@@ -57,4 +79,8 @@ permissions:
 
   title.shine:
     description: Use your shine
+    default: op
+
+  title.shine.any:
+    description: Use any shine
     default: op

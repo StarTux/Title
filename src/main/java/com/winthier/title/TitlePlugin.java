@@ -29,6 +29,7 @@ public final class TitlePlugin extends JavaPlugin {
         getCommand("title").setExecutor(new TitleCommand(this));
         getCommand("titles").setExecutor(new TitlesCommand(this));
         getCommand("shine").setExecutor(new ShineCommand(this));
+        getCommand("gradient").setExecutor(new GradientCommand(this));
         new PlayerListener(this).enable();
         new ShineListener(this).enable();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -48,7 +49,8 @@ public final class TitlePlugin extends JavaPlugin {
         String titlePrefix = title != null ? title.getPlayerListPrefix() : null;
         String prefix = playerListPrefixes.get(player.getUniqueId());
         String suffix = playerListSuffixes.get(player.getUniqueId());
-        if (titlePrefix == null && prefix == null && suffix == null) {
+        Shine shine = title.parseShine();
+        if (titlePrefix == null && prefix == null && suffix == null && shine != Shine.PRIDE) {
             player.setPlayerListName(null);
             return;
         }
@@ -58,7 +60,11 @@ public final class TitlePlugin extends JavaPlugin {
         } else if (titlePrefix != null) {
             sb.append(format(titlePrefix));
         }
-        sb.append(player.getDisplayName());
+        if (shine == Shine.PRIDE) {
+            sb.append(Msg.rainbowify(player.getName()));
+        } else {
+            sb.append(player.getName());
+        }
         if (suffix != null) sb.append(suffix);
         player.setPlayerListName(sb.toString());
     }

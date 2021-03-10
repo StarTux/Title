@@ -91,7 +91,7 @@ public final class Database {
         return true;
     }
 
-    public Title getTitle(String name) {
+    public TitleInfo getTitle(String name) {
         return db.find(TitleInfo.class).where().eq("name", name).findUnique();
     }
 
@@ -172,5 +172,9 @@ public final class Database {
 
     public Title getCachedTitle(UUID uuid) {
         return playerTitleCache.get(uuid);
+    }
+
+    public boolean save(TitleInfo titleInfo) {
+        return 1 == db.update(titleInfo);
     }
 }

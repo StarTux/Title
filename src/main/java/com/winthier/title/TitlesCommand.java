@@ -1,7 +1,10 @@
 package com.winthier.title;
 
+import com.google.gson.JsonParseException;
 import com.winthier.playercache.PlayerCache;
+import com.winthier.title.sql.TitleInfo;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +16,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
@@ -101,6 +105,8 @@ public final class TitlesCommand implements TabExecutor {
                     sender.sendMessage(Msg.builder("Shine:").color(ChatColor.GRAY).append(" ").reset()
                                        .append(title.getShine()).insertion(title.getShine()).create());
                 }
+                sender.sendMessage(Msg.builder("Priority:").color(ChatColor.GRAY).append(" ").reset()
+                                   .append("" + title.getPriority()).create());
             } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String titleName = args[1];
                 Title title = plugin.getDb().getTitle(titleName);
@@ -139,8 +145,7 @@ public final class TitlesCommand implements TabExecutor {
                 String title = sb.toString();
                 plugin.getDb().setTitle(name, title);
                 plugin.send(sender, "&eTitle %s created: " + title, name);
-            } else if (("Desc".equalsIgnoreCase(args[0])
-                        || "Description".equalsIgnoreCase(args[0])) && args.length >= 2) {
+            } else if (("Desc".equalsIgnoreCase(args[0]) || "Description".equalsIgnoreCase(args[0])) && args.length >= 2) {
                 String name = args[1];
                 if (args.length == 2) {
                     Title title = plugin.getDb().getTitle(name);
@@ -277,6 +282,103 @@ public final class TitlesCommand implements TabExecutor {
             } else if ("Reload".equalsIgnoreCase(args[0]) && args.length == 1) {
                 plugin.getDb().init();
                 plugin.send(sender, "Database reloaded.");
+            } else if ("json".equalsIgnoreCase(args[0])) {
+                if (args.length < 2) return false;
+                String name = args[1];
+                TitleInfo title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                String json;
+                TextComponent text;
+                if (args.length == 2) {
+                    json = null;
+                    text = null;
+                } else {
+                    json = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+                    try {
+                        text = new TextComponent(new ComponentSerializer().parse(json));
+                    } catch (JsonParseException jpe) {
+                        throw new CommandException("Bad Json format: " + json);
+                    }
+                }
+                title.setTitleJson(json);
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    if (json == null) {
+                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " reset").create());
+                    } else {
+                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " set: ").append(text).create());
+                    }
+                }
+            } else if ("prefix".equalsIgnoreCase(args[0])) {
+                if (args.length < 2) return false;
+                String name = args[1];
+                TitleInfo title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                String prefix;
+                String text;
+                if (args.length == 2) {
+                    prefix = null;
+                    text = null;
+                } else {
+                    prefix = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+                    text = Msg.colorize(prefix);
+                }
+                title.setPlayerListPrefix(prefix);
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    if (prefix == null) {
+                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " reset").create());
+                    } else {
+                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " set: ").append(text).create());
+                    }
+                }
+            } else if ("shine".equalsIgnoreCase(args[0])) {
+                if (args.length != 2 && args.length != 3) return false;
+                String name = args[1];
+                TitleInfo title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                Shine shine;
+                BaseComponent[] text;
+                if (args.length == 2) {
+                    shine = null;
+                    text = null;
+                } else {
+                    try {
+                        shine = Shine.valueOf(args[2].toUpperCase());
+                    } catch (IllegalArgumentException iae) {
+                        throw new CommandException("Shine not found: " + args[2]);
+                    }
+                    text = Msg.builder(shine.name()).color(shine.color).create();
+                }
+                title.setShine(shine.name().toLowerCase());
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    if (shine == null) {
+                        sender.sendMessage(Msg.builder("Shine of title " + title.getName() + " reset").create());
+                    } else {
+                        sender.sendMessage(Msg.builder("Shine of title " + title.getName() + " set: ").append(text).create());
+                    }
+                }
+            } else if ("prio".equalsIgnoreCase(args[0])) {
+                if (args.length != 3) return false;
+                String name = args[1];
+                TitleInfo title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                int priority;
+                try {
+                    priority = Integer.parseInt(args[2]);
+                } catch (IllegalArgumentException iae) {
+                    throw new CommandException("Shine not found: " + args[2]);
+                }
+                title.setPriority(priority);
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    sender.sendMessage(Msg.builder("Priority of title " + title.getName() + " set to " + priority).create());
+                }
             } else {
                 return false;
             }
@@ -293,7 +395,8 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length == 1) {
             return Stream.of("list", "info", "listplayers", "ranktitles", "create", "desc",
                              "unlock", "lock", "set", "has", "unlockset", "reset", "reload",
-                             "search")
+                             "search",
+                             "json", "prefix", "shine", "prio")
                 .filter(s -> s.contains(cmd))
                 .collect(Collectors.toList());
         }
@@ -306,7 +409,18 @@ public final class TitlesCommand implements TabExecutor {
         case "info":
         case "listplayers":
         case "desc":
+        case "json":
+        case "prefix":
+        case "prio":
             if (args.length == 2) return completeTitles(arg);
+            return Collections.emptyList();
+        case "shine":
+            if (args.length == 2) return completeTitles(arg);
+            if (args.length == 3) return Stream.of(Shine.values())
+                                      .map(Shine::name)
+                                      .map(String::toLowerCase)
+                                      .filter(s -> s.startsWith(arg))
+                                      .collect(Collectors.toList());
             return Collections.emptyList();
         case "has":
         case "lock":

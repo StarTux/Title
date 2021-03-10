@@ -45,6 +45,16 @@ public interface Title extends Comparable<Title> {
             : new TextComponent(formatted());
     }
 
+    default Shine parseShine() {
+        String str = getShine();
+        if (str == null) return null;
+        try {
+            return Shine.valueOf(str.toUpperCase());
+        } catch (IllegalArgumentException iae) {
+            return null;
+        }
+    }
+
     @Override
     default int compareTo(Title other) {
         int prio = Integer.compare(other.getPriority(), getPriority()); // reverse!
