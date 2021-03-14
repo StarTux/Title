@@ -329,9 +329,9 @@ public final class TitlesCommand implements TabExecutor {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
                     if (prefix == null) {
-                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " reset").create());
+                        sender.sendMessage(Msg.builder("Prefix of title " + title.getName() + " reset").create());
                     } else {
-                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " set: ").append(text).create());
+                        sender.sendMessage(Msg.builder("Prefix of title " + title.getName() + " set: ").append(text).create());
                     }
                 }
             } else if ("shine".equalsIgnoreCase(args[0])) {
