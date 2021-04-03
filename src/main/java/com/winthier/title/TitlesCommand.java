@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -41,7 +42,7 @@ public final class TitlesCommand implements TabExecutor {
     }
 
     private void button(ComponentBuilder cb, Title title) {
-        cb.append(title.getTitleComponent());
+        cb.append(title.getTitleComponent()).retain(FormatRetention.NONE);
         BaseComponent[] tooltip = TextComponent
             .fromLegacyText(plugin.format("%s\n&7%s\n&r%s",
                                           title.formatted(), title.getName(), title.formattedDescription()));
@@ -91,7 +92,8 @@ public final class TitlesCommand implements TabExecutor {
                                    .append(title.formatted()).insertion(title.getTitle()).create());
                 if (title.getTitleJson() != null) {
                     sender.sendMessage(Msg.builder("Component:").color(ChatColor.GRAY).append(" ").reset()
-                                       .append(title.getTitleComponent()).insertion(title.getTitleJson()).create());
+                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE)
+                                       .insertion(title.getTitleJson()).create());
                 }
                 if (title.getPlayerListPrefix() != null) {
                     sender.sendMessage(Msg.builder("Player List:").color(ChatColor.GRAY).append(" ").reset()
@@ -177,9 +179,10 @@ public final class TitlesCommand implements TabExecutor {
                 }
                 if (plugin.getDb().unlockTitle(player.getUniqueId(), title)) {
                     sender.sendMessage(Msg.builder("Unlocked title for " + playerName + ": ").color(ChatColor.YELLOW)
-                                       .append(title.getTitleComponent()).create());
+                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
                 } else {
-                    sender.sendMessage(Msg.builder(playerName + " already had title: ").color(ChatColor.RED).append(title.getTitleComponent()).create());
+                    sender.sendMessage(Msg.builder(playerName + " already had title: ").color(ChatColor.RED)
+                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
                 }
             } else if ("Lock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
@@ -208,7 +211,7 @@ public final class TitlesCommand implements TabExecutor {
                     plugin.updatePlayerListName((Player) player);
                 }
                 sender.sendMessage(Msg.builder("Set title ").color(ChatColor.YELLOW)
-                                   .append(title.getTitleComponent()).append("").reset()
+                                   .append(title.getTitleComponent()).retain(FormatRetention.NONE).append("").reset()
                                    .append(" for player ").color(ChatColor.YELLOW).append(playerName)
                                    .create());
             } else if ("Has".equalsIgnoreCase(args[0]) && args.length == 3) {
@@ -219,9 +222,11 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(titleName);
                 if (title == null) throw new CommandException("Unknown title: " + titleName);
                 if (plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
-                    sender.sendMessage(Msg.builder(player.getName() + " has title: ").append(title.getTitleComponent()).create());
+                    sender.sendMessage(Msg.builder(player.getName() + " has title: ")
+                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
                 } else {
-                    sender.sendMessage(Msg.builder(player.getName() + " does not have title: ").append(title.getTitleComponent()).create());
+                    sender.sendMessage(Msg.builder(player.getName() + " does not have title: ")
+                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
                 }
             } else if ("UnlockSet".equalsIgnoreCase(args[0])) {
                 if (args.length < 3) return false;

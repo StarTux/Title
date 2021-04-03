@@ -1,10 +1,13 @@
 package com.winthier.title;
 
 import com.winthier.title.sql.Database;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -54,19 +57,32 @@ public final class TitlePlugin extends JavaPlugin {
             player.setPlayerListName(null);
             return;
         }
-        StringBuilder sb = new StringBuilder();
+        List<Component> components = new ArrayList<>();
         if (prefix != null) {
-            sb.append(prefix);
-        } else if (titlePrefix != null) {
-            sb.append(format(titlePrefix));
+            components.add(Component.text(prefix));
         }
+        String displayName;
         if (shine == Shine.PRIDE) {
-            sb.append(Msg.rainbowify(player.getName()));
+            displayName = Msg.rainbowify(player.getName());
         } else {
-            sb.append(player.getName());
+            displayName = player.getName();
         }
-        if (suffix != null) sb.append(suffix);
-        player.setPlayerListName(sb.toString());
+        if (titlePrefix != null) {
+            if (titlePrefix.equals("&r")) {
+                // Magic code
+                components.add(Msg.parseComponent(title.getTitleJson()));
+                components.add(shine != null ? Component.text(displayName).color(shine.textColor)
+                               : Component.text(displayName));
+            } else {
+                components.add(Component.text(format(titlePrefix) + displayName));
+            }
+        } else {
+            components.add(Component.text(displayName));
+        }
+        if (suffix != null) {
+            components.add(Component.text(suffix));
+        }
+        player.playerListName(Component.empty().children(components));
     }
 
     public static String format(String msg, Object... args) {

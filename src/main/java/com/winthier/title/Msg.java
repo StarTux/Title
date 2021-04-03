@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.List;
 import java.util.Map;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -69,6 +71,10 @@ public final class Msg {
             }
         }
         return result;
+    }
+
+    public static Component parseComponent(String in) {
+        return GsonComponentSerializer.gson().deserialize(in);
     }
 
     public static String colorize(String in) {

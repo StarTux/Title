@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import java.util.Random;
 import lombok.Value;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -12,6 +13,7 @@ public final class ShinePlace {
     private final Vector right;
     private final Vector up;
     private final double scale;
+    static Random random = new Random();
 
     public static ShinePlace of(Location location, double scale) {
         return of(location, new Vector(0, 0, 0), scale);
@@ -36,6 +38,65 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case EGG: {
+            double[][] shape = {
+                {-0.33, 1.00}, {-0.11, 1.00}, {0.11, 1.00}, {0.33, 1.00}, {-0.56, 0.80},
+                {0.56, 0.80}, {-0.78, 0.60}, {0.78, 0.60}, {-0.78, 0.40}, {0.78, 0.40},
+                {-1.00, 0.20}, {1.00, 0.20}, {-1.00, 0.00}, {1.00, 0.00}, {-1.00, -0.20},
+                {1.00, -0.20}, {-1.00, -0.40}, {1.00, -0.40}, {-1.00, -0.60}, {1.00, -0.60},
+                {-0.78, -0.80}, {0.78, -0.80}, {-0.56, -1.00}, {-0.33, -1.00}, {-0.11, -1.00},
+                {0.11, -1.00}, {0.33, -1.00}, {0.56, -1.00}
+            };
+            int rgb = 0xFFFFFF & java.awt.Color.HSBtoRGB(random.nextFloat(), 1.0f, 1.0f);
+            Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(rgb), 2.0f);
+            for (double[] p : shape) {
+                showParticle(Particle.REDSTONE, dust, 2, 0.8 * p[0], 0.8 * p[1]);
+            }
+            break;
+        }
+        case BUNNY: {
+            double[][] shape = {
+                {-0.60, 1.00}, {-0.40, 1.00}, {0.40, 1.00}, {0.60, 1.00}, {-0.80, 0.87},
+                {-0.20, 0.87}, {0.20, 0.87}, {0.80, 0.87}, {-0.80, 0.73}, {-0.20, 0.73},
+                {0.20, 0.73}, {0.80, 0.73}, {-0.80, 0.60}, {-0.20, 0.60}, {0.20, 0.60}, {0.80, 0.60},
+                {-0.80, 0.47}, {-0.20, 0.47}, {0.20, 0.47}, {0.80, 0.47}, {-0.80, 0.33},
+                {-0.20, 0.33}, {0.20, 0.33}, {0.80, 0.33}, {-0.80, 0.20}, {-0.40, 0.20},
+                {-0.20, 0.20}, {0.00, 0.20}, {0.20, 0.20}, {0.40, 0.20}, {0.80, 0.20}, {-0.80, 0.07},
+                {0.80, 0.07}, {-1.00, -0.07}, {1.00, -0.07}, {-1.00, -0.20}, {1.00, -0.20},
+                {-1.00, -0.33}, {-0.40, -0.33}, {0.40, -0.33}, {1.00, -0.33}, {-1.00, -0.47},
+                {-0.40, -0.47}, {0.40, -0.47}, {1.00, -0.47}, {-1.00, -0.60}, {1.00, -0.60},
+                {-1.00, -0.73}, {1.00, -0.73}, {-0.80, -0.87}, {-0.60, -0.87}, {0.60, -0.87},
+                {0.80, -0.87}, {-0.40, -1.00}, {-0.20, -1.00}, {0.00, -1.00}, {0.20, -1.00},
+                {0.40, -1.00}
+            };
+            int rgb = 0xFFFFFF & java.awt.Color.HSBtoRGB(random.nextFloat(), 1.0f, 1.0f);
+            Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(rgb), 2.0f);
+            for (double[] p : shape) {
+                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+            }
+            break;
+        }
+        case COIN: {
+            double[][] shape = {
+                {-0.27, 1.00}, {-0.09, 1.00}, {0.09, 1.00}, {0.27, 1.00}, {-0.64, 0.82},
+                {-0.45, 0.82}, {0.45, 0.82}, {0.64, 0.82}, {-0.82, 0.64}, {0.82, 0.64},
+                {-0.82, 0.45}, {-0.27, 0.45}, {0.27, 0.45}, {0.82, 0.45}, {-1.00, 0.27},
+                {-0.27, 0.27}, {-0.09, 0.27}, {0.09, 0.27}, {0.27, 0.27}, {1.00, 0.27},
+                {-1.00, 0.09}, {-0.45, 0.09}, {-0.09, 0.09}, {0.09, 0.09}, {0.45, 0.09},
+                {1.00, 0.09}, {-1.00, -0.09}, {-0.64, -0.09}, {-0.45, -0.09}, {-0.09, -0.09},
+                {0.09, -0.09}, {0.45, -0.09}, {0.64, -0.09}, {1.00, -0.09}, {-1.00, -0.27},
+                {-0.45, -0.27}, {-0.27, -0.27}, {-0.09, -0.27}, {0.09, -0.27}, {0.27, -0.27},
+                {0.45, -0.27}, {1.00, -0.27}, {-0.82, -0.45}, {-0.27, -0.45}, {-0.09, -0.45},
+                {0.09, -0.45}, {0.27, -0.45}, {0.82, -0.45}, {-0.82, -0.64}, {0.82, -0.64},
+                {-0.64, -0.82}, {-0.45, -0.82}, {0.45, -0.82}, {0.64, -0.82}, {-0.27, -1.00},
+                {-0.09, -1.00}, {0.09, -1.00}, {0.27, -1.00}
+            };
+            Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0xFFFF00), 2.0f);
+            for (double[] p : shape) {
+                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+            }
+            break;
+        }
         case PRIDE: {
             int[][] colors = {
                 {255, 0, 0},
@@ -69,7 +130,7 @@ public final class ShinePlace {
             for (int i = 0; i < points.length; i += 1) {
                 double[][] segment = points[i];
                 int[] color = colors[i];
-                Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(color[0], color[1], color[2]), 1.5f);
+                Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(color[0], color[1], color[2]), 2.0f);
                 for (double[] p : segment) {
                     showParticle(Particle.REDSTONE, dust, 1, p[0], p[1]);
                 }
