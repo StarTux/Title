@@ -2,6 +2,7 @@ package com.winthier.title;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -64,13 +65,19 @@ public final class ShineListener implements Listener {
     void onPlayerTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SPECTATOR) return;
+        Location from = event.getFrom();
+        final Location to = event.getTo();
+        if (Objects.equals(from.getWorld(), to.getWorld())) {
+            double distance = from.distanceSquared(to);
+            if (distance < 4.0) return;
+        }
         Shine shine = getShine(player);
         if (shine == null) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnGround()) {
-                    ShinePlace.of(player.getEyeLocation(), 2.0).show(shine);
+                    ShinePlace.of(to.add(0, player.getEyeHeight(), 0), 2.0).show(shine);
                 } else {
-                    ShinePlace.of(player.getEyeLocation().add(0.0, 2.0, 0.0), 2.0).show(shine);
+                    ShinePlace.of(to.add(0, player.getEyeHeight() + 2.0, 0), 2.0).show(shine);
                 }
             });
     }
