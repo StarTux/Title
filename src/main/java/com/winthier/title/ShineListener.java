@@ -75,9 +75,9 @@ public final class ShineListener implements Listener {
         if (shine == null) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnGround()) {
-                    ShinePlace.of(to.add(0, player.getEyeHeight(), 0), 2.0).show(shine);
+                    ShinePlace.of(to.clone().add(0, player.getEyeHeight(), 0), 2.0).show(shine);
                 } else {
-                    ShinePlace.of(to.add(0, player.getEyeHeight() + 2.0, 0), 2.0).show(shine);
+                    ShinePlace.of(to.clone().add(0, player.getEyeHeight() + 2.0, 0), 2.0).show(shine);
                 }
             });
     }
