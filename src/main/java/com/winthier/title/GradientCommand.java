@@ -115,8 +115,7 @@ public final class GradientCommand implements CommandExecutor {
         }
         String json = Msg.GSON.toJson(comps);
         plugin.getLogger().info(json);
-        Component text = Msg.parseComponent(json);
-        text.insertion(json);
+        Component text = Msg.parseComponent(json).insertion(json);
         sender.sendMessage(text);
         return true;
     }

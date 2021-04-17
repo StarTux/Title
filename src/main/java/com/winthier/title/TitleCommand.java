@@ -80,9 +80,8 @@ public final class TitleCommand implements TabExecutor {
                     }
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
                     plugin.updatePlayerListName(player);
-                    player.sendMessage(Component.text()
-                                       .content("Set title to ").color(NamedTextColor.AQUA)
-                                       .append(title.getTitleComponent()).build());
+                    player.sendMessage(TextComponent.ofChildren(Component.text("Set title to ", NamedTextColor.AQUA),
+                                                                title.getTitleComponent()));
                 }
             } else {
                 return false;

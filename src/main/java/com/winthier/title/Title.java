@@ -5,6 +5,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 
 @Data @Table(name = "titles")
@@ -59,6 +61,23 @@ public final class Title implements Comparable<Title> {
         return titleJson != null
             ? Msg.parseComponent(titleJson)
             : Component.text(formatted());
+    }
+
+    public Component getTooltip() {
+        TextComponent.Builder tooltip = Component.text();
+        tooltip.append(getTitleComponent());
+        if (description != null) {
+            tooltip.append(Component.text("\n" + formattedDescription(), NamedTextColor.WHITE));
+        }
+        if (playerListPrefix != null) {
+            tooltip.append(Component.text("\nPlayer List ", NamedTextColor.GRAY));
+            tooltip.append(Component.text(formattedPlayerListPrefix()));
+        }
+        return tooltip.build();
+    }
+
+    public boolean isEmptyTitle() {
+        return titleJson != null && titleJson.isEmpty();
     }
 
     public Shine parseShine() {
