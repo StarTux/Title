@@ -71,7 +71,7 @@ public final class TitlePlugin extends JavaPlugin {
             if (titlePrefix.equals("&r")) {
                 // Magic code
                 components.add(Msg.parseComponent(title.getTitleJson()));
-                components.add(shine != null ? Component.text(displayName).color(shine.textColor)
+                components.add(shine != null ? Component.text(displayName).color(shine.color)
                                : Component.text(displayName));
             } else {
                 components.add(Component.text(format(titlePrefix) + displayName));

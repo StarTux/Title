@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 
 @Data @Table(name = "titles")
@@ -35,12 +35,12 @@ public final class Title implements Comparable<Title> {
     }
 
     public String formatted() {
-        return ChatColor.translateAlternateColorCodes('&', getTitle());
+        return Msg.colorize(title);
     }
 
     public String formattedDescription() {
-        if (getDescription() == null) return "";
-        return ChatColor.translateAlternateColorCodes('&', getDescription());
+        if (description == null) return "";
+        return Msg.colorize(description);
     }
 
     public String stripped() {
@@ -52,20 +52,19 @@ public final class Title implements Comparable<Title> {
     }
 
     public String formattedPlayerListPrefix() {
-        return getPlayerListPrefix() != null ? Msg.colorize(getPlayerListPrefix()) : "";
+        return playerListPrefix != null ? Msg.colorize(playerListPrefix) : "";
     }
 
-    public TextComponent getTitleComponent() {
-        return getTitleJson() != null
-            ? new TextComponent(Msg.toComponent(getTitleJson()))
-            : new TextComponent(formatted());
+    public Component getTitleComponent() {
+        return titleJson != null
+            ? Msg.parseComponent(titleJson)
+            : Component.text(formatted());
     }
 
     public Shine parseShine() {
-        String str = getShine();
-        if (str == null) return null;
+        if (shine == null) return null;
         try {
-            return Shine.valueOf(str.toUpperCase());
+            return Shine.valueOf(shine.toUpperCase());
         } catch (IllegalArgumentException iae) {
             return null;
         }
@@ -73,8 +72,8 @@ public final class Title implements Comparable<Title> {
 
     @Override
     public int compareTo(Title other) {
-        int prio = Integer.compare(other.getPriority(), getPriority()); // reverse!
+        int prio = Integer.compare(other.priority, priority); // reverse!
         if (prio != 0) return prio;
-        return getName().compareToIgnoreCase(other.getName());
+        return name.compareToIgnoreCase(other.name);
     }
 }

@@ -9,14 +9,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
@@ -40,13 +37,17 @@ public final class TitlesCommand implements TabExecutor {
         return null;
     }
 
-    private void button(ComponentBuilder cb, Title title) {
-        cb.append(title.getTitleComponent()).retain(FormatRetention.NONE);
-        BaseComponent[] tooltip = TextComponent
-            .fromLegacyText(plugin.format("%s\n&7%s\n&r%s",
-                                          title.formatted(), title.getName(), title.formattedDescription()));
-        cb.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        cb.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/title:titles info " + title.getName()));
+    private Component button(Title title) {
+        Component titleComponent = title.getTitleComponent();
+        Component tooltip = TextComponent
+            .ofChildren(titleComponent,
+                        Component.text('\n' + title.getName(), NamedTextColor.GRAY),
+                        Component.text('\n' + title.formattedDescription()));
+        return Component.text()
+            .append(titleComponent)
+            .hoverEvent(HoverEvent.showText(tooltip))
+            .clickEvent(ClickEvent.runCommand("/title:titles info " + title.getName()))
+            .build();
     }
 
     @Override
@@ -55,70 +56,83 @@ public final class TitlesCommand implements TabExecutor {
             if (args.length == 0) {
                 return false;
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 1) {
-                ComponentBuilder cb = new ComponentBuilder();
-                cb.append(plugin.format("&eAll titles:"));
+                TextComponent.Builder cb = Component.text();
+                cb.append(Component.text("All titles:", NamedTextColor.YELLOW));
                 for (Title title: plugin.getDb().listTitles()) {
-                    cb.append(" ");
-                    button(cb, title);
+                    cb.append(Component.text(" "));
+                    cb.append(button(title));
                 }
-                sender.sendMessage(cb.create());
+                sender.sendMessage(cb.build());
             } else if ("List".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 String name = plugin.getDb().getPlayerTitleName(player.getUniqueId());
-                ComponentBuilder cb = new ComponentBuilder()
-                    .append("Titles of " + playerName + ":").color(ChatColor.YELLOW);
+                TextComponent.Builder cb = Component.text();
+                cb.append(Component.text("Titles of " + playerName + ":", NamedTextColor.YELLOW));
                 for (Title title: plugin.getDb().listTitles(player.getUniqueId())) {
-                    cb.append(" ").reset();
+                    cb.append(Component.text(" "));
                     if (name != null && name.equalsIgnoreCase(title.getName())) {
-                        cb.append("[").color(ChatColor.WHITE);
-                        button(cb, title);
-                        cb.append("]").color(ChatColor.WHITE);
+                        cb.append(Component.text("[", NamedTextColor.WHITE));
+                        cb.append(button(title));
+                        cb.append(Component.text("]", NamedTextColor.WHITE));
                     } else {
-                        button(cb, title);
+                        cb.append(button(title));
                     }
                 }
-                sender.sendMessage(cb.create());
+                sender.sendMessage(cb.build());
             } else if ("info".equalsIgnoreCase(args[0])) {
                 if (args.length != 2) return false;
                 String name = args[1];
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
-                sender.sendMessage(Msg.builder("Name:").color(ChatColor.GRAY).append(" ").reset()
-                                   .append(title.getName()).insertion(title.getName()).create());
-                sender.sendMessage(Msg.builder("Title:").color(ChatColor.GRAY).append(" ").reset()
-                                   .append(title.formatted()).insertion(title.getTitle()).create());
+                sender.sendMessage(Component.text()
+                                   .append(Component.text("Name: ", NamedTextColor.GRAY))
+                                   .append(Component.text(title.getName(), NamedTextColor.WHITE))
+                                   .insertion(title.getName()).build());
+                sender.sendMessage(Component.text()
+                                   .append(Component.text("Title: ", NamedTextColor.GRAY))
+                                   .append(Component.text(title.formatted()))
+                                   .insertion(title.getTitle()).build());
                 if (title.getTitleJson() != null) {
-                    sender.sendMessage(Msg.builder("Component:").color(ChatColor.GRAY).append(" ").reset()
-                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE)
-                                       .insertion(title.getTitleJson()).create());
+                    sender.sendMessage(Component.text()
+                                       .append(Component.text("Component: ", NamedTextColor.GRAY))
+                                       .append(title.getTitleComponent())
+                                       .insertion(title.getTitleJson()).build());
                 }
                 if (title.getPlayerListPrefix() != null) {
-                    sender.sendMessage(Msg.builder("Player List:").color(ChatColor.GRAY).append(" ").reset()
-                                       .append(title.formattedPlayerListPrefix()).insertion(title.getPlayerListPrefix()).create());
+                    sender.sendMessage(Component.text()
+                                       .append(Component.text("Player List: ", NamedTextColor.GRAY))
+                                       .append(Component.text(title.formattedPlayerListPrefix()))
+                                       .insertion(title.getPlayerListPrefix()).build());
                 }
                 if (title.getDescription() != null) {
-                    sender.sendMessage(Msg.builder("Description:").color(ChatColor.GRAY).append(" ").reset()
-                                       .append(title.formattedDescription()).insertion(title.getDescription()).create());
+                    sender.sendMessage(Component.text()
+                                       .append(Component.text("Description: ", NamedTextColor.GRAY))
+                                       .append(Component.text(title.formattedDescription(), NamedTextColor.WHITE))
+                                       .insertion(title.getDescription()).build());
                 }
                 if (title.getShine() != null) {
-                    sender.sendMessage(Msg.builder("Shine:").color(ChatColor.GRAY).append(" ").reset()
-                                       .append(title.getShine()).insertion(title.getShine()).create());
+                    sender.sendMessage(Component.text()
+                                       .append(Component.text("Shine:", NamedTextColor.GRAY))
+                                       .append(Component.text(title.getShine(), NamedTextColor.WHITE))
+                                       .insertion(title.getShine()).build());
                 }
-                sender.sendMessage(Msg.builder("Priority:").color(ChatColor.GRAY).append(" ").reset()
-                                   .append("" + title.getPriority()).create());
+                sender.sendMessage(Component.text()
+                                   .append(Component.text("Priority: ", NamedTextColor.GRAY))
+                                   .append(Component.text(title.getPriority(), NamedTextColor.WHITE))
+                                   .insertion("" + title.getPriority()).build());
             } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String titleName = args[1];
                 Title title = plugin.getDb().getTitle(titleName);
                 List<UUID> players = plugin.getDb().listPlayers(title);
-                StringBuilder sb = new StringBuilder("Owners of title \"").append(title.getName()).append("(").append(players.size()).append(")");
+                StringBuilder sb = new StringBuilder("Owners of title ").append(title.getName()).append("(").append(players.size()).append(")");
                 for (UUID uuid: players) {
                     String name = PlayerCache.nameForUuid(uuid);
                     if (name == null) name = uuid.toString();
                     sb.append(" ").append(name);
                 }
-                sender.sendMessage(sb.toString());
+                sender.sendMessage(Component.text(sb.toString(), NamedTextColor.YELLOW));
             } else if ("RankTitles".equalsIgnoreCase(args[0]) && args.length == 1) {
                 class Rank {
                     Title title = null;
@@ -133,7 +147,7 @@ public final class TitlesCommand implements TabExecutor {
                 }
                 Collections.sort(ranks, (b, a) -> Integer.compare(a.count, b.count));
                 int rankIter = 1;
-                sender.sendMessage("Ranking of titles by ownership (" + ranks.size() + ")");
+                sender.sendMessage(Component.text("Ranking of titles by ownership (" + ranks.size() + ")", NamedTextColor.YELLOW));
                 for (Rank rank: ranks) {
                     sender.sendMessage("" + rankIter++ + ") " + rank.count + " " + rank.title.getName());
                 }
@@ -177,11 +191,11 @@ public final class TitlesCommand implements TabExecutor {
                     throw new CommandException("Unknown title: " + titleName);
                 }
                 if (plugin.getDb().unlockTitle(player.getUniqueId(), title)) {
-                    sender.sendMessage(Msg.builder("Unlocked title for " + playerName + ": ").color(ChatColor.YELLOW)
-                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
+                    sender.sendMessage(Component.text().content("Unlocked title for " + playerName + ": ").color(NamedTextColor.YELLOW)
+                                       .append(title.getTitleComponent()).build());
                 } else {
-                    sender.sendMessage(Msg.builder(playerName + " already had title: ").color(ChatColor.RED)
-                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
+                    sender.sendMessage(Component.text().content(playerName + " already had title: ").color(NamedTextColor.RED)
+                                       .append(title.getTitleComponent()).build());
                 }
             } else if ("Lock".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
@@ -209,10 +223,10 @@ public final class TitlesCommand implements TabExecutor {
                 if (player instanceof Player) {
                     plugin.updatePlayerListName((Player) player);
                 }
-                sender.sendMessage(Msg.builder("Set title ").color(ChatColor.YELLOW)
-                                   .append(title.getTitleComponent()).retain(FormatRetention.NONE).append("").reset()
-                                   .append(" for player ").color(ChatColor.YELLOW).append(playerName)
-                                   .create());
+                sender.sendMessage(TextComponent.ofChildren(Component.text("Set title ", NamedTextColor.YELLOW),
+                                                            title.getTitleComponent(),
+                                                            Component.text(" for player ", NamedTextColor.YELLOW),
+                                                            Component.text(playerName)));
             } else if ("Has".equalsIgnoreCase(args[0]) && args.length == 3) {
                 String playerName = args[1];
                 String titleName = args[2];
@@ -221,11 +235,11 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(titleName);
                 if (title == null) throw new CommandException("Unknown title: " + titleName);
                 if (plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
-                    sender.sendMessage(Msg.builder(player.getName() + " has title: ")
-                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
+                    sender.sendMessage(Component.text().content(player.getName() + " has title: ")
+                                       .append(title.getTitleComponent()).build());
                 } else {
-                    sender.sendMessage(Msg.builder(player.getName() + " does not have title: ")
-                                       .append(title.getTitleComponent()).retain(FormatRetention.NONE).create());
+                    sender.sendMessage(Component.text().content(player.getName() + " does not have title: ")
+                                       .append(title.getTitleComponent()).build());
                 }
             } else if ("UnlockSet".equalsIgnoreCase(args[0])) {
                 if (args.length < 3) return false;
@@ -270,12 +284,13 @@ public final class TitlesCommand implements TabExecutor {
                     }
                 }
                 if (matches.isEmpty()) throw new CommandException("No match: " + term);
-                ComponentBuilder cb = new ComponentBuilder("" + ChatColor.YELLOW + matches.size() + " titles matching: ");
+                TextComponent.Builder cb = Component.text();
+                cb.append(Component.text("" + matches.size() + " titles matching: ", NamedTextColor.YELLOW));
                 for (Title title : matches) {
-                    cb.append(" ").reset();
-                    button(cb, title);
+                    cb.append(Component.text(" "));
+                    cb.append(button(title));
                 }
-                sender.sendMessage(cb.create());
+                sender.sendMessage(cb.build());
             } else if ("Reset".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String playerName = args[1];
                 OfflinePlayer player = findPlayer(playerName);
@@ -292,14 +307,14 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 String json;
-                TextComponent text;
+                Component text;
                 if (args.length == 2) {
                     json = null;
                     text = null;
                 } else {
                     json = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                     try {
-                        text = new TextComponent(new ComponentSerializer().parse(json));
+                        text = Msg.parseComponent(json);
                     } catch (JsonParseException jpe) {
                         throw new CommandException("Bad Json format: " + json);
                     }
@@ -309,9 +324,9 @@ public final class TitlesCommand implements TabExecutor {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
                     if (json == null) {
-                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " reset").create());
+                        sender.sendMessage(Component.text().content("Json of title " + title.getName() + " reset").build());
                     } else {
-                        sender.sendMessage(Msg.builder("Json of title " + title.getName() + " set: ").append(text).create());
+                        sender.sendMessage(Component.text().content("Json of title " + title.getName() + " set: ").append(text).build());
                     }
                 }
             } else if ("prefix".equalsIgnoreCase(args[0])) {
@@ -333,9 +348,9 @@ public final class TitlesCommand implements TabExecutor {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
                     if (prefix == null) {
-                        sender.sendMessage(Msg.builder("Prefix of title " + title.getName() + " reset").create());
+                        sender.sendMessage(Component.text().content("Prefix of title " + title.getName() + " reset").build());
                     } else {
-                        sender.sendMessage(Msg.builder("Prefix of title " + title.getName() + " set: ").append(text).create());
+                        sender.sendMessage(Component.text().content("Prefix of title " + title.getName() + " set: ").append(Component.text(text)).build());
                     }
                 }
             } else if ("shine".equalsIgnoreCase(args[0])) {
@@ -344,7 +359,7 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 Shine shine;
-                BaseComponent[] text;
+                Component text;
                 if (args.length == 2) {
                     shine = null;
                     text = null;
@@ -354,16 +369,16 @@ public final class TitlesCommand implements TabExecutor {
                     } catch (IllegalArgumentException iae) {
                         throw new CommandException("Shine not found: " + args[2]);
                     }
-                    text = Msg.builder(shine.name()).color(shine.color).create();
+                    text = Component.text(shine.name(), shine.color);
                 }
                 title.setShine(shine.name().toLowerCase());
                 if (!plugin.getDb().save(title)) {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
                     if (shine == null) {
-                        sender.sendMessage(Msg.builder("Shine of title " + title.getName() + " reset").create());
+                        sender.sendMessage(Component.text().content("Shine of title " + title.getName() + " reset").build());
                     } else {
-                        sender.sendMessage(Msg.builder("Shine of title " + title.getName() + " set: ").append(text).create());
+                        sender.sendMessage(Component.text().content("Shine of title " + title.getName() + " set: ").append(text).build());
                     }
                 }
             } else if ("prio".equalsIgnoreCase(args[0])) {
@@ -381,13 +396,13 @@ public final class TitlesCommand implements TabExecutor {
                 if (!plugin.getDb().save(title)) {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
-                    sender.sendMessage(Msg.builder("Priority of title " + title.getName() + " set to " + priority).create());
+                    sender.sendMessage(Component.text().content("Priority of title " + title.getName() + " set to " + priority).build());
                 }
             } else {
                 return false;
             }
         } catch (CommandException ce) {
-            sender.sendMessage("" + ChatColor.RED + ce.getMessage());
+            sender.sendMessage("" + NamedTextColor.RED + ce.getMessage());
         }
         return true;
     }

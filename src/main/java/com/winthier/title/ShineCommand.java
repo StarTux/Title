@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
-import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -50,7 +51,7 @@ public final class ShineCommand implements TabExecutor {
             }
         }
         ShinePlace.of(player.getEyeLocation(), new Vector(0.0, 2.0, 0.0), 2.0).show(shine);
-        player.sendMessage(Msg.builder("Showing shine: " + shine.humanName).color(shine.color).create());
+        player.sendMessage(Component.text().content("Showing shine: " + shine.humanName).color(shine.color).build());
         return true;
     }
 

@@ -8,9 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
+import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -116,8 +115,8 @@ public final class GradientCommand implements CommandExecutor {
         }
         String json = Msg.GSON.toJson(comps);
         plugin.getLogger().info(json);
-        TextComponent text = new TextComponent(new ComponentSerializer().parse(json));
-        text.setInsertion(json);
+        Component text = Msg.parseComponent(json);
+        text.insertion(json);
         sender.sendMessage(text);
         return true;
     }

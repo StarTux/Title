@@ -2,8 +2,12 @@ package com.winthier.title;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
@@ -31,33 +35,36 @@ public final class TitleCommand implements TabExecutor {
                 String name = plugin.getDb().getPlayerTitleName(player.getUniqueId());
                 List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
                 if (titles.isEmpty()) {
-                    player.sendMessage(ChatColor.RED + "No titles to show!");
+                    player.sendMessage(Component.text("No titles to show!", NamedTextColor.RED));
                     return true;
                 }
                 Title currentTitle = plugin.getDb().getPlayerTitle(player.getUniqueId());
-                player.sendMessage(Msg.builder(plugin.format("&3&lYour Titles &3(Current: &r"))
-                                   .append(currentTitle != null ? currentTitle.getTitleComponent() : Msg.text(""))
-                                   .append(plugin.format("&r&3) &7&oClick to switch"))
-                                   .create());
-                ComponentBuilder cb = new ComponentBuilder();
+                player.sendMessage(Component.text()
+                                   .content(Msg.colorize("&3&lYour Titles &3(Current: &r"))
+                                   .append(currentTitle != null ? currentTitle.getTitleComponent() : Component.empty())
+                                   .append(Component.text(Msg.colorize("&r&3) &7&oClick to switch")))
+                                   .build());
+                TextComponent.Builder cb = Component.text();
                 for (Title title : titles) {
-                    cb.append(" ").reset();
-                    cb.append("[");
-                    cb.append(title.getTitleComponent());
-                    ComponentBuilder tooltip = new ComponentBuilder(title.getTitleComponent());
+                    cb.append(Component.text(" "));
+                    TextComponent.Builder tooltip = Component.text();
+                    tooltip.append(title.getTitleComponent());
                     if (title.getDescription() != null) {
-                        tooltip.append("\n").reset().append(title.formattedDescription());
+                        tooltip.append(Component.text("\n" + title.formattedDescription()));
                     }
                     if (title.getPlayerListPrefix() != null) {
-                        tooltip.append("\n").reset().append("Player List ").color(ChatColor.GRAY)
-                            .append(title.formattedPlayerListPrefix());
+                        tooltip.append(Component.text("\nPlayer List ", NamedTextColor.GRAY));
+                        tooltip.append(Component.text(title.formattedPlayerListPrefix()));
                     }
-                    tooltip.append("\n").reset().append("Click to use this title").color(ChatColor.AQUA).italic(true);
-                    cb.event(Msg.hover(tooltip.create()));
-                    cb.event(Msg.click("/title " + title.getName()));
-                    cb.append("]").reset();
+                    tooltip.append(Component.text().content("\nClick to use this title").color(NamedTextColor.AQUA).decorate(TextDecoration.ITALIC).build());
+                    cb.append(Component.text()
+                              .append(Component.text("["))
+                              .append(title.getTitleComponent())
+                              .append(Component.text("]"))
+                              .hoverEvent(HoverEvent.showText(tooltip.build()))
+                              .clickEvent(ClickEvent.runCommand("/title " + title.getName())));
                 }
-                sender.sendMessage(cb.create());
+                sender.sendMessage(cb.build());
                 plugin.send(sender, "");
             } else if (args.length == 1) {
                 if (player == null) throw new CommandException("Player expected");
@@ -73,13 +80,15 @@ public final class TitleCommand implements TabExecutor {
                     }
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
                     plugin.updatePlayerListName(player);
-                    player.sendMessage(Msg.builder("Set title to ").color(ChatColor.AQUA).append(title.getTitleComponent()).create());
+                    player.sendMessage(Component.text()
+                                       .content("Set title to ").color(NamedTextColor.AQUA)
+                                       .append(title.getTitleComponent()).build());
                 }
             } else {
                 return false;
             }
         } catch (CommandException ce) {
-            sender.sendMessage("" + ChatColor.RED + ce.getMessage());
+            sender.sendMessage(Component.text(ce.getMessage(), NamedTextColor.RED));
         }
         return true;
     }
