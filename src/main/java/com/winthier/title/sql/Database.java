@@ -26,13 +26,13 @@ public final class Database {
     public boolean init() {
         db = new SQLDatabase(plugin);
         db.registerTables(PlayerInfo.class,
-                          TitleInfo.class,
+                          Title.class,
                           UnlockedInfo.class);
         return db.createAllTables();
     }
 
     public List<Title> listTitles() {
-        List<? extends Title> list = db.find(TitleInfo.class).findList();
+        List<? extends Title> list = db.find(Title.class).findList();
         Collections.sort(list);
         titlesCache = (List<Title>) list;
         return (List<Title>) list;
@@ -71,9 +71,9 @@ public final class Database {
     }
 
     public void setTitle(final String name, final String title) {
-        TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
+        Title info = db.find(Title.class).where().eq("name", name).findUnique();
         if (info == null) {
-            info = new TitleInfo();
+            info = new Title();
             info.setName(name);
             info.setTitle(title);
             db.insert(info);
@@ -84,15 +84,15 @@ public final class Database {
     }
 
     public boolean setDescription(final String name, final String description) {
-        TitleInfo info = db.find(TitleInfo.class).where().eq("name", name).findUnique();
+        Title info = db.find(Title.class).where().eq("name", name).findUnique();
         if (info == null) return false;
         info.setDescription(description);
         db.update(info, "description");
         return true;
     }
 
-    public TitleInfo getTitle(String name) {
-        return db.find(TitleInfo.class).where().eq("name", name).findUnique();
+    public Title getTitle(String name) {
+        return db.find(Title.class).where().eq("name", name).findUnique();
     }
 
     public boolean unlockTitle(UUID uuid, Title title) {
@@ -144,7 +144,7 @@ public final class Database {
             List<Title> titles = listTitles(uuid);
             title = !titles.isEmpty()
                 ? titles.get(0)
-                : new TitleInfo("?", "?", "?");
+                : new Title("?", "?", "?");
         }
         playerTitleCache.put(uuid, title);
         return title;
@@ -174,7 +174,7 @@ public final class Database {
         return playerTitleCache.get(uuid);
     }
 
-    public boolean save(TitleInfo titleInfo) {
-        return 1 == db.update(titleInfo);
+    public boolean save(Title title) {
+        return 1 == db.update(title);
     }
 }

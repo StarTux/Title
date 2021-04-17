@@ -2,7 +2,6 @@ package com.winthier.title;
 
 import com.google.gson.JsonParseException;
 import com.winthier.playercache.PlayerCache;
-import com.winthier.title.sql.TitleInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -290,7 +289,7 @@ public final class TitlesCommand implements TabExecutor {
             } else if ("json".equalsIgnoreCase(args[0])) {
                 if (args.length < 2) return false;
                 String name = args[1];
-                TitleInfo title = plugin.getDb().getTitle(name);
+                Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 String json;
                 TextComponent text;
@@ -318,7 +317,7 @@ public final class TitlesCommand implements TabExecutor {
             } else if ("prefix".equalsIgnoreCase(args[0])) {
                 if (args.length < 2) return false;
                 String name = args[1];
-                TitleInfo title = plugin.getDb().getTitle(name);
+                Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 String prefix;
                 String text;
@@ -342,7 +341,7 @@ public final class TitlesCommand implements TabExecutor {
             } else if ("shine".equalsIgnoreCase(args[0])) {
                 if (args.length != 2 && args.length != 3) return false;
                 String name = args[1];
-                TitleInfo title = plugin.getDb().getTitle(name);
+                Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 Shine shine;
                 BaseComponent[] text;
@@ -370,7 +369,7 @@ public final class TitlesCommand implements TabExecutor {
             } else if ("prio".equalsIgnoreCase(args[0])) {
                 if (args.length != 3) return false;
                 String name = args[1];
-                TitleInfo title = plugin.getDb().getTitle(name);
+                Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 int priority;
                 try {
