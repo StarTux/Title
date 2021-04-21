@@ -402,7 +402,7 @@ public final class TitlesCommand implements TabExecutor {
                 return false;
             }
         } catch (CommandException ce) {
-            sender.sendMessage("" + NamedTextColor.RED + ce.getMessage());
+            sender.sendMessage(Component.text(ce.getMessage(), NamedTextColor.RED));
         }
         return true;
     }
