@@ -7,6 +7,8 @@ import java.util.UUID;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.Bukkit;
@@ -69,7 +71,11 @@ public final class TitlePlugin extends JavaPlugin {
             player.displayName(null);
         } else {
             TextComponent.Builder cb2 = Component.text();
-            if (title.isPrefix()) cb2.append(title.getTitleComponent());
+            if (title.isPrefix()) {
+                cb2.append(title.getTitleComponent()
+                           .hoverEvent(HoverEvent.showText(title.getTooltip()))
+                           .clickEvent(ClickEvent.runCommand("/title " + title.getName())));
+            }
             if (nameColor instanceof TextColor) {
                 cb2.append(Component.text(player.getName(), (TextColor) nameColor));
             } else if (nameColor instanceof TextEffect) {
