@@ -124,14 +124,4 @@ public final class TitlePlugin extends JavaPlugin {
         }
         updatePlayerName(player);
     }
-
-    @Deprecated
-    public void setPlayerListSuffix(Player player, String suffix) {
-        setPlayerListSuffix(player, suffix != null ? Component.text(suffix) : (Component) null);
-    }
-
-    @Deprecated
-    public void setPlayerListPrefix(Player player, String prefix) {
-        setPlayerListPrefix(player, prefix != null ? Component.text(prefix) : (Component) null);
-    }
 }
