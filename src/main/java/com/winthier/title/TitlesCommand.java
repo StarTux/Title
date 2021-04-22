@@ -323,6 +323,34 @@ public final class TitlesCommand implements TabExecutor {
                         sender.sendMessage(Component.text().content("Json of title " + title.getName() + " set: ").append(text).build());
                     }
                 }
+            } else if ("color".equalsIgnoreCase(args[0])) {
+                if (args.length < 2) return false;
+                String name = args[1];
+                Title title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                String value = args.length >= 1 ? args[1] : null;
+                title.setNameColor(value);
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    if (value == null) {
+                        sender.sendMessage(Component.text("Color of title " + title.getName() + " reset"));
+                    } else {
+                        sender.sendMessage(Component.text("Color of title " + title.getName() + " set: " + value));
+                    }
+                }
+            } else if ("prefix".equalsIgnoreCase(args[0])) {
+                if (args.length < 2) return false;
+                String name = args[1];
+                Title title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                boolean value = args.length >= 1 ? true : false;
+                title.setPrefix(value);
+                if (!plugin.getDb().save(title)) {
+                    throw new CommandException("Could not save title: " + title.getName());
+                } else {
+                    sender.sendMessage(Component.text("Prefix of title " + title.getName() + " set: " + value));
+                }
             } else if ("shine".equalsIgnoreCase(args[0])) {
                 if (args.length != 2 && args.length != 3) return false;
                 String name = args[1];
@@ -385,7 +413,7 @@ public final class TitlesCommand implements TabExecutor {
             return Stream.of("list", "info", "listplayers", "ranktitles", "create", "desc",
                              "unlock", "lock", "set", "has", "unlockset", "reset", "reload",
                              "search",
-                             "json", "prefix", "shine", "prio")
+                             "json", "color", "prefix", "shine", "prio")
                 .filter(s -> s.contains(cmd))
                 .collect(Collectors.toList());
         }
@@ -399,6 +427,7 @@ public final class TitlesCommand implements TabExecutor {
         case "listplayers":
         case "desc":
         case "json":
+        case "color":
         case "prefix":
         case "prio":
             if (args.length == 2) return completeTitles(arg);
