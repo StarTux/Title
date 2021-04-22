@@ -7,6 +7,8 @@ import lombok.Data;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.ChatColor;
 
 @Data @Table(name = "titles")
@@ -24,7 +26,9 @@ public final class Title implements Comparable<Title> {
     @Column(nullable = true, length = 4096)
     private String titleJson;
     @Column(nullable = true, length = 255)
-    private String playerListPrefix;
+    private String nameColor;
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean prefix;
     @Column(nullable = true, length = 255)
     private String shine;
 
@@ -53,10 +57,6 @@ public final class Title implements Comparable<Title> {
         return ChatColor.stripColor(formattedDescription());
     }
 
-    public String formattedPlayerListPrefix() {
-        return playerListPrefix != null ? Msg.colorize(playerListPrefix) : "";
-    }
-
     public Component getTitleComponent() {
         return titleJson != null
             ? Msg.parseComponent(titleJson)
@@ -69,11 +69,21 @@ public final class Title implements Comparable<Title> {
         if (description != null) {
             tooltip.append(Component.text("\n" + formattedDescription(), NamedTextColor.WHITE));
         }
-        if (playerListPrefix != null) {
-            tooltip.append(Component.text("\nPlayer List ", NamedTextColor.GRAY));
-            tooltip.append(Component.text(formattedPlayerListPrefix()));
-        }
         return tooltip.build();
+    }
+
+    public TextFormat getNameTextFormat() {
+        if (nameColor == null) return null;
+        if (nameColor.startsWith("#")) {
+            try {
+                return TextColor.fromHexString(nameColor);
+            } catch (IllegalArgumentException iae) {
+                TitlePlugin.getInstance().getLogger().warning("Invalid color code: " + nameColor);
+            }
+        }
+        TextColor textColor = NamedTextColor.NAMES.value(nameColor);
+        if (textColor != null) return textColor;
+        return TextEffect.of(nameColor);
     }
 
     public boolean isEmptyTitle() {

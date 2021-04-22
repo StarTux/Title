@@ -35,22 +35,4 @@ public final class Msg {
     public static String toCamelCase(Enum en) {
         return toCamelCase(en.name().split("_"));
     }
-
-    public static String rainbowify(String in) {
-        final ChatColor[] colors = {
-            ChatColor.RED,
-            ChatColor.GOLD,
-            ChatColor.YELLOW,
-            ChatColor.GREEN,
-            ChatColor.DARK_AQUA,
-            ChatColor.BLUE,
-            ChatColor.LIGHT_PURPLE
-        };
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < in.length(); i += 1) {
-            sb.append(colors[i % colors.length]);
-            sb.append(in.charAt(i));
-        }
-        return sb.toString();
-    }
 }

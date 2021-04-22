@@ -100,12 +100,6 @@ public final class TitlesCommand implements TabExecutor {
                                        .append(title.getTitleComponent())
                                        .insertion(title.getTitleJson()).build());
                 }
-                if (title.getPlayerListPrefix() != null) {
-                    sender.sendMessage(Component.text()
-                                       .append(Component.text("Player List: ", NamedTextColor.GRAY))
-                                       .append(Component.text(title.formattedPlayerListPrefix()))
-                                       .insertion(title.getPlayerListPrefix()).build());
-                }
                 if (title.getDescription() != null) {
                     sender.sendMessage(Component.text()
                                        .append(Component.text("Description: ", NamedTextColor.GRAY))
@@ -221,7 +215,7 @@ public final class TitlesCommand implements TabExecutor {
                 }
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
                 if (player instanceof Player) {
-                    plugin.updatePlayerListName((Player) player);
+                    plugin.updatePlayerName((Player) player);
                 }
                 sender.sendMessage(TextComponent.ofChildren(Component.text("Set title ", NamedTextColor.YELLOW),
                                                             title.getTitleComponent(),
@@ -261,7 +255,7 @@ public final class TitlesCommand implements TabExecutor {
                     boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), title);
                     if (res) {
                         plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
-                        if (player instanceof Player) plugin.updatePlayerListName((Player) player);
+                        if (player instanceof Player) plugin.updatePlayerName((Player) player);
                         plugin.send(sender, "&aUnlocked and set title %s for player %s.", titleName, playerName);
                         return true;
                     }
@@ -296,7 +290,7 @@ public final class TitlesCommand implements TabExecutor {
                 OfflinePlayer player = findPlayer(playerName);
                 if (player == null) throw new CommandException("Player not found: " + playerName);
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
-                if (player instanceof Player) plugin.updatePlayerListName((Player) player);
+                if (player instanceof Player) plugin.updatePlayerName((Player) player);
                 plugin.send(sender, "Reset title of player %s.", playerName);
             } else if ("Reload".equalsIgnoreCase(args[0]) && args.length == 1) {
                 plugin.getDb().init();
@@ -327,30 +321,6 @@ public final class TitlesCommand implements TabExecutor {
                         sender.sendMessage(Component.text().content("Json of title " + title.getName() + " reset").build());
                     } else {
                         sender.sendMessage(Component.text().content("Json of title " + title.getName() + " set: ").append(text).build());
-                    }
-                }
-            } else if ("prefix".equalsIgnoreCase(args[0])) {
-                if (args.length < 2) return false;
-                String name = args[1];
-                Title title = plugin.getDb().getTitle(name);
-                if (title == null) throw new CommandException("Title not found: " + name);
-                String prefix;
-                String text;
-                if (args.length == 2) {
-                    prefix = null;
-                    text = null;
-                } else {
-                    prefix = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-                    text = Msg.colorize(prefix);
-                }
-                title.setPlayerListPrefix(prefix);
-                if (!plugin.getDb().save(title)) {
-                    throw new CommandException("Could not save title: " + title.getName());
-                } else {
-                    if (prefix == null) {
-                        sender.sendMessage(Component.text().content("Prefix of title " + title.getName() + " reset").build());
-                    } else {
-                        sender.sendMessage(Component.text().content("Prefix of title " + title.getName() + " set: ").append(Component.text(text)).build());
                     }
                 }
             } else if ("shine".equalsIgnoreCase(args[0])) {

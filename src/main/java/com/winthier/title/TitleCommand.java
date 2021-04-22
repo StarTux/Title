@@ -52,10 +52,6 @@ public final class TitleCommand implements TabExecutor {
                     if (title.getDescription() != null) {
                         tooltip.append(Component.text("\n" + title.formattedDescription()));
                     }
-                    if (title.getPlayerListPrefix() != null) {
-                        tooltip.append(Component.text("\nPlayer List ", NamedTextColor.GRAY));
-                        tooltip.append(Component.text(title.formattedPlayerListPrefix()));
-                    }
                     tooltip.append(Component.text().content("\nClick to use this title").color(NamedTextColor.AQUA).decorate(TextDecoration.ITALIC).build());
                     cb.append(Component.text()
                               .append(Component.text("["))
@@ -71,7 +67,7 @@ public final class TitleCommand implements TabExecutor {
                 final String name = args[0];
                 if ("default".equalsIgnoreCase(name)) {
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
-                    plugin.updatePlayerListName(player);
+                    plugin.updatePlayerName(player);
                     plugin.send(player, "&bUsing default title.");
                 } else {
                     Title title = plugin.getDb().getTitle(name);
@@ -79,7 +75,7 @@ public final class TitleCommand implements TabExecutor {
                         throw new CommandException("You don't have that title.");
                     }
                     plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
-                    plugin.updatePlayerListName(player);
+                    plugin.updatePlayerName(player);
                     player.sendMessage(TextComponent.ofChildren(Component.text("Set title to ", NamedTextColor.AQUA),
                                                                 title.getTitleComponent()));
                 }
