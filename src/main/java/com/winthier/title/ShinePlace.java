@@ -38,6 +38,27 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case EARTH: {
+            double[][] circle = {
+                {1.00, 0.00}, {0.98, 0.17}, {0.94, 0.34}, {0.87, 0.50}, {0.77, 0.64}, {0.64, 0.77},
+                {0.50, 0.87}, {0.34, 0.94}, {0.17, 0.98}, {0.00, 1.00}, {-0.17, 0.98}, {-0.34, 0.94},
+                {-0.50, 0.87}, {-0.64, 0.77}, {-0.77, 0.64}, {-0.87, 0.50}, {-0.94, 0.34},
+                {-0.98, 0.17}, {-1.00, 0.00}, {-0.98, -0.17}, {-0.94, -0.34}, {-0.87, -0.50},
+                {-0.77, -0.64}, {-0.64, -0.77}, {-0.50, -0.87}, {-0.34, -0.94}, {-0.17, -0.98},
+                {-0.00, -1.00}, {0.17, -0.98}, {0.34, -0.94}, {0.50, -0.87}, {0.64, -0.77},
+                {0.77, -0.64}, {0.87, -0.50}, {0.94, -0.34}, {0.98, -0.17}
+            };
+            Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0x4169E1), 2.0f);
+            Particle.DustOptions dust2 = new Particle.DustOptions(Color.fromRGB(0x228B22), 2.0f);
+            for (double[] p : circle) {
+                if (random.nextInt(2) > 0) {
+                    showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+                } else {
+                    showParticle(Particle.REDSTONE, dust2, 2, p[0], p[1]);
+                }
+            }
+            break;
+        }
         case EGG: {
             double[][] shape = {
                 {-0.33, 1.00}, {-0.11, 1.00}, {0.11, 1.00}, {0.33, 1.00}, {-0.56, 0.80},

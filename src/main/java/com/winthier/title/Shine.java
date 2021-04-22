@@ -10,7 +10,8 @@ public enum Shine {
     PRIDE("#DB7093"), // palevioletred
     EGG("#6495ED"), // cornflowerblue
     BUNNY("#FFB6C1"), // lightpink
-    COIN("#FFFF00"); // yellow
+    COIN("#FFFF00"), // yellow
+    EARTH("#4169E1"); // royalblue
 
     public final String humanName;
     public final TextColor color;
