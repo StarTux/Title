@@ -20,7 +20,7 @@ public final class ShineCommand implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length != 1 && args.length != 3) return false;
+        if (args.length != 0 && args.length != 1 && args.length != 3) return false;
         final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) {
             sender.sendMessage("[title:title] player expected");
