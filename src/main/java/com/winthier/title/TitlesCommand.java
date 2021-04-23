@@ -108,7 +108,7 @@ public final class TitlesCommand implements TabExecutor {
                 lines.add(Component.text()
                           .append(Component.text("Json: ", NamedTextColor.GRAY))
                           .append(Component.text(json, NamedTextColor.WHITE))
-                          .clickEvent(ClickEvent.suggestCommand("/titles desc " + name + " " + json))
+                          .clickEvent(ClickEvent.suggestCommand("/titles json " + name + " " + json))
                           .insertion(json).build());
                 String description = title.getDescription();
                 if (description == null) description = "";
