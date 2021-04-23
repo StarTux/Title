@@ -86,36 +86,61 @@ public final class TitlesCommand implements TabExecutor {
                 String name = args[1];
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
-                sender.sendMessage(Component.text()
-                                   .append(Component.text("Name: ", NamedTextColor.GRAY))
-                                   .append(Component.text(title.getName(), NamedTextColor.WHITE))
-                                   .insertion(title.getName()).build());
-                sender.sendMessage(Component.text()
-                                   .append(Component.text("Title: ", NamedTextColor.GRAY))
-                                   .append(Component.text(title.formatted()))
-                                   .insertion(title.getTitle()).build());
-                if (title.getTitleJson() != null) {
-                    sender.sendMessage(Component.text()
-                                       .append(Component.text("Component: ", NamedTextColor.GRAY))
-                                       .append(title.getTitleComponent())
-                                       .insertion(title.getTitleJson()).build());
+                name = title.getName();
+                List<Component> lines = new ArrayList<>();
+                lines.add(Component.text()
+                          .append(Component.text("Name: ", NamedTextColor.GRAY))
+                          .append(Component.text(name, NamedTextColor.WHITE))
+                          .insertion(name).build());
+                lines.add(Component.text()
+                          .append(Component.text("Title: ", NamedTextColor.GRAY))
+                          .append(Component.text(title.formatted()))
+                          .insertion(title.getTitle()).build());
+                String json = title.getTitleJson();
+                if (json != null) {
+                    lines.add(Component.text()
+                              .append(Component.text("Component: ", NamedTextColor.GRAY))
+                              .append(title.getTitleComponent())
+                              .insertion(title.getTitleJson()).build());
                 }
-                if (title.getDescription() != null) {
-                    sender.sendMessage(Component.text()
-                                       .append(Component.text("Description: ", NamedTextColor.GRAY))
-                                       .append(Component.text(title.formattedDescription(), NamedTextColor.WHITE))
-                                       .insertion(title.getDescription()).build());
-                }
-                if (title.getShine() != null) {
-                    sender.sendMessage(Component.text()
-                                       .append(Component.text("Shine:", NamedTextColor.GRAY))
-                                       .append(Component.text(title.getShine(), NamedTextColor.WHITE))
-                                       .insertion(title.getShine()).build());
-                }
-                sender.sendMessage(Component.text()
-                                   .append(Component.text("Priority: ", NamedTextColor.GRAY))
-                                   .append(Component.text(title.getPriority(), NamedTextColor.WHITE))
-                                   .insertion("" + title.getPriority()).build());
+                if (json == null) json = "";
+                lines.add(Component.text()
+                          .append(Component.text("Json: ", NamedTextColor.GRAY))
+                          .append(Component.text(json, NamedTextColor.WHITE))
+                          .clickEvent(ClickEvent.suggestCommand("/titles desc " + name + " " + json))
+                          .insertion(json).build());
+                String description = title.getDescription();
+                if (description == null) description = "";
+                lines.add(Component.text()
+                          .append(Component.text("Description: ", NamedTextColor.GRAY))
+                          .append(Component.text(description, NamedTextColor.WHITE))
+                          .insertion(description)
+                          .clickEvent(ClickEvent.suggestCommand("/titles desc " + name + " " + description))
+                          .build());
+                String nameColor = title.getNameColor();
+                if (nameColor == null) nameColor = "";
+                lines.add(Component.text()
+                          .append(Component.text("Color: ", NamedTextColor.GRAY))
+                          .append(Component.text(nameColor, NamedTextColor.WHITE))
+                          .insertion(nameColor)
+                          .clickEvent(ClickEvent.suggestCommand("/titles color " + name + " " + nameColor))
+                          .build());
+                lines.add(Component.text()
+                          .append(Component.text("Prefix: ", NamedTextColor.GRAY))
+                          .append(Component.text(title.isPrefix(), NamedTextColor.WHITE))
+                          .clickEvent(ClickEvent.suggestCommand("/titles prefix " + name + " "))
+                          .build());
+                String shine = title.getShine();
+                if (shine == null) shine = "";
+                lines.add(Component.text()
+                          .append(Component.text("Shine:", NamedTextColor.GRAY))
+                          .append(Component.text(shine, NamedTextColor.WHITE))
+                          .insertion(shine).build());
+                lines.add(Component.text()
+                          .append(Component.text("Priority: ", NamedTextColor.GRAY))
+                          .append(Component.text(title.getPriority(), NamedTextColor.WHITE))
+                          .insertion("" + title.getPriority()).build());
+                sender.sendMessage(Component.join(Component.newline(), lines));
             } else if ("ListPlayers".equalsIgnoreCase(args[0]) && args.length == 2) {
                 String titleName = args[1];
                 Title title = plugin.getDb().getTitle(titleName);
