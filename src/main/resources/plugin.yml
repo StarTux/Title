@@ -42,6 +42,7 @@ commands:
       §e /titles search <term>§8 - §7Search for matching title or description
       §e /titles reset <player>§8 - §7Reset the title of a player
       §e /titles reload§8 - §7Reload database
+      §e /titles reloadall§8 - §7Reload all player titles and names
 
   gradient:
     description: Make a gradient

@@ -14,6 +14,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
@@ -133,7 +134,7 @@ public final class TitlesCommand implements TabExecutor {
                 String shine = title.getShine();
                 if (shine == null) shine = "";
                 lines.add(Component.text()
-                          .append(Component.text("Shine:", NamedTextColor.GRAY))
+                          .append(Component.text("Shine: ", NamedTextColor.GRAY))
                           .append(Component.text(shine, NamedTextColor.WHITE))
                           .insertion(shine).build());
                 lines.add(Component.text()
@@ -421,6 +422,12 @@ public final class TitlesCommand implements TabExecutor {
                 } else {
                     sender.sendMessage(Component.text().content("Priority of title " + title.getName() + " set to " + priority).build());
                 }
+            } else if ("reloadall".equalsIgnoreCase(args[0]) && args.length == 1) {
+                sender.sendMessage(Component.text("Reloading all player titles...", NamedTextColor.YELLOW));
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    plugin.updatePlayerName(player);
+                }
+                return true;
             } else {
                 return false;
             }
