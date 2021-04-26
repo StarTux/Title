@@ -65,7 +65,7 @@ public final class Database {
     public List<UUID> listPlayers(Title title) {
         List<UUID> result = new ArrayList<>();
         for (UnlockedInfo unlocked: db.find(UnlockedInfo.class).where().eq("title", title.getName()).findList()) {
-            result.add(unlocked.player);
+            result.add(unlocked.getPlayer());
         }
         return result;
     }

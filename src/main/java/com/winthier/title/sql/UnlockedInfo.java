@@ -1,5 +1,6 @@
 package com.winthier.title.sql;
 
+import java.util.Date;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -16,16 +17,19 @@ import lombok.Data;
        uniqueConstraints = {@UniqueConstraint(columnNames = {"player", "title"})})
 public class UnlockedInfo {
     @Id
-    Integer id;
+    private Integer id;
     @Column(nullable = false)
-    UUID player;
+    private UUID player;
     @Column(nullable = false, length = 32)
-    String title;
+    private String title;
+    @Column(nullable = false, columnDefinition = "DATETIME DEFAULT NOW()")
+    private Date time;
 
     public UnlockedInfo() { }
 
     public UnlockedInfo(final UUID player, final String title) {
         this.player = player;
         this.title = title;
+        this.time = new Date();
     }
 }
