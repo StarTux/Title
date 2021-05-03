@@ -268,26 +268,42 @@ public final class TitlesCommand implements TabExecutor {
                 if (player == null) {
                     throw new CommandException("Player not found: " + playerName);
                 }
-                for (int i = 2; i < args.length; i += 1) {
-                    String titleName = args[i];
-                    if (null == plugin.getDb().getTitle(titleName)) throw new CommandException("Unknown title: " + titleName);
-                }
+                Title[] titles = new Title[args.length - 2];
                 for (int i = 2; i < args.length; i += 1) {
                     String titleName = args[i];
                     Title title = plugin.getDb().getTitle(titleName);
-                    if (title == null) {
-                        throw new CommandException("Title not found: " + titleName);
-                    }
-                    boolean res = plugin.getDb().unlockTitle(player.getUniqueId(), title);
-                    if (res) {
-                        plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
-                        if (player instanceof Player) plugin.updatePlayerName((Player) player);
-                        plugin.send(sender, "&aUnlocked and set title %s for player %s.", titleName, playerName);
-                        return true;
-                    }
+                    if (title == null) throw new CommandException("Unknown title: " + titleName);
+                    titles[i - 2] = title;
                 }
-                String titleName = args[args.length - 1];
-                plugin.send(sender, "&e%s already has title %s.", playerName, titleName);
+                Title title = null;
+                boolean success = false;
+                for (int i = 0; i < titles.length; i += 1) {
+                    title = titles[i];
+                    success = plugin.getDb().unlockTitle(player.getUniqueId(), title);
+                    if (success) break;
+                }
+                if (!success) {
+                    sender.sendMessage(Component.text(player.getName() + " alreay has title " + title.getName(), NamedTextColor.YELLOW));
+                    return true;
+                }
+                plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
+                sender.sendMessage(Component.text()
+                                   .append(Component.text("Unlocked and set title ", NamedTextColor.YELLOW))
+                                   .append(title.getTitleTag())
+                                   .append(Component.text(" for player ", NamedTextColor.YELLOW))
+                                   .append(Component.text(player.getName(), NamedTextColor.WHITE))
+                                   .build());
+                Player online = Bukkit.getPlayer(player.getUniqueId());
+                if (online != null) {
+                    plugin.updatePlayerName(online);
+                    online.sendMessage(Component.text()
+                                       .append(Component.text("Title unlocked: ", NamedTextColor.WHITE))
+                                       .append(title.getTitleTag())
+                                       .build());
+                    online.showTitle(net.kyori.adventure.title.Title.title(title.getTitleComponent(),
+                                                                           Component.text("Title unlocked", NamedTextColor.WHITE)));
+                }
+                return true;
             } else if ("Search".equalsIgnoreCase(args[0]) && args.length >= 2) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(args[1]);

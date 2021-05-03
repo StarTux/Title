@@ -6,6 +6,8 @@ import javax.persistence.Table;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
@@ -63,11 +65,26 @@ public final class Title implements Comparable<Title> {
             : Component.text(formatted());
     }
 
+    public Component getTitleTag() {
+        return getTitleComponent()
+            .hoverEvent(HoverEvent.showText(getTooltip()))
+            .clickEvent(ClickEvent.suggestCommand("/title " + name));
+    }
+
     public Component getTooltip() {
         TextComponent.Builder tooltip = Component.text();
         tooltip.append(getTitleComponent());
+        if (prefix) {
+            tooltip.append(Component.space());
+            TextFormat textFormat = getNameTextFormat();
+            TextColor titleColor = textFormat != null && textFormat instanceof TextColor
+                ? (TextColor) textFormat
+                : TextColor.color(0xffffff);
+            tooltip.append(Component.text(name, titleColor));
+        }
         if (description != null) {
-            tooltip.append(Component.text("\n" + formattedDescription(), NamedTextColor.WHITE));
+            tooltip.append(Component.newline());
+            tooltip.append(Component.text(formattedDescription(), NamedTextColor.WHITE));
         }
         return tooltip.build();
     }
