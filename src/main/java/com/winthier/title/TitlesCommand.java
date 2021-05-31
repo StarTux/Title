@@ -366,11 +366,13 @@ public final class TitlesCommand implements TabExecutor {
                     }
                 }
             } else if ("color".equalsIgnoreCase(args[0])) {
-                if (args.length != 2 && args.length != 3) return false;
+                if (args.length < 2) return false;
                 String name = args[1];
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
-                String value = args.length >= 3 ? args[2] : null;
+                String value = args.length >= 3
+                    ? String.join(" ", Arrays.copyOfRange(args, 2, args.length))
+                    : null;
                 title.setNameColor(value);
                 if (!plugin.getDb().save(title)) {
                     throw new CommandException("Could not save title: " + title.getName());
