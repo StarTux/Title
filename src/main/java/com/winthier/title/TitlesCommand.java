@@ -283,7 +283,7 @@ public final class TitlesCommand implements TabExecutor {
                     if (success) break;
                 }
                 if (!success) {
-                    sender.sendMessage(Component.text(player.getName() + " alreay has title " + title.getName(), NamedTextColor.YELLOW));
+                    sender.sendMessage(Component.text(player.getName() + " already has title " + title.getName(), NamedTextColor.YELLOW));
                     return true;
                 }
                 plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
