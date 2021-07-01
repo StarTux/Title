@@ -1,6 +1,5 @@
 package com.winthier.title;
 
-import com.google.gson.JsonParseException;
 import com.winthier.playercache.PlayerCache;
 import java.util.ArrayList;
 import java.util.Arrays;

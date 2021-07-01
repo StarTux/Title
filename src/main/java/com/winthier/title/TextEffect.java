@@ -16,7 +16,7 @@ public abstract class TextEffect implements TextFormat {
     private static final List<TextEffect> VALUES = new ArrayList<>();
     private static final Map<String, TextEffect> NAME_MAP = new HashMap<>();
 
-    public static TextEffect RAINBOW = new TextEffect() {
+    public static final TextEffect RAINBOW = new TextEffect() {
             @Getter String name = "rainbow";
 
             @Override public Component format(String in) {
@@ -37,7 +37,7 @@ public abstract class TextEffect implements TextFormat {
             }
         };
 
-    public static TextEffect SEQUENCE = new TextEffect() {
+    public static final TextEffect SEQUENCE = new TextEffect() {
             @Getter String name = "sequence";
             private List<TextColor> colors;
 
