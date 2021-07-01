@@ -1,5 +1,7 @@
 package com.winthier.title;
 
+import com.cavetale.core.font.DefaultFont;
+import com.cavetale.core.font.VanillaItems;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -60,9 +62,31 @@ public final class Title implements Comparable<Title> {
     }
 
     public Component getTitleComponent() {
-        return titleJson != null
-            ? Msg.parseComponent(titleJson)
-            : Component.text(formatted());
+        if (titleJson == null) return Component.text(formatted());
+        if (titleJson.startsWith("mytems:")) {
+            String key = titleJson.substring(7);
+            if (TitlePlugin.getInstance().getMytemsHandler() == null) {
+                return Component.empty();
+            }
+            return TitlePlugin.getInstance().getMytemsHandler().forKey(key);
+        } else if (titleJson.startsWith("DefaultFont:")) {
+            String key = titleJson.substring(12);
+            DefaultFont glyph = DefaultFont.of(key);
+            if (glyph == null) {
+                TitlePlugin.getInstance().getLogger().warning("DefaultFont not found: " + key);
+                return Component.empty();
+            }
+            return glyph.component;
+        } else if (titleJson.startsWith("VanillaItems:")) {
+            String key = titleJson.substring(13);
+            VanillaItems glyph = VanillaItems.of(key);
+            if (glyph == null) {
+                TitlePlugin.getInstance().getLogger().warning("VanillaItems not found: " + key);
+                return Component.empty();
+            }
+            return glyph.component;
+        }
+        return Msg.parseComponent(titleJson);
     }
 
     public Component getTitleTag() {

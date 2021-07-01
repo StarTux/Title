@@ -22,6 +22,7 @@ public final class TitlePlugin extends JavaPlugin {
     @Getter static TitlePlugin instance;
     private Map<UUID, Component> playerListSuffixes = new HashMap<>();
     private Map<UUID, Component> playerListPrefixes = new HashMap<>();
+    private MytemsHandler mytemsHandler;
 
     @Override
     public void onEnable() {
@@ -38,6 +39,13 @@ public final class TitlePlugin extends JavaPlugin {
         new ShineListener(this).enable();
         for (Player player : Bukkit.getOnlinePlayers()) {
             updatePlayerName(player);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("Mytems")) {
+            getLogger().info("Mytems plugin found");
+            mytemsHandler = new MytemsHandler();
+        } else {
+            getLogger().warning("Mytems plugin not found!");
+            mytemsHandler = null;
         }
     }
 

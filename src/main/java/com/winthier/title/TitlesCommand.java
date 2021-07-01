@@ -343,26 +343,23 @@ public final class TitlesCommand implements TabExecutor {
                 Title title = plugin.getDb().getTitle(name);
                 if (title == null) throw new CommandException("Title not found: " + name);
                 String json;
-                Component text;
                 if (args.length == 2) {
                     json = null;
-                    text = null;
                 } else {
                     json = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-                    try {
-                        text = Msg.parseComponent(json);
-                    } catch (JsonParseException jpe) {
-                        throw new CommandException("Bad Json format: " + json);
-                    }
                 }
                 title.setTitleJson(json);
+                if (title.getTitleComponent().equals(Component.empty())) {
+                    throw new CommandException("Bad Json format: " + json);
+                }
                 if (!plugin.getDb().save(title)) {
                     throw new CommandException("Could not save title: " + title.getName());
                 } else {
                     if (json == null) {
                         sender.sendMessage(Component.text().content("Json of title " + title.getName() + " reset").build());
                     } else {
-                        sender.sendMessage(Component.text().content("Json of title " + title.getName() + " set: ").append(text).build());
+                        sender.sendMessage(Component.text().content("Json of title " + title.getName() + " set: ")
+                                           .append(title.getTitleComponent()).build());
                     }
                 }
             } else if ("color".equalsIgnoreCase(args[0])) {
