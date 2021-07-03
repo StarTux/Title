@@ -70,11 +70,20 @@ public final class TitleCommand implements TabExecutor {
                     plugin.updatePlayerName(player);
                     plugin.send(player, "&bUsing default title.");
                 } else {
-                    Title title = plugin.getDb().getTitle(name);
-                    if (title == null || !plugin.getDb().playerHasTitle(player.getUniqueId(), title)) {
+                    List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
+                    Title title = null;
+                    int titleIndex = 0;
+                    for (Title it : titles) {
+                        if (it.getName().equals(name)) {
+                            title = it;
+                            break;
+                        }
+                        titleIndex += 1;
+                    }
+                    if (title == null) {
                         throw new CommandException("You don't have that title.");
                     }
-                    plugin.getDb().setPlayerTitle(player.getUniqueId(), title);
+                    plugin.getDb().setPlayerTitle(player.getUniqueId(), titleIndex == 0 ? (Title) null : title);
                     plugin.updatePlayerName(player);
                     player.sendMessage(TextComponent.ofChildren(Component.text("Set title to ", NamedTextColor.AQUA),
                                                                 title.getTitleComponent()));

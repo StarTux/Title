@@ -1,7 +1,6 @@
 package com.winthier.title;
 
-import com.cavetale.core.font.DefaultFont;
-import com.cavetale.core.font.VanillaItems;
+import com.cavetale.core.font.Emoji;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -63,28 +62,8 @@ public final class Title implements Comparable<Title> {
 
     public Component getTitleComponent() {
         if (titleJson == null) return Component.text(formatted());
-        if (titleJson.startsWith("mytems:")) {
-            String key = titleJson.substring(7);
-            if (TitlePlugin.getInstance().getMytemsHandler() == null) {
-                return Component.empty();
-            }
-            return TitlePlugin.getInstance().getMytemsHandler().forKey(key);
-        } else if (titleJson.startsWith("DefaultFont:")) {
-            String key = titleJson.substring(12);
-            DefaultFont glyph = DefaultFont.of(key);
-            if (glyph == null) {
-                TitlePlugin.getInstance().getLogger().warning("DefaultFont not found: " + key);
-                return Component.empty();
-            }
-            return glyph.component;
-        } else if (titleJson.startsWith("VanillaItems:")) {
-            String key = titleJson.substring(13);
-            VanillaItems glyph = VanillaItems.of(key);
-            if (glyph == null) {
-                TitlePlugin.getInstance().getLogger().warning("VanillaItems not found: " + key);
-                return Component.empty();
-            }
-            return glyph.component;
+        if (titleJson.startsWith(":") && titleJson.endsWith(":")) {
+            return Emoji.getComponent(titleJson.substring(1, titleJson.length() - 1));
         }
         return Msg.parseComponent(titleJson);
     }
@@ -142,7 +121,7 @@ public final class Title implements Comparable<Title> {
 
     @Override
     public int compareTo(Title other) {
-        int prio = Integer.compare(other.priority, priority); // reverse!
+        int prio = Integer.compare(other.priority, priority); // highest first
         if (prio != 0) return prio;
         return name.compareToIgnoreCase(other.name);
     }

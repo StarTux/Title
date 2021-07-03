@@ -13,5 +13,5 @@ public class PlayerInfo {
     @Column(nullable = false, unique = true)
     private UUID uuid;
     @Column(length = 32, nullable = true)
-    private String title;
+    private String title; // null => default
 }

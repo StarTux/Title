@@ -2,6 +2,7 @@ package com.winthier.title;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.ChatColor;
@@ -12,7 +13,12 @@ public final class Msg {
     private Msg() { }
 
     public static Component parseComponent(String in) {
-        return GsonComponentSerializer.gson().deserialize(in);
+        try {
+            return GsonComponentSerializer.gson().deserialize(in);
+        } catch (JsonSyntaxException je) {
+            je.printStackTrace();
+            return Component.empty();
+        }
     }
 
     public static String colorize(String in) {

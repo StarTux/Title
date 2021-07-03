@@ -8,7 +8,7 @@ api-version: 1.13
 website: https://cavetale.com
 
 depend: [Core,  SQL, PlayerCache]
-softdepend: [Mytems]
+softdepend: []
 
 commands:
 
