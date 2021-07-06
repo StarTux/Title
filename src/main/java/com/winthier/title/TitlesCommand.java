@@ -1,6 +1,7 @@
 package com.winthier.title;
 
 import com.winthier.playercache.PlayerCache;
+import com.winthier.title.html.HtmlExporter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -442,6 +443,10 @@ public final class TitlesCommand implements TabExecutor {
                     plugin.updatePlayerName(player);
                 }
                 return true;
+            } else if ("html".equalsIgnoreCase(args[0]) && args.length == 1) {
+                sender.sendMessage(Component.text("Exporting html..."));
+                new HtmlExporter(plugin, sender).export();
+                return true;
             } else {
                 return false;
             }
@@ -458,8 +463,7 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length == 1) {
             return Stream.of("list", "info", "listplayers", "ranktitles", "create", "desc",
                              "unlock", "lock", "set", "has", "unlockset", "reset", "reload",
-                             "search",
-                             "json", "color", "prefix", "shine", "prio")
+                             "search", "json", "color", "prefix", "shine", "prio", "html")
                 .filter(s -> s.contains(cmd))
                 .collect(Collectors.toList());
         }
