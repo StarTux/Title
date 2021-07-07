@@ -447,6 +447,19 @@ public final class TitlesCommand implements TabExecutor {
                 sender.sendMessage(Component.text("Exporting html..."));
                 new HtmlExporter(plugin, sender).export();
                 return true;
+            } else if ("delete".equalsIgnoreCase(args[0])) {
+                if (args.length != 2) return false;
+                String name = args[1];
+                Title title = plugin.getDb().getTitle(name);
+                if (title == null) throw new CommandException("Title not found: " + name);
+                int count = plugin.getDb().deleteTitle(title);
+                if (count == -1) {
+                    throw new CommandException("Could not delete title!");
+                }
+                sender.sendMessage(Component.text()
+                                   .append(Component.text("Title deleted: ", NamedTextColor.YELLOW))
+                                   .append(title.getTitleComponent())
+                                   .append(Component.text(". Unlocks: " + count, NamedTextColor.YELLOW)));
             } else {
                 return false;
             }
@@ -463,7 +476,8 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length == 1) {
             return Stream.of("list", "info", "listplayers", "ranktitles", "create", "desc",
                              "unlock", "lock", "set", "has", "unlockset", "reset", "reload",
-                             "search", "json", "color", "prefix", "shine", "prio", "html")
+                             "search", "json", "color", "prefix", "shine", "prio", "html",
+                             "delete")
                 .filter(s -> s.contains(cmd))
                 .collect(Collectors.toList());
         }
@@ -480,6 +494,7 @@ public final class TitlesCommand implements TabExecutor {
         case "color":
         case "prefix":
         case "prio":
+        case "delete":
             if (args.length == 2) return completeTitles(arg);
             return Collections.emptyList();
         case "shine":

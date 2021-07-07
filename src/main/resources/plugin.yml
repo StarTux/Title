@@ -44,6 +44,7 @@ commands:
       §e /titles reload§8 - §7Reload database
       §e /titles reloadall§8 - §7Reload all player titles and names
       §e /titles html§8 - §7Export titles to an HTML file
+      §e /titles delete <title>§8 - §7Remove title from database
 
   gradient:
     description: Make a gradient

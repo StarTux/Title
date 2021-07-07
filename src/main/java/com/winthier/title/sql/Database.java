@@ -165,6 +165,22 @@ public final class Database {
             != null;
     }
 
+    public int deleteTitle(Title title) {
+        int count = db.delete(title);
+        if (count == 0) return -1;
+        int unlocks = db.find(UnlockedInfo.class)
+            .eq("title", title.getName())
+            .delete();
+        int players = db.update(PlayerInfo.class)
+            .set("title", null)
+            .where(w -> w.eq("title", title.getName()))
+            .sync();
+        plugin.getLogger().info("Deleted title " + title.getName()
+                                + ", unlocks=" + unlocks
+                                + ", players=" + players);
+        return unlocks;
+    }
+
     public void clearCache(UUID uuid) {
         playerTitleCache.remove(uuid);
         playerUnlockedCache.remove(uuid);
