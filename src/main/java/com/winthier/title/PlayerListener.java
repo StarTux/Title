@@ -2,6 +2,7 @@ package com.winthier.title;
 
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -19,12 +20,16 @@ public final class PlayerListener implements Listener {
 
     @EventHandler
     void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.updatePlayerName(event.getPlayer());
+        Player player = event.getPlayer();
+        plugin.enter(player);
+        plugin.updatePlayerName(player);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.getDb().clearCache(event.getPlayer().getUniqueId());
-        event.getPlayer().setPlayerListName(null);
+        Player player = event.getPlayer();
+        plugin.getDb().clearCache(player.getUniqueId());
+        plugin.resetPlayerScoreboards(player);
+        plugin.exit(player);
     }
 }

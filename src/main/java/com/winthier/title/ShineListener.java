@@ -1,9 +1,6 @@
 package com.winthier.title;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -20,7 +17,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
@@ -29,7 +25,6 @@ import org.bukkit.util.Vector;
 public final class ShineListener implements Listener {
     private final TitlePlugin plugin;
     private NamespacedKey shineKey;
-    private Map<UUID, Vector> lastFlyShines = new HashMap<>();
 
     public ShineListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -125,20 +120,17 @@ public final class ShineListener implements Listener {
     void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         if (!player.isGliding()) return;
+        Session session = plugin.findSession(player);
+        if (session == null) return;
         Shine shine = getShine(player);
         if (shine == null) return;
         Location location = player.getLocation();
         Vector vector = location.toVector();
-        Vector lastFlyShine = lastFlyShines.get(player.getUniqueId());
-        if (lastFlyShine != null && lastFlyShine.distanceSquared(vector) < 64.0) {
+        Vector lastFlyingShine = session.lastFlyingShine;
+        if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 64.0) {
             return;
         }
-        lastFlyShines.put(player.getUniqueId(), vector);
+        session.lastFlyingShine = vector;
         ShinePlace.of(location, 3.0).show(shine);
-    }
-
-    @EventHandler
-    void onPlayerQuit(PlayerQuitEvent event) {
-        lastFlyShines.remove(event.getPlayer().getUniqueId());
     }
 }

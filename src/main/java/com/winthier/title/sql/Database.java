@@ -32,7 +32,7 @@ public final class Database {
     }
 
     public List<Title> listTitles() {
-        List<? extends Title> list = db.find(Title.class).findList();
+        List<Title> list = db.find(Title.class).findList();
         Collections.sort(list);
         titlesCache = (List<Title>) list;
         return (List<Title>) list;

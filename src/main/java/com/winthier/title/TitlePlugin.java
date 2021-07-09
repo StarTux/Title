@@ -3,6 +3,7 @@ package com.winthier.title;
 import com.winthier.title.sql.Database;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
@@ -15,13 +16,14 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 @Getter
 public final class TitlePlugin extends JavaPlugin {
     private final Database db = new Database(this);
     @Getter static TitlePlugin instance;
-    private Map<UUID, Component> playerListSuffixes = new HashMap<>();
-    private Map<UUID, Component> playerListPrefixes = new HashMap<>();
+    private Map<UUID, Session> sessions = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -37,6 +39,7 @@ public final class TitlePlugin extends JavaPlugin {
         new PlayerListener(this).enable();
         new ShineListener(this).enable();
         for (Player player : Bukkit.getOnlinePlayers()) {
+            enter(player);
             updatePlayerName(player);
         }
     }
@@ -44,19 +47,22 @@ public final class TitlePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.setPlayerListName(null);
+            exit(player);
         }
     }
 
     public void updatePlayerName(Player player) {
         Title title = db.getPlayerTitle(player.getUniqueId());
-        Component prefix = playerListPrefixes.get(player.getUniqueId());
-        Component suffix = playerListSuffixes.get(player.getUniqueId());
+        Session session = sessions.get(player.getUniqueId());
+        if (session == null) session = new Session();
+        Component prefix = session.playerListPrefix;
+        Component suffix = session.playerListSuffix;
         Shine shine = title.parseShine();
         TextFormat nameColor = title.getNameTextFormat();
         if (prefix == null && suffix == null && nameColor == null && !title.isPrefix()) {
             player.displayName(null);
-            player.setPlayerListName(null);
+            player.playerListName(null);
+            resetPlayerScoreboards(player);
             return;
         }
         TextComponent.Builder cb = Component.text();
@@ -64,13 +70,17 @@ public final class TitlePlugin extends JavaPlugin {
             cb.append(prefix);
         }
         Component displayName;
+        session.teamPrefix = Component.empty();
+        session.teamSuffix = Component.empty();
         if (nameColor == null && !title.isPrefix()) {
             displayName = Component.text(player.getName());
             player.displayName(null);
         } else {
             TextComponent.Builder cb2 = Component.text();
             if (title.isPrefix()) {
-                cb2.append(title.getTitleTag());
+                Component titleTag = title.getTitleTag();
+                cb2.append(titleTag);
+                session.teamPrefix = titleTag;
             }
             if (nameColor instanceof TextColor) {
                 cb2.append(Component.text(player.getName(), (TextColor) nameColor));
@@ -88,6 +98,44 @@ public final class TitlePlugin extends JavaPlugin {
             cb.append(suffix);
         }
         player.playerListName(cb.build());
+        updatePlayerScoreboards(player, session);
+    }
+
+    private static void updatePlayerScoreboards(Player owner, Session session) {
+        Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
+        // updatePlayerScoreboard(owner, session, main);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (Objects.equals(player, owner)) continue;
+            Scoreboard scoreboard = player.getScoreboard();
+            if (Objects.equals(main, scoreboard)) continue;
+            updatePlayerScoreboard(owner, session, scoreboard);
+        }
+    }
+
+    private static void updatePlayerScoreboard(Player owner, Session session, Scoreboard scoreboard) {
+        String teamName = owner.getName().toLowerCase();
+        Team team = scoreboard.getTeam(teamName);
+        if (team == null) team = scoreboard.registerNewTeam(teamName);
+        team.addEntry(owner.getName());
+        team.prefix(session.teamPrefix);
+        team.suffix(session.teamSuffix);
+        team.color(session.teamColor);
+    }
+
+    protected void resetPlayerScoreboards(Player owner) {
+        Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
+        // resetPlayerScoreboard(owner, main);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (Objects.equals(player, owner)) continue;
+            Scoreboard scoreboard = player.getScoreboard();
+            if (Objects.equals(main, scoreboard)) continue;
+            resetPlayerScoreboard(owner, scoreboard);
+        }
+    }
+
+    private void resetPlayerScoreboard(Player owner, Scoreboard scoreboard) {
+        Team team = scoreboard.getTeam(owner.getName().toLowerCase());
+        if (team != null) team.unregister();
     }
 
     public static String format(String msg, Object... args) {
@@ -110,20 +158,39 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public void setPlayerListSuffix(Player player, Component suffix) {
-        if (suffix == null) {
-            playerListSuffixes.remove(player.getUniqueId());
-        } else {
-            playerListSuffixes.put(player.getUniqueId(), suffix);
-        }
+        Session session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        session.playerListSuffix = suffix;
         updatePlayerName(player);
     }
 
     public void setPlayerListPrefix(Player player, Component prefix) {
-        if (prefix == null) {
-            playerListPrefixes.remove(player.getUniqueId());
-        } else {
-            playerListPrefixes.put(player.getUniqueId(), prefix);
-        }
+        Session session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        session.playerListPrefix = prefix;
         updatePlayerName(player);
+    }
+
+    protected void enter(Player player) {
+        sessions.put(player.getUniqueId(), new Session());
+        Scoreboard scoreboard = player.getScoreboard();
+        if (!Objects.equals(scoreboard, Bukkit.getScoreboardManager().getMainScoreboard())) {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (Objects.equals(online, player)) continue;
+                Session session2 = findSession(online);
+                if (session2 != null) {
+                    updatePlayerScoreboard(online, session2, scoreboard);
+                }
+            }
+        }
+    }
+
+    protected void exit(Player player) {
+        player.playerListName(null);
+        sessions.remove(player.getUniqueId());
+    }
+
+    public Session findSession(Player player) {
+        return sessions.get(player.getUniqueId());
     }
 }
