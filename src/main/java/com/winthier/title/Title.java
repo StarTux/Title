@@ -13,6 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 
 @Data @Table(name = "titles")
 public final class Title implements Comparable<Title> {
@@ -43,13 +44,17 @@ public final class Title implements Comparable<Title> {
         this.description = description;
     }
 
+    private static String colorize(String in) {
+        return ChatColor.translateAlternateColorCodes('&', in);
+    }
+
     public String formatted() {
-        return Msg.colorize(title);
+        return colorize(title);
     }
 
     public String formattedDescription() {
         if (description == null) return "";
-        return Msg.colorize(description);
+        return colorize(description);
     }
 
     public String stripped() {
@@ -70,6 +75,7 @@ public final class Title implements Comparable<Title> {
 
     public Component getTitleTag() {
         return getTitleComponent()
+            .insertion(name)
             .hoverEvent(HoverEvent.showText(getTooltip()))
             .clickEvent(ClickEvent.suggestCommand("/title " + name));
     }
@@ -110,19 +116,19 @@ public final class Title implements Comparable<Title> {
         return titleJson != null && titleJson.isEmpty();
     }
 
-    public Shine parseShine() {
-        if (shine == null) return null;
-        try {
-            return Shine.valueOf(shine.toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            return null;
-        }
-    }
-
     @Override
     public int compareTo(Title other) {
         int prio = Integer.compare(other.priority, priority); // highest first
         if (prio != 0) return prio;
         return name.compareToIgnoreCase(other.name);
+    }
+
+    public Shine parseShine() {
+        return shine == null ? null : Shine.ofKey(shine);
+    }
+
+    public boolean hasPermission(Player player) {
+        final String permission = "title.unlock." + name.toLowerCase();
+        return player.isPermissionSet(permission) && player.hasPermission(permission);
     }
 }

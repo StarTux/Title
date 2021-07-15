@@ -22,13 +22,11 @@ public final class PlayerListener implements Listener {
     void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.enter(player);
-        plugin.updatePlayerName(player);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        plugin.getDb().clearCache(player.getUniqueId());
         plugin.resetPlayerScoreboards(player);
         plugin.exit(player);
     }

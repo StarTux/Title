@@ -1,7 +1,11 @@
 package com.winthier.title;
 
+import java.util.HashMap;
+import java.util.Map;
+import lombok.Getter;
 import net.kyori.adventure.text.format.TextColor;
 
+@Getter
 public enum Shine {
     HEART(0xFF69B4),
     STAR(0xFFD700),
@@ -15,11 +19,24 @@ public enum Shine {
     YINYANG(0x808080),
     EAGLE(0xBA6426); // brownish
 
+    public static final Map<String, Shine> KEY_MAP = new HashMap<>();
+    public final String key;
     public final String humanName;
     public final TextColor color;
 
     Shine(final int hex) {
+        this.key = name().toLowerCase();
         this.color = TextColor.color(hex);
         this.humanName = Msg.toCamelCase(this);
+    }
+
+    static {
+        for (Shine shine : Shine.values()) {
+            KEY_MAP.put(shine.key, shine);
+        }
+    }
+
+    public static Shine ofKey(String key) {
+        return KEY_MAP.get(key);
     }
 }

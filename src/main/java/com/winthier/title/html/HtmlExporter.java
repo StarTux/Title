@@ -20,7 +20,7 @@ public final class HtmlExporter {
     }
 
     public void export() {
-        List<Title> titles = plugin.getDb().listTitles();
+        List<Title> titles = plugin.getTitles();
         List<TitleEntry> entries = new ArrayList<>(titles.size());
         for (Title title : titles) {
             entries.add(TitleEntry.of(title));

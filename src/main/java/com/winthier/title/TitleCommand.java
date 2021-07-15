@@ -28,69 +28,11 @@ public final class TitleCommand implements TabExecutor {
             sender.sendMessage("[title:title] player expected");
             return true;
         }
+        if (args.length > 1) return false;
         try {
-            if (args.length == 0) {
-                if (player == null) throw new CommandException("Player expected");
-                plugin.send(sender, "");
-                String name = plugin.getDb().getPlayerTitleName(player.getUniqueId());
-                List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
-                if (titles.isEmpty()) {
-                    player.sendMessage(Component.text("No titles to show!", NamedTextColor.RED));
-                    return true;
-                }
-                Title currentTitle = plugin.getDb().getPlayerTitle(player.getUniqueId());
-                player.sendMessage(Component.text()
-                                   .content(Msg.colorize("&3&lYour Titles &3(Current: &r"))
-                                   .append(currentTitle != null ? currentTitle.getTitleComponent() : Component.empty())
-                                   .append(Component.text(Msg.colorize("&r&3) &7&oClick to switch")))
-                                   .build());
-                TextComponent.Builder cb = Component.text();
-                for (Title title : titles) {
-                    cb.append(Component.text(" "));
-                    TextComponent.Builder tooltip = Component.text();
-                    tooltip.append(title.getTitleComponent());
-                    if (title.getDescription() != null) {
-                        tooltip.append(Component.text("\n" + title.formattedDescription()));
-                    }
-                    tooltip.append(Component.text().content("\nClick to use this title").color(NamedTextColor.AQUA).decorate(TextDecoration.ITALIC).build());
-                    cb.append(Component.text()
-                              .append(Component.text("["))
-                              .append(title.getTitleComponent())
-                              .append(Component.text("]"))
-                              .hoverEvent(HoverEvent.showText(tooltip.build()))
-                              .clickEvent(ClickEvent.runCommand("/title " + title.getName())));
-                }
-                sender.sendMessage(cb.build());
-                plugin.send(sender, "");
-            } else if (args.length == 1) {
-                if (player == null) throw new CommandException("Player expected");
-                final String name = args[0];
-                if ("default".equalsIgnoreCase(name)) {
-                    plugin.getDb().setPlayerTitle(player.getUniqueId(), null);
-                    plugin.updatePlayerName(player);
-                    plugin.send(player, "&bUsing default title.");
-                } else {
-                    List<Title> titles = plugin.getDb().listTitles(player.getUniqueId());
-                    Title title = null;
-                    int titleIndex = 0;
-                    for (Title it : titles) {
-                        if (it.getName().equals(name)) {
-                            title = it;
-                            break;
-                        }
-                        titleIndex += 1;
-                    }
-                    if (title == null) {
-                        throw new CommandException("You don't have that title.");
-                    }
-                    plugin.getDb().setPlayerTitle(player.getUniqueId(), titleIndex == 0 ? (Title) null : title);
-                    plugin.updatePlayerName(player);
-                    player.sendMessage(TextComponent.ofChildren(Component.text("Set title to ", NamedTextColor.AQUA),
-                                                                title.getTitleComponent()));
-                }
-            } else {
-                return false;
-            }
+            return args.length == 0
+                ? list(player)
+                : select(player, args[0]);
         } catch (CommandException ce) {
             sender.sendMessage(Component.text(ce.getMessage(), NamedTextColor.RED));
         }
@@ -104,11 +46,76 @@ public final class TitleCommand implements TabExecutor {
         Player player = (Player) sender;
         if (args.length == 0) return null;
         if (args.length == 1) {
-            return plugin.getDb().listTitles(player.getUniqueId()).stream()
+            return plugin.getPlayerTitles(player).stream()
                 .map(Title::getName)
                 .filter(s -> s.startsWith(args[0]))
                 .collect(Collectors.toList());
         }
         return null;
+    }
+
+    boolean list(Player player) {
+        player.sendMessage("");
+        List<Title> titles = plugin.getPlayerTitles(player);
+        if (titles.isEmpty()) {
+            player.sendMessage(Component.text("No titles to show!", NamedTextColor.RED));
+            return true;
+        }
+        Title currentTitle = plugin.getPlayerTitle(player);
+        player.sendMessage(Component.text()
+                           .append(Component.text("Your Titles", NamedTextColor.DARK_AQUA, TextDecoration.BOLD))
+                           .append(Component.space())
+                           .append(Component.text("(Current:", NamedTextColor.DARK_AQUA))
+                           .append(Component.space())
+                           .append(currentTitle != null ? currentTitle.getTitleComponent() : Component.empty())
+                           .append(Component.text(")", NamedTextColor.DARK_AQUA))
+                           .append(Component.space())
+                           .append(Component.text("Click to switch", NamedTextColor.GRAY, TextDecoration.ITALIC))
+                           .build());
+        TextComponent.Builder cb = Component.text();
+        for (Title title : titles) {
+            cb.append(Component.text(" "));
+            TextComponent.Builder tooltip = Component.text();
+            tooltip.append(title.getTitleComponent());
+            if (title.getDescription() != null) {
+                tooltip.append(Component.text("\n" + title.formattedDescription()));
+            }
+            tooltip.append(Component.text("\nClick to use this title", NamedTextColor.AQUA, TextDecoration.ITALIC));
+            cb.append(Component.text()
+                      .append(Component.text("["))
+                      .append(title.getTitleComponent())
+                      .append(Component.text("]"))
+                      .hoverEvent(HoverEvent.showText(tooltip.build()))
+                      .clickEvent(ClickEvent.runCommand("/title " + title.getName())));
+        }
+        player.sendMessage(cb.build());
+        player.sendMessage("");
+        return true;
+    }
+
+    boolean select(Player player, String titleName) {
+        Session session = plugin.findSession(player);
+        if (session == null) {
+            throw new CommandException("Session not found. Please try again later!");
+        }
+        if ("default".equalsIgnoreCase(titleName)) {
+            session.resetTitle(player);
+            player.sendMessage(Component.text("Using default title", NamedTextColor.AQUA));
+            return true;
+        }
+        Title title = plugin.getTitle(titleName);
+        if (title == null || !session.hasTitle(player, title)) {
+            throw new CommandException("You don't have that title.");
+        }
+        List<Title> titles = session.getTitles(player);
+        if (titles.indexOf(title) == 0) {
+            session.resetTitle(player);
+        } else {
+            session.setTitle(player, title);
+        }
+        player.sendMessage(Component.text()
+                           .append(Component.text("Set title to ", NamedTextColor.AQUA))
+                           .append(title.getTitleTag()));
+        return true;
     }
 }

@@ -32,28 +32,11 @@ public final class ShineListener implements Listener {
         return this;
     }
 
-    boolean shine(Player player, Location location, double scale) {
-        Title title = plugin.getDb().getCachedTitle(player.getUniqueId());
-        if (title == null || title.getShine() == null) return false;
-        Shine shine;
-        try {
-            shine = Shine.valueOf(title.getShine().toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            return false;
-        }
+    private boolean shine(Player player, Location location, double scale) {
+        Shine shine = plugin.getPlayerShine(player);
+        if (shine == null) return false;
         ShinePlace.of(location, scale).show(shine);
         return true;
-    }
-
-    Shine getShine(Player player) {
-        Title title = plugin.getDb().getCachedTitle(player.getUniqueId());
-        if (title == null || title.getShine() == null) return null;
-        Shine shine;
-        try {
-            return Shine.valueOf(title.getShine().toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            return null;
-        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -66,7 +49,7 @@ public final class ShineListener implements Listener {
             double distance = from.distanceSquared(to);
             if (distance < 4.0) return;
         }
-        Shine shine = getShine(player);
+        Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnGround()) {
@@ -85,7 +68,7 @@ public final class ShineListener implements Listener {
         proj.getPersistentDataContainer().set(shineKey, PersistentDataType.BYTE, (byte) 1);
         if (!(proj.getShooter() instanceof Player)) return;
         Player player = (Player) proj.getShooter();
-        Shine shine = getShine(player);
+        Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
         Block block = event.getHitBlock();
         if (block != null) {
@@ -122,7 +105,7 @@ public final class ShineListener implements Listener {
         if (!player.isGliding()) return;
         Session session = plugin.findSession(player);
         if (session == null) return;
-        Shine shine = getShine(player);
+        Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
         Location location = player.getLocation();
         Vector vector = location.toVector();

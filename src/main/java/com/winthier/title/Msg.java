@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import org.bukkit.ChatColor;
 
 public final class Msg {
     public static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
@@ -19,10 +18,6 @@ public final class Msg {
             je.printStackTrace();
             return Component.empty();
         }
-    }
-
-    public static String colorize(String in) {
-        return ChatColor.translateAlternateColorCodes('&', in);
     }
 
     public static String toCamelCase(String in) {
