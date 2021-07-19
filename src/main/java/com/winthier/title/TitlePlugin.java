@@ -149,7 +149,6 @@ public final class TitlePlugin extends JavaPlugin {
         Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
         // updatePlayerScoreboard(owner, session, main);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (Objects.equals(player, owner)) continue;
             Scoreboard scoreboard = player.getScoreboard();
             if (Objects.equals(main, scoreboard)) continue;
             updatePlayerScoreboard(owner, session, scoreboard);
