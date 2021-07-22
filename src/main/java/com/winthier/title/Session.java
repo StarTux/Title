@@ -102,9 +102,9 @@ public final class Session {
     }
 
     public boolean setTitle(Player player, Title title) {
-        if (!unlockedRows.containsKey(title.getName())) return false;
         List<Title> titles = getTitles(player);
         if (0 == titles.indexOf(title)) {
+            // Default title
             if (playerRow.getTitle() == null) return false;
             playerRow.setTitle(null);
         } else {
