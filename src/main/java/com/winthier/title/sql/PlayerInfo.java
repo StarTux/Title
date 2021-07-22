@@ -1,6 +1,7 @@
 package com.winthier.title.sql;
 
 import com.winthier.title.Shine;
+import com.winthier.title.TitlePlugin;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -26,7 +27,13 @@ public final class PlayerInfo {
         this.uuid = uuid;
     }
 
+    // Nullable
     public Shine parseShine() {
         return shine == null ? null : Shine.ofKey(shine);
+    }
+
+    // Nullable
+    public SQLSuffix findSuffix() {
+        return suffix == null ? null : TitlePlugin.getInstance().getSuffixes().get(suffix);
     }
 }

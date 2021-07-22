@@ -22,7 +22,7 @@ public final class ShineCommand implements TabExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) {
-            sender.sendMessage("[title:title] player expected");
+            sender.sendMessage("[title:shine] player expected");
             return true;
         }
         if (args.length == 0) {
@@ -73,7 +73,7 @@ public final class ShineCommand implements TabExecutor {
             return Stream.concat(Stream.of("default"),
                                  plugin.getPlayerShines(player).stream()
                                  .map(Shine::getKey)
-                                 .filter(s -> s.startsWith(args[0])))
+                                 .filter(s -> s.contains(args[0])))
                 .collect(Collectors.toList());
         }
         return Collections.emptyList();

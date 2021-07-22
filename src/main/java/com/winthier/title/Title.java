@@ -33,8 +33,14 @@ public final class Title implements Comparable<Title> {
     private String nameColor;
     @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean prefix;
-    @Column(nullable = true, length = 255)
+    @Column(nullable = true, length = 32)
     private String shine;
+    /** Optional: A category. Possibly keyed by TitleCategory. */
+    @Column(nullable = true, length = 255)
+    private String category;
+    /** Optional: A suffix that is also unlocked by this title. */
+    @Column(nullable = true, length = 32)
+    private String suffix;
 
     public Title() { }
 
@@ -130,5 +136,11 @@ public final class Title implements Comparable<Title> {
     public boolean hasPermission(Player player) {
         final String permission = "title.unlock." + name.toLowerCase();
         return player.isPermissionSet(permission) && player.hasPermission(permission);
+    }
+
+    public TitleCategory parseCategory() {
+        return category == null
+            ? null
+            : TitleCategory.ofKey(category);
     }
 }

@@ -3,6 +3,8 @@ package com.winthier.title;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.PlayerInfo;
+import com.winthier.title.sql.SQLPlayerSuffix;
+import com.winthier.title.sql.SQLSuffix;
 import com.winthier.title.sql.UnlockedInfo;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +39,8 @@ public final class TitlePlugin extends JavaPlugin {
     // Cache
     private Map<UUID, Session> sessions = new HashMap<>();
     private final List<Title> titles = new ArrayList<>();
+    private final Map<String, SQLSuffix> suffixes = new HashMap<>();
+    private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
     private final Map<String, Title> nameTitleMap = new HashMap<>();
 
     @Override
@@ -45,19 +49,23 @@ public final class TitlePlugin extends JavaPlugin {
         db = new SQLDatabase(this);
         db.registerTables(PlayerInfo.class,
                           Title.class,
-                          UnlockedInfo.class);
+                          UnlockedInfo.class,
+                          SQLSuffix.class,
+                          SQLPlayerSuffix.class);
         if (!db.createAllTables()) {
             throw new IllegalStateException("Database init failed!");
         }
         getCommand("title").setExecutor(new TitleCommand(this));
         new TitlesCommand(this).enable();
         getCommand("shine").setExecutor(new ShineCommand(this));
+        getCommand("badge").setExecutor(new BadgeCommand(this));
         getCommand("gradient").setExecutor(new GradientCommand(this));
         new PlayerListener(this).enable();
         new ShineListener(this).enable();
         titles.addAll(Database.listTitles());
         for (Title title : titles) nameTitleMap.put(title.getName(), title);
         Collections.sort(titles);
+        loadSuffixesAsync();
         // Update title list every 10 seconds
         Bukkit.getScheduler().runTaskTimer(this, () -> {
                 db.find(Title.class).findListAsync(list -> {
@@ -67,6 +75,7 @@ public final class TitlePlugin extends JavaPlugin {
                         for (Title title : titles) nameTitleMap.put(title.getName(), title);
                         Collections.sort(titles);
                     });
+                loadSuffixesAsync();
             }, 200L, 200L);
         for (Player player : Bukkit.getOnlinePlayers()) {
             enter(player);
@@ -89,29 +98,45 @@ public final class TitlePlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             enter(player);
         }
+        loadSuffixesAsync();
+    }
+
+    private void loadSuffixesAsync() {
+        db.find(SQLSuffix.class).findListAsync(list -> {
+                suffixes.clear();
+                suffixCategories.clear();
+                for (SQLSuffix suffix : list) {
+                    suffix.unpack();
+                    suffixes.put(suffix.getName(), suffix);
+                    if (suffix.getCategory() != null) {
+                        suffixCategories.computeIfAbsent(suffix.getCategory(), n -> new ArrayList<>())
+                            .add(suffix);
+                    }
+                }
+            });
     }
 
     public void updatePlayerName(Player player) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null) return;
         Title title = session.getTitle(player);
-        Component prefix = session.playerListPrefix;
-        Component suffix = session.playerListSuffix;
         TextFormat nameColor = title.getNameTextFormat();
-        if (prefix == null && suffix == null && nameColor == null && !title.isPrefix()) {
+        SQLSuffix suffix = session.getSuffix(player);
+        if (session.playerListPrefix == null && session.playerListSuffix == null
+            && nameColor == null && !title.isPrefix() && suffix == null) {
             player.displayName(null);
             player.playerListName(null);
             resetPlayerScoreboards(player);
             return;
         }
         TextComponent.Builder cb = Component.text();
-        if (prefix != null) {
-            cb.append(prefix);
+        if (session.playerListPrefix != null) {
+            cb.append(session.playerListPrefix);
         }
         Component displayName;
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
-        if (nameColor == null && !title.isPrefix()) {
+        if (nameColor == null && !title.isPrefix() && suffix == null) {
             displayName = Component.text(player.getName());
             player.displayName(null);
         } else {
@@ -121,20 +146,32 @@ public final class TitlePlugin extends JavaPlugin {
                 cb2.append(titleTag);
                 session.teamPrefix = titleTag;
             }
+            String playerName = suffix != null && suffix.isPartOfName()
+                ? player.getName() + suffix.getCharacter()
+                : player.getName();
             if (nameColor instanceof TextColor) {
-                cb2.append(Component.text(player.getName(), (TextColor) nameColor));
+                cb2.append(Component.text(playerName, (TextColor) nameColor));
             } else if (nameColor instanceof TextEffect) {
                 TextEffect textEffect = (TextEffect) nameColor;
-                cb2.append(textEffect.format(player.getName()));
+                cb2.append(textEffect.format(playerName));
             } else {
-                cb2.append(Component.text(player.getName()));
+                cb2.append(Component.text(playerName));
+            }
+            if (suffix != null && !suffix.isPartOfName()) {
+                cb2.append(suffix.getComponent());
             }
             displayName = cb2.build();
             player.displayName(displayName);
         }
         cb.append(displayName);
-        if (suffix != null) {
-            cb.append(suffix);
+        if (session.playerListSuffix != null) {
+            cb.append(session.playerListSuffix);
+        }
+        if (suffix != null || session.playerListSuffix != null) {
+            TextComponent.Builder cb2 = Component.text();
+            if (suffix != null) cb2.append(suffix.getComponent());
+            if (session.playerListSuffix != null) cb2.append(session.playerListSuffix);
+            session.teamSuffix = cb2.build();
         }
         player.playerListName(cb.build());
         updatePlayerScoreboards(player, session);
@@ -204,7 +241,8 @@ public final class TitlePlugin extends JavaPlugin {
                     throw new IllegalStateException(player.getName() + ": playerRow=null");
                 }
                 List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
-                final Session session = new Session(this, uuid, playerRow, unlockedRows);
+                List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
+                final Session session = new Session(this, uuid, playerRow, unlockedRows, suffixRows);
                 Bukkit.getScheduler().runTask(this, () -> {
                         if (!player.isOnline()) return;
                         sessions.put(uuid, session);
@@ -236,6 +274,7 @@ public final class TitlePlugin extends JavaPlugin {
         if (0 == db.insertIgnore(title)) return false;
         titles.add(title);
         Collections.sort(titles);
+        nameTitleMap.put(title.getName(), title);
         return true;
     }
 
@@ -366,5 +405,33 @@ public final class TitlePlugin extends JavaPlugin {
             .where(w -> w.eq("uuid", uuid))
             .set("title", null)
             .sync();
+    }
+
+    public SQLSuffix getPlayerSuffix(Player player) {
+        Session session = sessions.get(player.getUniqueId());
+        return session != null
+            ? session.getSuffix(player)
+            : null;
+    }
+
+    public List<SQLSuffix> getPlayerSuffixes(UUID uuid) {
+        Session session = sessions.get(uuid);
+        return session != null
+            ? session.getSuffixes()
+            : Collections.emptyList();
+    }
+
+    public boolean unlockPlayerSuffix(UUID uuid, String suffixName) {
+        Session session = sessions.get(uuid);
+        return session != null
+            ? session.unlockSuffix(suffixName)
+            : 0 != db.insert(new SQLPlayerSuffix(uuid, suffixName));
+    }
+
+    public boolean lockPlayerSuffix(UUID uuid, String suffixName) {
+        Session session = sessions.get(uuid);
+        return session != null
+            ? session.lockSuffix(suffixName)
+            : 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
     }
 }

@@ -4,14 +4,17 @@ import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandContext;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
+import com.cavetale.core.font.Emoji;
 import com.winthier.playercache.PlayerCache;
 import com.winthier.title.html.HtmlExporter;
 import com.winthier.title.sql.Database;
+import com.winthier.title.sql.SQLSuffix;
 import com.winthier.title.sql.UnlockedInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,6 +24,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -117,6 +121,14 @@ public final class TitlesCommand implements TabExecutor {
             .description("Set priority")
             .completers(this::completeTitleArg)
             .senderCaller(this::prio);
+        rootNode.addChild("category").arguments("<title> [category]")
+            .description("Set or reset category")
+            .completers(this::completeTitleArg, this::completeCategoryArg)
+            .senderCaller(this::category);
+        rootNode.addChild("setsuffix").arguments("<title> [suffix]")
+            .description("Set or reset suffix")
+            .completers(this::completeTitleArg, this::completeSuffixOrCategoryArg)
+            .senderCaller(this::setSuffix);
         rootNode.addChild("html").denyTabCompletion()
             .description("Export html")
             .senderCaller(this::html);
@@ -127,6 +139,37 @@ public final class TitlesCommand implements TabExecutor {
         rootNode.addChild("refreshplayers").denyTabCompletion()
             .description("Refresh player names")
             .senderCaller(this::refreshPlayes);
+        // /titles suffix
+        CommandNode suffixNode = rootNode.addChild("suffix")
+            .description("Suffix commands");
+        suffixNode.addChild("list").denyTabCompletion()
+            .description("List suffixes")
+            .senderCaller(this::suffixList);
+        suffixNode.addChild("info").arguments("<name>")
+            .description("Suffix information")
+            .completers(this::completeSuffixOrCategoryArg)
+            .senderCaller(this::suffixInfo);
+        suffixNode.addChild("create").arguments("<name> <format>")
+            .description("Create or change suffix")
+            .completers(this::completeSuffixArg, Emoji.HIDDEN_COMPLETER)
+            .senderCaller(this::suffixCreate);
+        suffixNode.addChild("category").arguments("<name> [category]")
+            .description("Set or reset category")
+            .completers(this::completeSuffixArg, this::completeSuffixCategoryArg)
+            .senderCaller(this::suffixCategory);
+        suffixNode.addChild("unlock").arguments("<suffix> <player>")
+            .description("Unlock for player")
+            .completers(this::completeSuffixOrCategoryArg, CommandArgCompleter.NULL)
+            .senderCaller(this::suffixUnlock);
+        suffixNode.addChild("lock").arguments("<suffix> <player>")
+            .description("Lock for player")
+            .completers(this::completeSuffixOrCategoryArg, CommandArgCompleter.NULL)
+            .senderCaller(this::suffixLock);
+        suffixNode.addChild("player").arguments("<player>")
+            .description("List player suffixes")
+            .completers(CommandArgCompleter.NULL)
+            .senderCaller(this::suffixPlayer);
+        // Finis
         plugin.getCommand("titles").setExecutor(this);
         return this;
     }
@@ -159,8 +202,36 @@ public final class TitlesCommand implements TabExecutor {
     List<String> completeTitleArg(CommandContext context, CommandNode node, String arg) {
         String lower = arg.toLowerCase();
         return plugin.getTitles().stream()
-            .filter(t -> t.getName().toLowerCase().contains(lower))
             .map(Title::getName)
+            .filter(name -> name.toLowerCase().contains(lower))
+            .collect(Collectors.toList());
+    }
+
+    List<String> completeCategoryArg(CommandContext context, CommandNode node, String arg) {
+        return Stream.of(TitleCategory.values())
+            .map(e -> e.key)
+            .filter(key -> key.contains(arg))
+            .collect(Collectors.toList());
+    }
+
+    List<String> completeSuffixArg(CommandContext context, CommandNode node, String arg) {
+        return plugin.getSuffixes().values().stream()
+            .map(SQLSuffix::getName)
+            .filter(name -> name.contains(arg))
+            .collect(Collectors.toList());
+    }
+
+    List<String> completeSuffixCategoryArg(CommandContext context, CommandNode node, String arg) {
+        return plugin.getSuffixCategories().keySet().stream()
+            .map(s -> "#" + s)
+            .filter(key -> key.contains(arg))
+            .collect(Collectors.toList());
+    }
+
+    List<String> completeSuffixOrCategoryArg(CommandContext context, CommandNode node, String arg) {
+        return Stream.concat(plugin.getSuffixes().values().stream().map(SQLSuffix::getName),
+                             plugin.getSuffixCategories().keySet().stream().map(s -> "#" + s))
+            .filter(key -> key.contains(arg))
             .collect(Collectors.toList());
     }
 
@@ -168,6 +239,12 @@ public final class TitlesCommand implements TabExecutor {
         Title title = plugin.getTitle(titleName);
         if (title == null) throw new CommandWarn("Unknown title: " + titleName);
         return title;
+    }
+
+    SQLSuffix requireSuffix(String name) {
+        SQLSuffix suffix = plugin.getSuffixes().get(name);
+        if (suffix == null) throw new CommandWarn("Unknown suffix: " + name);
+        return suffix;
     }
 
     private static PlayerCache requirePlayerCache(String playerName) {
@@ -265,6 +342,18 @@ public final class TitlesCommand implements TabExecutor {
                   .append(Component.text("Priority: ", NamedTextColor.GRAY))
                   .append(Component.text(title.getPriority(), NamedTextColor.WHITE))
                   .insertion("" + title.getPriority()).build());
+        lines.add(Component.text()
+                  .append(Component.text("Category: ", NamedTextColor.GRAY))
+                  .append(title.getCategory() == null
+                          ? Component.text("None", NamedTextColor.DARK_GRAY)
+                          : Component.text(title.getCategory(), NamedTextColor.WHITE))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Suffix: ", NamedTextColor.GRAY))
+                  .append(title.getSuffix() == null
+                          ? Component.text("None", NamedTextColor.DARK_GRAY)
+                          : Component.text(title.getSuffix(), NamedTextColor.WHITE))
+                  .build());
         sender.sendMessage(Component.join(Component.newline(), lines));
         return true;
     }
@@ -600,9 +689,43 @@ public final class TitlesCommand implements TabExecutor {
         title.setPriority(priority);
         plugin.updateTitleList();
         if (0 == plugin.getDb().update(title, "priority")) {
-            throw new CommandWarn("Could not save title: " + title.getName());
+            throw new CommandWarn("Could not update title: " + title.getName());
         }
-        sender.sendMessage(Component.text().content("Priority of title " + title.getName() + " set to " + priority).build());
+        sender.sendMessage(Component.text("Priority of title " + title.getName() + " set to "
+                                          + priority, NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean category(CommandSender sender, String[] args) {
+        if (args.length != 1 && args.length != 2) return false;
+        Title title = requireTitle(args[0]);
+        String category = args.length >= 2 ? args[1] : null;
+        if (Objects.equals(title.getCategory(), category)) {
+            throw new CommandWarn(title.getName() + " already has category " + category + "!");
+        }
+        title.setCategory(category);
+        plugin.updateTitleList();
+        if (0 == plugin.getDb().update(title, "category")) {
+            throw new CommandWarn("Could not update title: " + title.getName());
+        }
+        sender.sendMessage(Component.text("Category of title " + title.getName() + " set to "
+                                          + title.getCategory(), NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean setSuffix(CommandSender sender, String[] args) {
+        if (args.length != 1 && args.length != 2) return false;
+        Title title = requireTitle(args[0]);
+        String suffix = args.length >= 2 ? args[1] : null;
+        if (Objects.equals(title.getSuffix(), suffix)) {
+            throw new CommandWarn(title.getName() + " already has suffix " + suffix + "!");
+        }
+        title.setSuffix(suffix);
+        if (0 == plugin.getDb().update(title, "suffix")) {
+            throw new CommandWarn("Could not update title: " + title.getName());
+        }
+        sender.sendMessage(Component.text().content("Category of title " + title.getName() + " set to "
+                                                    + title.getCategory()).build());
         return true;
     }
 
@@ -646,7 +769,7 @@ public final class TitlesCommand implements TabExecutor {
                     ShinePlace.of(player.getEyeLocation(), vec.normalize().multiply(dist), 2.0).show(shine);
                 }
             } catch (IllegalArgumentException iae) {
-                player.sendMessage(Component.text("Invalid arguments: " + args[1] + ", " + args[2], NamedTextColor.RED));
+                throw new CommandWarn("Invalid arguments: " + args[1] + ", " + args[2]);
             }
         }
         return true;
@@ -658,6 +781,193 @@ public final class TitlesCommand implements TabExecutor {
             plugin.updatePlayerName(player);
         }
         sender.sendMessage(Component.text("All player names refreshed", NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean suffixList(CommandSender sender, String[] args) {
+        if (args.length != 0) return false;
+        TextComponent.Builder cb = Component.text();
+        cb.append(Component.text("Categories:", NamedTextColor.YELLOW));
+        for (String cat : plugin.getSuffixCategories().keySet()) {
+            cb.append(Component.space());
+            cb.append(Component.text()
+                      .content("#" + cat).color(NamedTextColor.GRAY)
+                      .hoverEvent(HoverEvent.showText(Component.text("/titles suffix info #" + cat)))
+                      .clickEvent(ClickEvent.runCommand("/titles suffix info #" + cat))
+                      .insertion("#" + cat).build());
+        }
+        cb.append(Component.newline());
+        cb.append(Component.text("Suffixes:", NamedTextColor.YELLOW));
+        for (SQLSuffix suffix : plugin.getSuffixes().values()) {
+            cb.append(Component.space());
+            cb.append(Component.text()
+                      .content(suffix.getName()).color(NamedTextColor.WHITE)
+                      .hoverEvent(HoverEvent.showText(suffix.getComponent()))
+                      .clickEvent(ClickEvent.runCommand("/titles suffix info " + suffix.getName()))
+                      .insertion(suffix.getName()).build());
+        }
+        sender.sendMessage(cb.build());
+        return true;
+    }
+
+    boolean suffixInfo(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        if (args[0].startsWith("#")) {
+            String key = args[0].substring(1);
+            List<SQLSuffix> suffixList = plugin.getSuffixCategories().get(key);
+            if (suffixList == null) {
+                throw new CommandWarn("Suffix category not found: " + key);
+            }
+            TextComponent.Builder cb = Component.text();
+            cb.append(Component.text("Category " + key + " has " + suffixList.size()
+                                     + " suffixes:", NamedTextColor.YELLOW));
+            for (SQLSuffix suffix : suffixList) {
+                cb.append(Component.newline());
+                cb.append(Component.text("- " + suffix.getName(), NamedTextColor.WHITE));
+                cb.append(Component.space());
+                cb.append(suffix.getComponent().insertion(suffix.getFormat()));
+            }
+            sender.sendMessage(cb.build());
+            return true;
+        }
+        SQLSuffix suffix = requireSuffix(args[0]);
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.text("Suffix Information", NamedTextColor.YELLOW));
+        lines.add(Component.text()
+                  .append(Component.text("Name: ", NamedTextColor.GRAY))
+                  .append(Component.text(suffix.getName(), NamedTextColor.WHITE).insertion(suffix.getName()))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Format: ", NamedTextColor.GRAY))
+                  .append(Component.text(suffix.getFormat(), NamedTextColor.WHITE).insertion(suffix.getFormat()))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Priority: ", NamedTextColor.GRAY))
+                  .append(Component.text("" + suffix.getPriority(), NamedTextColor.WHITE).insertion("" + suffix.getPriority()))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Category: ", NamedTextColor.GRAY))
+                  .append(suffix.getCategory() == null
+                          ? Component.text("None", NamedTextColor.DARK_GRAY)
+                          : Component.text(suffix.getCategory(), NamedTextColor.WHITE).insertion("#" + suffix.getCategory()))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Component: ", NamedTextColor.GRAY))
+                  .append(suffix.getComponent())
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Part of Name: ", NamedTextColor.GRAY))
+                  .append(suffix.isPartOfName()
+                          ? Component.text("Yes", NamedTextColor.GREEN)
+                          : Component.text("No", NamedTextColor.DARK_GRAY))
+                  .build());
+        lines.add(Component.text()
+                  .append(Component.text("Invalid: ", NamedTextColor.GRAY))
+                  .append(suffix.isInvalid()
+                          ? Component.text("Yes", NamedTextColor.RED, TextDecoration.BOLD)
+                          : Component.text("No", NamedTextColor.DARK_GRAY))
+                  .build());
+        sender.sendMessage(Component.join(Component.newline(), lines));
+        return true;
+    }
+
+    boolean suffixCreate(CommandSender sender, String[] args) {
+        if (args.length < 2) return false;
+        String name = args[0];
+        SQLSuffix suffix = plugin.getSuffixes().get(name);
+        String format = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        if (suffix != null) {
+            String old = suffix.getFormat();
+            suffix.setFormat(format);
+            suffix.unpack();
+            if (suffix.isInvalid()) {
+                suffix.setFormat(old);
+                suffix.unpack();
+                throw new CommandWarn("Invalid format: " + format);
+            }
+            if (0 == plugin.getDb().update(suffix, "format")) {
+                throw new CommandWarn("Could not update suffix " + suffix.getName() + "!");
+            }
+            sender.sendMessage(Component.text()
+                               .append(Component.text("Suffix " + suffix.getName() + " updated: ", NamedTextColor.YELLOW))
+                               .append(suffix.getComponent())
+                               .build());
+        } else {
+            suffix = new SQLSuffix(name, args[1]);
+            suffix.unpack();
+            if (suffix.isInvalid()) {
+                throw new CommandWarn("Invalid format: " + format);
+            }
+            if (0 == plugin.getDb().insertIgnore(suffix)) {
+                throw new CommandWarn("Could not create suffix " + name + "! Different case already exists?");
+            }
+            plugin.getSuffixes().put(suffix.getName(), suffix);
+            sender.sendMessage(Component.text()
+                               .append(Component.text("Suffix " + suffix.getName() + " created: ", NamedTextColor.YELLOW))
+                               .append(suffix.getComponent())
+                               .build());
+        }
+        return true;
+    }
+
+    boolean suffixCategory(CommandSender sender, String[] args) {
+        if (args.length != 1 && args.length != 2) return false;
+        SQLSuffix suffix = requireSuffix(args[0]);
+        String old = suffix.getCategory();
+        String category = args.length >= 2 ? args[1] : null;
+        if (category != null && category.startsWith("#")) {
+            category = category.substring(1);
+        }
+        if (Objects.equals(old, category)) {
+            throw new CommandWarn("Suffix " + suffix.getName() + " already has category " + category + "!");
+        }
+        suffix.setCategory(category);
+        if (0 == plugin.getDb().update(suffix, "category")) {
+            suffix.setCategory(old);
+            throw new CommandWarn("Could not update suffix " + suffix.getName() + "!");
+        }
+        sender.sendMessage(Component.text("Set category of suffix " + suffix.getName() + " to "
+                                          + suffix.getCategory(), NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean suffixUnlock(CommandSender sender, String[] args) {
+        if (args.length != 2) return false;
+        String suffixName = args[0];
+        if (!suffixName.startsWith("#")) requireSuffix(suffixName);
+        PlayerCache player = requirePlayerCache(args[1]);
+        if (!plugin.unlockPlayerSuffix(player.uuid, suffixName)) {
+            throw new CommandWarn(player.name + " already has suffix " + suffixName + " unlocked!");
+        }
+        sender.sendMessage(Component.text("Suffix " + suffixName + " unlocked for " + player.name, NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean suffixLock(CommandSender sender, String[] args) {
+        if (args.length != 2) return false;
+        String suffixName = args[0];
+        // We allow locking of invalid suffixes!
+        PlayerCache player = requirePlayerCache(args[1]);
+        if (!plugin.lockPlayerSuffix(player.uuid, suffixName)) {
+            throw new CommandWarn(player.name + " does not not have suffix " + suffixName + " unlocked!");
+        }
+        sender.sendMessage(Component.text("Suffix " + suffixName + " locked for " + player.name, NamedTextColor.YELLOW));
+        return true;
+    }
+
+    boolean suffixPlayer(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        PlayerCache player = requirePlayerCache(args[0]);
+        List<SQLSuffix> list = plugin.getPlayerSuffixes(player.uuid);
+        TextComponent.Builder cb = Component.text();
+        cb.append(Component.text(player.name + " has " + list.size() + " suffixes:", NamedTextColor.YELLOW));
+        for (SQLSuffix suffix : list) {
+            cb.append(Component.space());
+            cb.append(Component.text().content(suffix.getName()).color(NamedTextColor.YELLOW)
+                      .hoverEvent(HoverEvent.showText(Component.text("/titles suffix info " + suffix.getName())))
+                      .clickEvent(ClickEvent.runCommand("/titles suffix info " + suffix.getName())));
+        }
+        sender.sendMessage(cb.build());
         return true;
     }
 }

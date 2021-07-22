@@ -1,11 +1,14 @@
 package com.winthier.title;
 
 import com.winthier.title.sql.PlayerInfo;
+import com.winthier.title.sql.SQLPlayerSuffix;
+import com.winthier.title.sql.SQLSuffix;
 import com.winthier.title.sql.UnlockedInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +31,7 @@ public final class Session {
     protected final UUID uuid;
     protected final PlayerInfo playerRow;
     protected final Map<String, UnlockedInfo> unlockedRows = new HashMap<>();
+    protected final Map<String, SQLPlayerSuffix> suffixRows = new HashMap<>();
     // Cache
     protected Component playerListPrefix = null;
     protected Component playerListSuffix = null;
@@ -37,12 +41,15 @@ public final class Session {
     protected NamedTextColor teamColor = NamedTextColor.WHITE;
 
     public Session(final TitlePlugin plugin, final UUID uuid, final PlayerInfo playerRow,
-                   final List<UnlockedInfo> unlockedList) {
+                   final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {
         this.plugin = plugin;
         this.uuid = uuid;
         this.playerRow = playerRow;
         for (UnlockedInfo row : unlockedList) {
             unlockedRows.put(row.getTitle(), row);
+        }
+        for (SQLPlayerSuffix row : suffixList) {
+            suffixRows.put(row.getSuffix(), row);
         }
     }
 
@@ -201,5 +208,113 @@ public final class Session {
         if (playerRow.getShine() == null) return;
         playerRow.setShine(null);
         plugin.getDb().update(playerRow, "shine");
+    }
+
+    public SQLSuffix getSuffix() {
+        return getSuffix(getPlayer());
+    }
+
+    // Nullable
+    public SQLSuffix getSuffix(Player player) {
+        return playerRow.findSuffix();
+    }
+
+    public List<SQLSuffix> getSuffixes() {
+        return getSuffixes(getPlayer());
+    }
+
+    public List<SQLSuffix> getSuffixes(Player player) {
+        Set<String> set = new HashSet<>();
+        for (SQLPlayerSuffix unlocked : suffixRows.values()) {
+            String name = unlocked.getSuffix();
+            if (name.startsWith("#")) {
+                List<SQLSuffix> category = plugin.getSuffixCategories().get(name.substring(1));
+                if (category != null) {
+                    for (SQLSuffix suffix : category) {
+                        set.add(suffix.getName());
+                    }
+                }
+            } else {
+                set.add(name);
+            }
+        }
+        for (Title title : getTitles(player)) {
+            String name = title.getSuffix();
+            if (name != null) {
+                if (name.startsWith("#")) {
+                    List<SQLSuffix> category = plugin.getSuffixCategories().get(name.substring(1));
+                    if (category != null) {
+                        for (SQLSuffix suffix : category) {
+                            set.add(suffix.getName());
+                        }
+                    }
+                } else {
+                    set.add(name);
+                }
+            }
+        }
+        List<SQLSuffix> result = new ArrayList<>(set.size());
+        for (String name : set) {
+            SQLSuffix suffix = plugin.getSuffixes().get(name);
+            if (suffix != null) result.add(suffix);
+        }
+        Collections.sort(result);
+        return result;
+    }
+
+    public boolean hasSuffixUnlocked(String suffixName) {
+        return suffixRows.containsKey(suffixName);
+    }
+
+    public boolean hasSuffix(Player player, SQLSuffix suffix) {
+        for (SQLSuffix it : getSuffixes(player)) {
+            if (Objects.equals(it.getName(), suffix.getName())) return true;
+        }
+        return false;
+    }
+
+    public boolean unlockSuffix(String suffixName) {
+        return unlockSuffix(getPlayer(), suffixName);
+    }
+
+    public boolean unlockSuffix(Player player, String suffixName) {
+        if (suffixRows.containsKey(suffixName)) return false;
+        SQLPlayerSuffix row = new SQLPlayerSuffix(player.getUniqueId(), suffixName);
+        plugin.getDb().insertIgnoreAsync(row, result -> {
+                if (result == 0) {
+                    plugin.getLogger().info("Insert row " + row + ": " + result);
+                }
+            });
+        suffixRows.put(suffixName, row);
+        return true;
+    }
+
+    public boolean lockSuffix(String suffixName) {
+        return lockSuffix(getPlayer(), suffixName);
+    }
+
+    public boolean lockSuffix(Player player, String suffixName) {
+        SQLPlayerSuffix row = suffixRows.remove(suffixName);
+        if (row == null) return false;
+        plugin.getDb().deleteAsync(row, result -> {
+                if (result == 0) {
+                    plugin.getLogger().info("Delete row " + row + ": " + result);
+                }
+            });
+        return true;
+    }
+
+    public void setSuffix(Player player, SQLSuffix suffix) {
+        if (Objects.equals(suffix.getName(), playerRow.getSuffix())) return;
+        playerRow.setSuffix(suffix.getName());
+        plugin.getDb().updateAsync(playerRow, null, "suffix");
+        plugin.updatePlayerName(player);
+    }
+
+    public void resetSuffix(Player player) {
+        if (playerRow.getSuffix() == null) return;
+        playerRow.setSuffix(null);
+        plugin.getDb().updateAsync(playerRow, null, "suffix");
+        plugin.updatePlayerName(player);
     }
 }

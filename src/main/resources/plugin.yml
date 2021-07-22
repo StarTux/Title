@@ -45,8 +45,13 @@ commands:
 
   shine:
     description: Use your shine
-    usage: §b/shine
+    usage: /shine
     permission: title.shine
+
+  badge:
+    description: Select a badge
+    usage: /badge
+    permission: title.badge
 
 permissions:
 
@@ -60,4 +65,8 @@ permissions:
 
   title.shine:
     description: Use your shine
+    default: op
+
+  title.badge:
+    description: Select a badge
     default: op
