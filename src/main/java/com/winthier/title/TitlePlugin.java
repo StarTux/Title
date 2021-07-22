@@ -122,6 +122,8 @@ public final class TitlePlugin extends JavaPlugin {
         Title title = session.getTitle(player);
         TextFormat nameColor = title.getNameTextFormat();
         SQLSuffix suffix = session.getSuffix(player);
+        session.teamPrefix = Component.empty();
+        session.teamSuffix = Component.empty();
         if (session.playerListPrefix == null && session.playerListSuffix == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             player.displayName(null);
@@ -134,8 +136,6 @@ public final class TitlePlugin extends JavaPlugin {
             cb.append(session.playerListPrefix);
         }
         Component displayName;
-        session.teamPrefix = Component.empty();
-        session.teamSuffix = Component.empty();
         if (nameColor == null && !title.isPrefix() && suffix == null) {
             displayName = Component.text(player.getName());
             player.displayName(null);
@@ -206,7 +206,6 @@ public final class TitlePlugin extends JavaPlugin {
         Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
         // resetPlayerScoreboard(owner, main);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (Objects.equals(player, owner)) continue;
             Scoreboard scoreboard = player.getScoreboard();
             if (Objects.equals(main, scoreboard)) continue;
             resetPlayerScoreboard(owner, scoreboard);
@@ -221,15 +220,17 @@ public final class TitlePlugin extends JavaPlugin {
     public void setPlayerListSuffix(Player player, Component suffix) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null) return;
+        if (Objects.equals(session.playerListSuffix, suffix)) return;
         session.playerListSuffix = suffix;
-        updatePlayerName(player);
+        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
     }
 
     public void setPlayerListPrefix(Player player, Component prefix) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null) return;
+        if (Objects.equals(session.playerListPrefix, prefix)) return;
         session.playerListPrefix = prefix;
-        updatePlayerName(player);
+        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
     }
 
     protected void enter(final Player player) {
@@ -242,10 +243,9 @@ public final class TitlePlugin extends JavaPlugin {
                 }
                 List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
                 List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
-                final Session session = new Session(this, uuid, playerRow, unlockedRows, suffixRows);
                 Bukkit.getScheduler().runTask(this, () -> {
                         if (!player.isOnline()) return;
-                        sessions.put(uuid, session);
+                        sessions.put(uuid, new Session(this, player, playerRow, unlockedRows, suffixRows));
                         updatePlayerName(player);
                     });
             });

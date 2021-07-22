@@ -139,6 +139,9 @@ public final class TitlesCommand implements TabExecutor {
         rootNode.addChild("refreshplayers").denyTabCompletion()
             .description("Refresh player names")
             .senderCaller(this::refreshPlayers);
+        rootNode.addChild("session").arguments("[player]")
+            .description("Session info")
+            .senderCaller(this::session);
         // /titles suffix
         CommandNode suffixNode = rootNode.addChild("suffix")
             .description("Suffix commands");
@@ -725,7 +728,7 @@ public final class TitlesCommand implements TabExecutor {
             throw new CommandWarn("Could not update title: " + title.getName());
         }
         sender.sendMessage(Component.text().content("Category of title " + title.getName() + " set to "
-                                                    + title.getCategory()).build());
+                                                    + title.getSuffix()).build());
         return true;
     }
 
@@ -782,6 +785,84 @@ public final class TitlesCommand implements TabExecutor {
         }
         sender.sendMessage(Component.text("All player names refreshed", NamedTextColor.YELLOW));
         return true;
+    }
+
+    boolean session(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            int errors = 0;
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (plugin.findSession(player) == null) {
+                    sender.sendMessage(Component.text("Player without session: " + player.getName(), NamedTextColor.RED));
+                    errors += 1;
+                }
+            }
+            for (Session session : plugin.getSessions().values()) {
+                if (session.getPlayer() == null) {
+                    sender.sendMessage(Component.text("Session without player: " + session.getPlayerName(), NamedTextColor.RED));
+                    errors += 1;
+                }
+            }
+            if (errors > 0) {
+                sender.sendMessage(Component.text(errors + " errors!", NamedTextColor.RED));
+            } else {
+                sender.sendMessage(Component.text("No errors!", NamedTextColor.GREEN));
+            }
+            return true;
+        } else if (args.length == 1) {
+            PlayerCache player = requirePlayerCache(args[0]);
+            Session session = plugin.getSessions().get(player.uuid);
+            if (session == null) {
+                sender.sendMessage(Component.text("No session: " + player.name, NamedTextColor.YELLOW));
+                return true;
+            }
+            TextComponent.Builder cb = Component.text();
+            cb.append(Component.text("Session info of " + player.name, NamedTextColor.YELLOW));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("UUID: ", NamedTextColor.GRAY))
+                      .append(Component.text("" + session.getUuid(), NamedTextColor.WHITE)));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Title: ", NamedTextColor.GRAY))
+                      .append(session.playerRow.getTitle() != null
+                              ? Component.text(session.playerRow.getTitle(), NamedTextColor.WHITE)
+                              : Component.empty()));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Shine: ", NamedTextColor.GRAY))
+                      .append(session.playerRow.getShine() != null
+                              ? Component.text(session.playerRow.getShine(), NamedTextColor.WHITE)
+                              : Component.empty()));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Suffix: ", NamedTextColor.GRAY))
+                      .append(session.playerRow.getSuffix() != null
+                              ? Component.text(session.playerRow.getSuffix(), NamedTextColor.WHITE)
+                              : Component.empty()));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Player List Prefix: ", NamedTextColor.GRAY))
+                      .append(session.playerListPrefix != null ? session.playerListPrefix : Component.empty()));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Player List Suffix: ", NamedTextColor.GRAY))
+                      .append(session.playerListSuffix != null ? session.playerListSuffix : Component.empty()));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Team Prefix: ", NamedTextColor.GRAY))
+                      .append(session.teamPrefix));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Team Suffix: ", NamedTextColor.GRAY))
+                      .append(session.teamSuffix));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Team Color: ", NamedTextColor.GRAY))
+                      .append(Component.text(NamedTextColor.NAMES.key(session.teamColor), NamedTextColor.WHITE)));
+            cb.append(Component.newline());
+            cb.append(Component.text().append(Component.text("Last Flying Shine: ", NamedTextColor.GRAY))
+                      .append(session.lastFlyingShine != null
+                              ? Component.text("" + session.lastFlyingShine.getBlockX()
+                                               + " " + session.lastFlyingShine.getBlockY()
+                                               + " " + session.lastFlyingShine.getBlockZ(),
+                                               NamedTextColor.WHITE)
+                              : Component.empty()));
+            sender.sendMessage(cb.build());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     boolean suffixList(CommandSender sender, String[] args) {

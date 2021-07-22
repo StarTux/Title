@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,7 +29,8 @@ import org.bukkit.util.Vector;
 public final class Session {
     // Data
     protected final TitlePlugin plugin;
-    protected final UUID uuid;
+    @Getter protected final UUID uuid;
+    @Getter protected final String playerName;
     protected final PlayerInfo playerRow;
     protected final Map<String, UnlockedInfo> unlockedRows = new HashMap<>();
     protected final Map<String, SQLPlayerSuffix> suffixRows = new HashMap<>();
@@ -40,10 +42,11 @@ public final class Session {
     protected Component teamSuffix = Component.empty();
     protected NamedTextColor teamColor = NamedTextColor.WHITE;
 
-    public Session(final TitlePlugin plugin, final UUID uuid, final PlayerInfo playerRow,
+    public Session(final TitlePlugin plugin, final Player player, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {
         this.plugin = plugin;
-        this.uuid = uuid;
+        this.uuid = player.getUniqueId();
+        this.playerName = player.getName();
         this.playerRow = playerRow;
         for (UnlockedInfo row : unlockedList) {
             unlockedRows.put(row.getTitle(), row);
