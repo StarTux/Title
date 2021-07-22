@@ -138,7 +138,7 @@ public final class TitlesCommand implements TabExecutor {
             .playerCaller(this::showshine);
         rootNode.addChild("refreshplayers").denyTabCompletion()
             .description("Refresh player names")
-            .senderCaller(this::refreshPlayes);
+            .senderCaller(this::refreshPlayers);
         // /titles suffix
         CommandNode suffixNode = rootNode.addChild("suffix")
             .description("Suffix commands");
@@ -775,7 +775,7 @@ public final class TitlesCommand implements TabExecutor {
         return true;
     }
 
-    boolean refreshPlayes(CommandSender sender, String[] args) {
+    boolean refreshPlayers(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
         for (Player player : Bukkit.getOnlinePlayers()) {
             plugin.updatePlayerName(player);
