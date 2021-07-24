@@ -97,6 +97,10 @@ public final class TitlesCommand implements TabExecutor {
             .completers(PlayerCache.NAME_COMPLETER, this::completeTitleArg, CommandArgCompleter.REPEAT)
             .description("Unlock progressive titles for player")
             .senderCaller(this::unlockSet);
+        rootNode.addChild("search").arguments("<pattern...>")
+            .completers(CommandArgCompleter.EMPTY)
+            .description("Search for matching titles")
+            .senderCaller(this::search);
         rootNode.addChild("reload").denyTabCompletion()
             .description("Reload all data")
             .senderCaller(this::reload);
@@ -561,7 +565,7 @@ public final class TitlesCommand implements TabExecutor {
         return true;
     }
 
-    boolean find(CommandSender sender, String[] args) {
+    boolean search(CommandSender sender, String[] args) {
         if (args.length == 1) return false;
         String term = String.join(" ", args);
         List<Title> matches = new ArrayList<>();
