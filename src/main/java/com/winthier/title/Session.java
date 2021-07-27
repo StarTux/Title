@@ -137,7 +137,7 @@ public final class Session {
 
     public Title getTitle(Player player) {
         String selectedTitleName = playerRow.getTitle();
-        if (selectedTitleName != null && unlockedRows.containsKey(selectedTitleName)) {
+        if (selectedTitleName != null) {
             Title selectedTitle = plugin.getTitle(selectedTitleName);
             if (selectedTitle != null) return selectedTitle;
         }
@@ -152,11 +152,7 @@ public final class Session {
     public Shine getShine(Player player) {
         Shine selectedShine = playerRow.parseShine();
         if (selectedShine != null) {
-            if (!hasShine(player, selectedShine)) {
-                resetShine();
-            } else {
-                return selectedShine;
-            }
+            return selectedShine;
         }
         Title title = getTitle(player);
         return title.parseShine();
