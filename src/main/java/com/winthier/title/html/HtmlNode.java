@@ -165,11 +165,15 @@ public final class HtmlNode {
             }
         }
         legacyHelper(sb, nodes, color, decorations);
-        return nodes.size() == 1
+        HtmlNode result = nodes.size() == 1
             ? nodes.get(0)
             : HtmlNode.ofChildren(Type.SPAN, nodes);
+        return result;
     }
 
+    /**
+     * Recursive!
+     */
     public static HtmlNode fromComponent(Component component) {
         HtmlNode result = HtmlNode.Type.SPAN.node();
         if (component instanceof TextComponent) {

@@ -31,9 +31,13 @@ public final class TitleEntry {
                 .withAttribute("src", src)
                 .withAttribute("alt", title.getName());
         } else if (json != null) {
-            return HtmlNode.fromComponent(title.getTitleComponent());
+            HtmlNode result = HtmlNode.fromComponent(title.getTitleComponent());
+            result.getAttributes().put("class", "mc");
+            return result;
         } else {
-            return HtmlNode.fromLegacyText(title.getTitle());
+            HtmlNode result = HtmlNode.fromLegacyText(title.getTitle());
+            result.getAttributes().put("class", "mc");
+            return result;
         }
     }
 }

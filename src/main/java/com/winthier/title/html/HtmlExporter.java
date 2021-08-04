@@ -30,7 +30,16 @@ public final class HtmlExporter {
                 header.withChild(HtmlNode.Type.META, meta -> meta.withAttribute("charset", "UTF-8"));
                 header.withChild(HtmlNode.Type.TITLE, title -> title.withText("Titles"));
                 header.withChild(HtmlNode.Type.STYLE, style -> {
-                        style.setText("html,body{background-color:#303030;color:white;font-family:monospace;}");
+                        style.setText(".mc{"
+                                      + "font-family:monospace;"
+                                      + "font-size:16px;"
+                                      + "background-color:#000;"
+                                      + "color:#FFF;"
+                                      + "display:inline-block;"
+                                      + "white-space:pre;"
+                                      + "letter-spacing: 1px;"
+                                      + "padding: 0.5px;"
+                                      + "}");
                     });
             });
         rootNode.withChild(HtmlNode.Type.BODY, body -> {
