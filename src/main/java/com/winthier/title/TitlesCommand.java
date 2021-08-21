@@ -566,7 +566,7 @@ public final class TitlesCommand implements TabExecutor {
     }
 
     boolean search(CommandSender sender, String[] args) {
-        if (args.length == 1) return false;
+        if (args.length == 0) return false;
         String term = String.join(" ", args);
         List<Title> matches = new ArrayList<>();
         for (Title title : plugin.getTitles()) {
