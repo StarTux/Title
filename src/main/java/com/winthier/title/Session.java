@@ -37,10 +37,10 @@ public final class Session {
     // Cache
     protected Component playerListPrefix = null;
     protected Component playerListSuffix = null;
+    protected NamedTextColor color = null;
     protected Vector lastFlyingShine;
-    protected Component teamPrefix = Component.empty();
-    protected Component teamSuffix = Component.empty();
-    protected NamedTextColor teamColor = NamedTextColor.WHITE;
+    protected Component teamPrefix = Component.empty(); // derived
+    protected Component teamSuffix = Component.empty(); // derived
 
     public Session(final TitlePlugin plugin, final Player player, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {

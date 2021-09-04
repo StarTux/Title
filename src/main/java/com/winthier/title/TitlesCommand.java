@@ -852,8 +852,8 @@ public final class TitlesCommand implements TabExecutor {
             cb.append(Component.text().append(Component.text("Team Suffix: ", NamedTextColor.GRAY))
                       .append(session.teamSuffix));
             cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Team Color: ", NamedTextColor.GRAY))
-                      .append(Component.text(NamedTextColor.NAMES.key(session.teamColor), NamedTextColor.WHITE)));
+            cb.append(Component.text().append(Component.text("Color: ", NamedTextColor.GRAY))
+                      .append(Component.text(NamedTextColor.NAMES.key(session.color), NamedTextColor.WHITE)));
             cb.append(Component.newline());
             cb.append(Component.text().append(Component.text("Last Flying Shine: ", NamedTextColor.GRAY))
                       .append(session.lastFlyingShine != null

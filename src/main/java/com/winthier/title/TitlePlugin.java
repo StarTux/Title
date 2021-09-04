@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.Bukkit;
@@ -124,7 +125,7 @@ public final class TitlePlugin extends JavaPlugin {
         SQLSuffix suffix = session.getSuffix(player);
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
-        if (session.playerListPrefix == null && session.playerListSuffix == null
+        if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             player.displayName(null);
             player.playerListName(null);
@@ -199,7 +200,7 @@ public final class TitlePlugin extends JavaPlugin {
         team.addEntry(owner.getName());
         team.prefix(session.teamPrefix);
         team.suffix(session.teamSuffix);
-        team.color(session.teamColor);
+        team.color(session.color);
     }
 
     protected void resetPlayerScoreboards(Player owner) {
@@ -230,6 +231,14 @@ public final class TitlePlugin extends JavaPlugin {
         if (session == null) return;
         if (Objects.equals(session.playerListPrefix, prefix)) return;
         session.playerListPrefix = prefix;
+        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
+    }
+
+    public void setColor(Player player, NamedTextColor color) {
+        Session session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        if (Objects.equals(session.color, color)) return;
+        session.color = color;
         Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
     }
 
