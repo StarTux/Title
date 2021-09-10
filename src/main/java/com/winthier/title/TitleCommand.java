@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.core.event.player.PluginPlayerEvent;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
@@ -90,6 +91,7 @@ public final class TitleCommand implements TabExecutor {
         }
         player.sendMessage(cb.build());
         player.sendMessage("");
+        PluginPlayerEvent.Name.LIST_PLAYER_TITLES.call(plugin, player);
         return true;
     }
 
