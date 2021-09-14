@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
 import com.cavetale.core.event.player.PluginPlayerEvent;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -118,6 +119,8 @@ public final class TitleCommand implements TabExecutor {
         player.sendMessage(Component.text()
                            .append(Component.text("Set title to ", NamedTextColor.AQUA))
                            .append(title.getTitleTag()));
+        PluginPlayerEvent.Name.SELECT_PLAYER_TITLE.ultimate(plugin, player)
+            .detail(Detail.NAME, title.getName()).call();
         return true;
     }
 }
