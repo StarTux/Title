@@ -24,7 +24,7 @@ public final class ShinePlace {
         location.setPitch(0f);
         Vector right = location.getDirection()
             .normalize()
-            .rotateAroundY(Math.PI * -0.5);
+            .rotateAroundY(Math.PI * 0.5);
         Vector up = new Vector(0, 1, 0);
         return new ShinePlace(location.add(add), right, up, scale);
     }
