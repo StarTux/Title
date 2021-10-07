@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -47,7 +48,7 @@ public final class BadgeCommand implements TabExecutor {
                 boolean active = suffix.is(activeSuffix);
                 if (active) cb.append(Component.text("[", NamedTextColor.WHITE));
                 Component tooltip = Component
-                    .join(Component.newline(),
+                    .join(JoinConfiguration.separator(Component.newline()),
                           suffix.getComponent(),
                           Component.text("Click here to wear this badge", NamedTextColor.GRAY));
                 cb.append(suffix.getComponent()

@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -194,10 +195,9 @@ public final class TitlesCommand implements TabExecutor {
 
     private static Component button(Title title) {
         Component titleComponent = title.getTitleComponent();
-        Component tooltip = TextComponent
-            .ofChildren(titleComponent,
-                        Component.text('\n' + title.getName(), NamedTextColor.GRAY),
-                        Component.text('\n' + title.formattedDescription()));
+        Component tooltip = Component.join(JoinConfiguration.separator(Component.newline()),
+                                           Component.text(title.getName(), NamedTextColor.GRAY),
+                                           Component.text(title.formattedDescription()));
         return Component.text()
             .append(titleComponent)
             .insertion(title.getName())
@@ -361,7 +361,7 @@ public final class TitlesCommand implements TabExecutor {
                           ? Component.text("None", NamedTextColor.DARK_GRAY)
                           : Component.text(title.getSuffix(), NamedTextColor.WHITE))
                   .build());
-        sender.sendMessage(Component.join(Component.newline(), lines));
+        sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
         return true;
     }
 
@@ -490,10 +490,11 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.setPlayerTitle(player.uuid, title)) {
             throw new CommandWarn("Setting title " + title.getName() + " for " + player.name + " failed!");
         }
-        sender.sendMessage(TextComponent.ofChildren(Component.text("Set title ", NamedTextColor.YELLOW),
-                                                    title.getTitleTag(),
-                                                    Component.text(" for  ", NamedTextColor.YELLOW),
-                                                    Component.text(player.name)));
+        sender.sendMessage(Component.join(JoinConfiguration.noSeparators(),
+                                          Component.text("Set title ", NamedTextColor.YELLOW),
+                                          title.getTitleTag(),
+                                          Component.text(" for  ", NamedTextColor.YELLOW),
+                                          Component.text(player.name)));
         return true;
     }
 
@@ -952,7 +953,7 @@ public final class TitlesCommand implements TabExecutor {
                           ? Component.text("Yes", NamedTextColor.RED, TextDecoration.BOLD)
                           : Component.text("No", NamedTextColor.DARK_GRAY))
                   .build());
-        sender.sendMessage(Component.join(Component.newline(), lines));
+        sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
         return true;
     }
 
