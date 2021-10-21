@@ -18,7 +18,8 @@ public enum Shine {
     EARTH(0x4169E1), // royalblue
     YINYANG(0x808080),
     EAGLE(0xBA6426), // brownish
-    GOAT(0xFFCD79); // gold
+    GOAT(0xFFCD79), // gold
+    PUMPKIN(0xFF8000); // orange
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();
     public final String key;

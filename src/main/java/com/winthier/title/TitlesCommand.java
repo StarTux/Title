@@ -773,8 +773,11 @@ public final class TitlesCommand implements TabExecutor {
                 double dist = Double.parseDouble(args[1]);
                 int amount = Integer.parseInt(args[2]);
                 player.sendMessage("shine=" + shine + " dist=" + dist + " amount=" + amount);
+                Location shineLocation = player.getEyeLocation();
+                shineLocation.setDirection(shineLocation.getDirection().multiply(-1));
+                Vector shineVector = vec.normalize().multiply(dist);
                 for (int i = 0; i < amount; i += 1) {
-                    ShinePlace.of(player.getEyeLocation(), vec.normalize().multiply(dist), 2.0).show(shine);
+                    ShinePlace.of(shineLocation.clone(), shineVector, 2.0).show(shine);
                 }
             } catch (IllegalArgumentException iae) {
                 throw new CommandWarn("Invalid arguments: " + args[1] + ", " + args[2]);
