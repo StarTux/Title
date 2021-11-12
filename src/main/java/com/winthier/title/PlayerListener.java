@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.winthier.perm.event.PlayerPermissionUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -19,15 +20,25 @@ public final class PlayerListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerJoin(PlayerJoinEvent event) {
+    protected void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.enter(player);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    void onPlayerQuit(PlayerQuitEvent event) {
+    protected void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.resetPlayerScoreboards(player);
         plugin.exit(player);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    protected void onPlayerPermissionUpdate(PlayerPermissionUpdateEvent event) {
+        Player player = event.getPlayer();
+        Session session = plugin.findSession(player);
+        if (session != null) {
+            session.updateValidity(player);
+        }
+        plugin.updatePlayerName(player);
     }
 }

@@ -124,9 +124,10 @@ public final class Session {
     }
 
     public boolean resetTitle(Player player) {
-        if (playerRow.getTitle() == null) return false;
-        playerRow.setTitle(null);
-        plugin.getDb().updateAsync(playerRow, null, "title");
+        if (playerRow.getTitle() != null) {
+            playerRow.setTitle(null);
+            plugin.getDb().updateAsync(playerRow, null, "title");
+        }
         plugin.updatePlayerName(player);
         return true;
     }
@@ -315,5 +316,17 @@ public final class Session {
         playerRow.setSuffix(null);
         plugin.getDb().updateAsync(playerRow, null, "suffix");
         plugin.updatePlayerName(player);
+    }
+
+    /**
+     * Check if current settings are valid and reset them if
+     * necessary.
+     */
+    public void updateValidity(Player player) {
+        Title title = getTitle(player);
+        if (title != null && !hasTitle(player, title)) {
+            plugin.getLogger().info(player.getName() + " has invalid title selected: " + title.getName());
+            resetTitle(player);
+        }
     }
 }
