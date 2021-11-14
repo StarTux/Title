@@ -64,7 +64,13 @@ public final class TitlePlugin extends JavaPlugin {
         new PlayerListener(this).enable();
         new ShineListener(this).enable();
         titles.addAll(Database.listTitles());
-        for (Title title : titles) nameTitleMap.put(title.getName(), title);
+        for (Title title : titles) {
+            if (title.parseCategory() == TitleCategory.UNKNOWN) {
+                getLogger().warning("Title without category: " + title.getName()
+                                    + ", " + title.getCategory());
+            }
+            nameTitleMap.put(title.getName(), title);
+        }
         Collections.sort(titles);
         loadSuffixesAsync();
         // Update title list every 10 seconds

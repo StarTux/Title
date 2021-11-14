@@ -140,7 +140,7 @@ public final class Title implements Comparable<Title> {
 
     public TitleCategory parseCategory() {
         return category == null
-            ? null
+            ? TitleCategory.UNKNOWN
             : TitleCategory.ofKey(category);
     }
 }
