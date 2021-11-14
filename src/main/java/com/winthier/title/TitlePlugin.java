@@ -20,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -138,49 +139,49 @@ public final class TitlePlugin extends JavaPlugin {
             resetPlayerScoreboards(player);
             return;
         }
-        TextComponent.Builder cb = Component.text();
+        TextComponent.Builder playerListBuilder = Component.text();
         if (session.playerListPrefix != null) {
-            cb.append(session.playerListPrefix);
+            playerListBuilder.append(session.playerListPrefix);
         }
         Component displayName;
         if (nameColor == null && !title.isPrefix() && suffix == null) {
             displayName = Component.text(player.getName());
             player.displayName(null);
         } else {
-            TextComponent.Builder cb2 = Component.text();
+            TextComponent.Builder displayNameBuilder = Component.text();
             if (title.isPrefix()) {
                 Component titleTag = title.getTitleTag();
-                cb2.append(titleTag);
+                displayNameBuilder.append(titleTag);
                 session.teamPrefix = titleTag;
             }
             String playerName = suffix != null && suffix.isPartOfName()
                 ? player.getName() + suffix.getCharacter()
                 : player.getName();
             if (nameColor instanceof TextColor) {
-                cb2.append(Component.text(playerName, (TextColor) nameColor));
+                displayNameBuilder.append(Component.text(playerName, (TextColor) nameColor));
             } else if (nameColor instanceof TextEffect) {
                 TextEffect textEffect = (TextEffect) nameColor;
-                cb2.append(textEffect.format(playerName));
+                displayNameBuilder.append(textEffect.format(playerName));
             } else {
-                cb2.append(Component.text(playerName));
+                displayNameBuilder.append(Component.text(playerName));
             }
             if (suffix != null && !suffix.isPartOfName()) {
-                cb2.append(suffix.getComponent());
+                displayNameBuilder.append(suffix.getComponent());
             }
-            displayName = cb2.build();
+            displayName = displayNameBuilder.build();
             player.displayName(displayName);
         }
-        cb.append(displayName);
+        playerListBuilder.append(Component.text().append(displayName).decoration(TextDecoration.ITALIC, false));
         if (session.playerListSuffix != null) {
-            cb.append(session.playerListSuffix);
+            playerListBuilder.append(session.playerListSuffix);
         }
         if (suffix != null || session.playerListSuffix != null) {
-            TextComponent.Builder cb2 = Component.text();
-            if (suffix != null) cb2.append(suffix.getComponent());
-            if (session.playerListSuffix != null) cb2.append(session.playerListSuffix);
-            session.teamSuffix = cb2.build();
+            TextComponent.Builder teamSuffixBuilder = Component.text();
+            if (suffix != null) teamSuffixBuilder.append(suffix.getComponent());
+            if (session.playerListSuffix != null) teamSuffixBuilder.append(session.playerListSuffix);
+            session.teamSuffix = teamSuffixBuilder.build();
         }
-        player.playerListName(cb.build());
+        player.playerListName(playerListBuilder.build());
         updatePlayerScoreboards(player, session);
     }
 
