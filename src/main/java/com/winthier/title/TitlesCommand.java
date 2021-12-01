@@ -740,7 +740,9 @@ public final class TitlesCommand implements TabExecutor {
     boolean html(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
         sender.sendMessage(Component.text("Exporting html..."));
-        new HtmlExporter(plugin, sender).export();
+        HtmlExporter exporter = new HtmlExporter(plugin, sender);
+        exporter.export();
+        sender.sendMessage("Image files: " + exporter.getImageFiles());
         return true;
     }
 

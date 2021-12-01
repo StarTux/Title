@@ -1,6 +1,8 @@
 package com.winthier.title.html;
 
 import com.winthier.title.Title;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -9,8 +11,9 @@ import lombok.RequiredArgsConstructor;
  */
 @Data @RequiredArgsConstructor
 public final class TitleEntry {
-    private final Title title;
-    private HtmlNode titleHtml;
+    protected final Title title;
+    protected HtmlNode titleHtml;
+    protected List<String> imageFiles = new ArrayList<>();
 
     public static TitleEntry of(Title title) {
         return new TitleEntry(title);
@@ -27,6 +30,7 @@ public final class TitleEntry {
         String json = title.getTitleJson();
         if (json != null && json.startsWith(":") && json.endsWith(":")) {
             String src = json.substring(1, json.length() - 1) + ".png";
+            imageFiles.add(src);
             return HtmlNode.Type.IMG.node()
                 .withAttribute("src", src)
                 .withAttribute("alt", title.getName());

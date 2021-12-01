@@ -38,10 +38,20 @@ public final class HtmlNode {
         BODY,
         TITLE,
         UL, LI,
+        H2,
+        H3,
+        TABLE,
+        TR,
+        TD,
         STYLE;
 
         public HtmlNode node() {
             return new HtmlNode(this);
+        }
+
+        public void node(Consumer<HtmlNode> consumer) {
+            HtmlNode node = new HtmlNode(this);
+            consumer.accept(node);
         }
     }
 
