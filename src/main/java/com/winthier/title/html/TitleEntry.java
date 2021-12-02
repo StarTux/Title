@@ -12,11 +12,12 @@ import lombok.RequiredArgsConstructor;
 @Data @RequiredArgsConstructor
 public final class TitleEntry {
     protected final Title title;
+    protected final int playerCount;
     protected HtmlNode titleHtml;
     protected List<String> imageFiles = new ArrayList<>();
 
-    public static TitleEntry of(Title title) {
-        return new TitleEntry(title);
+    public static TitleEntry of(Title title, int playerCount) {
+        return new TitleEntry(title, playerCount);
     }
 
     public HtmlNode getTitleHtml() {

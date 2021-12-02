@@ -4,12 +4,14 @@ import com.winthier.title.Msg;
 import com.winthier.title.Title;
 import com.winthier.title.TitleCategory;
 import com.winthier.title.TitlePlugin;
+import com.winthier.title.sql.UnlockedInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +32,14 @@ public final class HtmlExporter {
 
     public void export() {
         List<Title> titles = plugin.getTitles();
+        Map<String, Integer> unlockedMap = new HashMap<>();
+        for (UnlockedInfo row : plugin.getDb().find(UnlockedInfo.class).findList()) {
+            unlockedMap.compute(row.getTitle(), (n, i) -> i != null ? i + 1 : 1);
+        }
         Map<TitleCategory, List<TitleEntry>> titlesMap = new EnumMap<>(TitleCategory.class);
         for (Title title : titles) {
-            titlesMap.computeIfAbsent(title.parseCategory(), c -> new ArrayList<>()).add(TitleEntry.of(title));
+            titlesMap.computeIfAbsent(title.parseCategory(), c -> new ArrayList<>())
+                .add(TitleEntry.of(title, unlockedMap.getOrDefault(title.getName(), 1)));
         }
         HtmlNode rootNode = HtmlNode.Type.HTML.node();
         rootNode.withChild(HtmlNode.Type.HEADER, header -> {
@@ -41,26 +48,36 @@ public final class HtmlExporter {
                 header.withChild(HtmlNode.Type.STYLE, style -> {
                         style.setText(".mc{"
                                       + "font-family:'Courier New',monospace;"
-                                      + "font-size:16px;"
+                                      + "font-size:22px;"
                                       + "color:#FFF;"
                                       + "display:inline-block;"
                                       + "white-space:pre;"
                                       + "letter-spacing: 1px;"
-                                      + "padding: 0.5px;"
+                                      + "padding: 0.75px;"
                                       + "}"
-                                      + "td{padding-right:20px;}"
                                       + "document,body{background-color:#113;color:#fff;}"
                                       + "body{width:800px;max-width:800px;margin:auto;}"
-                                      + "table{width:100%;}"
-                                      + ".td-title{width:240px;text-align:right;}"
-                                      + ".td-desc{width:560px;}"
-                                      + "h2,h3{text-align:middle;}"
-                                      + "a{color:#fff;}"
-                                      + "a:visited{color:#fff;}");
+                                      + "tr,td{margin:0;padding:0;border:0;}"
+                                      + "table{width:780px;margin-left:20px;padding:0;border:0}"
+                                      + ".td-title{width:240px;max-width:260px;}"
+                                      + ".td-count{width:40px;max-width:60px;text-align:right;padding-right:10px;}"
+                                      + ".td-count{color:#AAA;font-family:monospace;}"
+                                      + ".td-desc{width:500px;max-width:480px;}"
+                                      + ".td-title{-webkit-text-stroke-width:0.5px;}"
+                                      + ".td-title{-webkit-text-stroke-color:#888;}"
+                                      + ".td-title{font-weight:bolder;}"
+                                      + "body{font-family:sans;}"
+                                      + ".td-desc{font-size:16px;}"
+                                      + ".td-desc{width:580px;}"
+                                      + "h2{font-size:26;}"
+                                      + "h3{font-size:24;}"
+                                      + "a::before{content:'#';}"
+                                      + "a{color:#BBB;text-decoration:none;}");
                     });
             });
         rootNode.withChild(HtmlNode.Type.BODY, body -> {
                 for (TitleCategory.Group group : TitleCategory.Group.values()) {
+                    if (group == TitleCategory.Group.UNKNOWN) continue;
                     body.withChild(HtmlNode.Type.H2, h2 -> {
                             h2.withChild(HtmlNode.Type.A, a -> {
                                     a.withText(Msg.toCamelCase(group));
@@ -88,6 +105,10 @@ public final class HtmlExporter {
                                                     td.withAttribute("class", "td-title");
                                                     td.getChildren().add(entry.getTitleHtml());
                                                     imageFiles.addAll(entry.imageFiles);
+                                                });
+                                            tr.withChild(HtmlNode.Type.TD, td -> {
+                                                    td.withAttribute("class", "td-count");
+                                                    td.withText("" + entry.getPlayerCount());
                                                 });
                                             tr.withChild(HtmlNode.Type.TD, td -> {
                                                     td.withAttribute("class", "td-desc");
