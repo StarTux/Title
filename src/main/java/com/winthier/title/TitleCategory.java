@@ -23,6 +23,7 @@ public enum TitleCategory {
     KING_OF_THE_RING(Group.EVENT),
     MOB_ARENA(Group.EVENT),
     OVERBOARD(Group.EVENT),
+    BATTLE_BOATS(Group.EVENT),
     PARKOUR(Group.EVENT),
     PIT_OF_DOOM(Group.EVENT),
     PVP_ARENA(Group.EVENT),
@@ -44,19 +45,19 @@ public enum TitleCategory {
     VALENTINE(Group.SEASONAL),
     XMAS(Group.SEASONAL),
     // Store
-    DONATION(Group.STORE),
-    FLAG(Group.STORE),
     SHINE(Group.STORE),
+    FLAG(Group.STORE),
+    DONATION(Group.STORE),
     // ?
     LEGACY(Group.OTHER),
     ACHIEVEMENT(Group.OTHER),
     UNKNOWN;
 
     public enum Group {
-        EVENT,
         RANK,
-        SEASONAL,
         STORE,
+        SEASONAL,
+        EVENT,
         OTHER,
         UNKNOWN;
     }

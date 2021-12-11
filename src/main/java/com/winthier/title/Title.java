@@ -41,6 +41,7 @@ public final class Title implements Comparable<Title> {
     /** Optional: A suffix that is also unlocked by this title. */
     @Column(nullable = true, length = 32)
     private String suffix;
+    private transient TitleCategory categoryCache;
 
     public Title() { }
 
@@ -124,7 +125,14 @@ public final class Title implements Comparable<Title> {
 
     @Override
     public int compareTo(Title other) {
-        int prio = Integer.compare(other.priority, priority); // highest first
+        TitleCategory cat = parseCategory();
+        TitleCategory cat2 = other.parseCategory();
+        int prio;
+        prio = Integer.compare(cat.group.ordinal(), cat2.group.ordinal());
+        if (prio != 0) return prio;
+        prio = Integer.compare(cat.ordinal(), cat2.ordinal());
+        if (prio != 0) return prio;
+        prio = Integer.compare(other.priority, priority); // highest first
         if (prio != 0) return prio;
         return name.compareToIgnoreCase(other.name);
     }
@@ -139,8 +147,16 @@ public final class Title implements Comparable<Title> {
     }
 
     public TitleCategory parseCategory() {
-        return category == null
-            ? TitleCategory.UNKNOWN
-            : TitleCategory.ofKey(category);
+        if (categoryCache == null) {
+            categoryCache = category == null
+                ? TitleCategory.UNKNOWN
+                : TitleCategory.ofKey(category);
+        }
+        return categoryCache;
+    }
+
+    public void setTitleCategory(TitleCategory titleCategory) {
+        this.category = titleCategory.key;
+        this.categoryCache = titleCategory;
     }
 }

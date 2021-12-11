@@ -712,6 +712,7 @@ public final class TitlesCommand implements TabExecutor {
             throw new CommandWarn(title.getName() + " already has category " + category + "!");
         }
         title.setCategory(category);
+        title.setCategoryCache(null);
         plugin.updateTitleList();
         if (0 == plugin.getDb().update(title, "category")) {
             throw new CommandWarn("Could not update title: " + title.getName());
