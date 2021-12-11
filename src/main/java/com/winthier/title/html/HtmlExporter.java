@@ -39,7 +39,7 @@ public final class HtmlExporter {
         Map<TitleCategory, List<TitleEntry>> titlesMap = new EnumMap<>(TitleCategory.class);
         for (Title title : titles) {
             titlesMap.computeIfAbsent(title.parseCategory(), c -> new ArrayList<>())
-                .add(TitleEntry.of(title, unlockedMap.getOrDefault(title.getName(), 1)));
+                .add(TitleEntry.of(title, unlockedMap.getOrDefault(title.getName(), 0)));
         }
         HtmlNode rootNode = HtmlNode.Type.HTML.node();
         rootNode.withChild(HtmlNode.Type.HEADER, header -> {
@@ -108,7 +108,9 @@ public final class HtmlExporter {
                                                 });
                                             tr.withChild(HtmlNode.Type.TD, td -> {
                                                     td.withAttribute("class", "td-count");
-                                                    td.withText("" + entry.getPlayerCount());
+                                                    if (entry.getPlayerCount() > 0) {
+                                                        td.withText("" + entry.getPlayerCount());
+                                                    }
                                                 });
                                             tr.withChild(HtmlNode.Type.TD, td -> {
                                                     td.withAttribute("class", "td-desc");

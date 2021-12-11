@@ -20,7 +20,8 @@ public enum Shine {
     EAGLE(0xBA6426), // brownish
     GOAT(0xFFCD79), // gold
     PUMPKIN(0xFF8000), // orange
-    SKULL(0xFFBBFF); // neon purple
+    SKULL(0xFFBBFF), // neon purple
+    MOON(0x80ff00);
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();
     public final String key;

@@ -732,7 +732,7 @@ public final class TitlesCommand implements TabExecutor {
         if (0 == plugin.getDb().update(title, "suffix")) {
             throw new CommandWarn("Could not update title: " + title.getName());
         }
-        sender.sendMessage(Component.text().content("Category of title " + title.getName() + " set to "
+        sender.sendMessage(Component.text().content("Suffix of title " + title.getName() + " set to "
                                                     + title.getSuffix()).build());
         return true;
     }
