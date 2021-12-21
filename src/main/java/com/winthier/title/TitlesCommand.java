@@ -137,10 +137,6 @@ public final class TitlesCommand implements TabExecutor {
         rootNode.addChild("html").denyTabCompletion()
             .description("Export html")
             .senderCaller(this::html);
-        rootNode.addChild("showshine").arguments("<shine> [distance] [amount]")
-            .description("Show a shine")
-            .completers(SHINE_COMPLETER)
-            .playerCaller(this::showshine);
         rootNode.addChild("refreshplayers").denyTabCompletion()
             .description("Refresh player names")
             .senderCaller(this::refreshPlayers);
@@ -177,6 +173,19 @@ public final class TitlesCommand implements TabExecutor {
             .description("List player suffixes")
             .completers(CommandArgCompleter.NULL)
             .senderCaller(this::suffixPlayer);
+        // Shines
+        CommandNode shinesNode = rootNode.addChild("shines")
+            .description("Shine subcommands");
+        shinesNode.addChild("show").arguments("<shine> [distance] [amount]")
+            .description("Show a shine")
+            .completers(SHINE_COMPLETER)
+            .playerCaller(this::shinesShow);
+        shinesNode.addChild("disable").denyTabCompletion()
+            .description("Disable shines (temporarily)")
+            .senderCaller(this::shinesDisable);
+        shinesNode.addChild("enable").denyTabCompletion()
+            .description("Enable shines")
+            .senderCaller(this::shinesEnable);
         // Finis
         plugin.getCommand("titles").setExecutor(this);
         return this;
@@ -760,35 +769,6 @@ public final class TitlesCommand implements TabExecutor {
         return true;
     }
 
-    boolean showshine(Player player, String[] args) {
-        if (args.length != 1 && args.length != 3) return false;
-        Shine shine = Shine.ofKey(args[0]);
-        if (shine == null) {
-            throw new CommandWarn("Shine not found: " + args[0]);
-        }
-        if (args.length == 1) {
-            ShinePlace.of(player.getEyeLocation(), new Vector(0.0, 2.0, 0.0), 2.0).show(shine);
-        } else if (args.length == 3) {
-            // /shine <shine> <distance> <times>
-            Location loc = player.getEyeLocation();
-            Vector vec = loc.getDirection();
-            try {
-                double dist = Double.parseDouble(args[1]);
-                int amount = Integer.parseInt(args[2]);
-                player.sendMessage("shine=" + shine + " dist=" + dist + " amount=" + amount);
-                Location shineLocation = player.getEyeLocation();
-                shineLocation.setDirection(shineLocation.getDirection().multiply(-1));
-                Vector shineVector = vec.normalize().multiply(dist);
-                for (int i = 0; i < amount; i += 1) {
-                    ShinePlace.of(shineLocation.clone(), shineVector, 2.0).show(shine);
-                }
-            } catch (IllegalArgumentException iae) {
-                throw new CommandWarn("Invalid arguments: " + args[1] + ", " + args[2]);
-            }
-        }
-        return true;
-    }
-
     boolean refreshPlayers(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -1060,6 +1040,49 @@ public final class TitlesCommand implements TabExecutor {
                       .clickEvent(ClickEvent.runCommand("/titles suffix info " + suffix.getName())));
         }
         sender.sendMessage(cb.build());
+        return true;
+    }
+
+    protected boolean shinesShow(Player player, String[] args) {
+        if (args.length != 1 && args.length != 3) return false;
+        Shine shine = Shine.ofKey(args[0]);
+        if (shine == null) {
+            throw new CommandWarn("Shine not found: " + args[0]);
+        }
+        if (args.length == 1) {
+            ShinePlace.of(player.getEyeLocation(), new Vector(0.0, 2.0, 0.0), 2.0).show(shine);
+        } else if (args.length == 3) {
+            // /shine <shine> <distance> <times>
+            Location loc = player.getEyeLocation();
+            Vector vec = loc.getDirection();
+            try {
+                double dist = Double.parseDouble(args[1]);
+                int amount = Integer.parseInt(args[2]);
+                player.sendMessage("shine=" + shine + " dist=" + dist + " amount=" + amount);
+                Location shineLocation = player.getEyeLocation();
+                shineLocation.setDirection(shineLocation.getDirection().multiply(-1));
+                Vector shineVector = vec.normalize().multiply(dist);
+                for (int i = 0; i < amount; i += 1) {
+                    ShinePlace.of(shineLocation.clone(), shineVector, 2.0).show(shine);
+                }
+            } catch (IllegalArgumentException iae) {
+                throw new CommandWarn("Invalid arguments: " + args[1] + ", " + args[2]);
+            }
+        }
+        return true;
+    }
+
+    protected boolean shinesDisable(CommandSender sender, String[] args) {
+        if (args.length != 0) return false;
+        plugin.shinesDisabled = true;
+        sender.sendMessage(Component.text("Shines disabled!", NamedTextColor.RED));
+        return true;
+    }
+
+    protected boolean shinesEnable(CommandSender sender, String[] args) {
+        if (args.length != 0) return false;
+        plugin.shinesDisabled = false;
+        sender.sendMessage(Component.text("Shines enabled!", NamedTextColor.AQUA));
         return true;
     }
 }

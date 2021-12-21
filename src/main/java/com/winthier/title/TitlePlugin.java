@@ -44,6 +44,7 @@ public final class TitlePlugin extends JavaPlugin {
     private final Map<String, SQLSuffix> suffixes = new HashMap<>();
     private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
     private final Map<String, Title> nameTitleMap = new HashMap<>();
+    protected boolean shinesDisabled = false;
 
     @Override
     public void onEnable() {

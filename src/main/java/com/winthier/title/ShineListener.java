@@ -41,6 +41,7 @@ public final class ShineListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (plugin.shinesDisabled) return;
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SPECTATOR) return;
         Location from = event.getFrom();
@@ -62,6 +63,7 @@ public final class ShineListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onProjectileHit(ProjectileHitEvent event) {
+        if (plugin.shinesDisabled) return;
         if (!(event.getEntity() instanceof AbstractArrow)) return;
         Projectile proj = event.getEntity();
         if (proj.getPersistentDataContainer().has(shineKey, PersistentDataType.BYTE)) return;
@@ -101,6 +103,7 @@ public final class ShineListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerMove(PlayerMoveEvent event) {
+        if (plugin.shinesDisabled) return;
         Player player = event.getPlayer();
         if (!player.isGliding()) return;
         Session session = plugin.findSession(player);

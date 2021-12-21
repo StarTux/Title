@@ -26,6 +26,10 @@ public final class ShineCommand implements TabExecutor {
             return true;
         }
         if (args.length == 0) {
+            if (plugin.shinesDisabled) {
+                sender.sendMessage(Component.text("Shines are currently disabled!", NamedTextColor.RED));
+                return true;
+            }
             Shine shine = plugin.getPlayerShine(player);
             if (shine == null) {
                 player.sendMessage(ChatColor.RED + "You don't have a shine selected!");
@@ -56,7 +60,9 @@ public final class ShineCommand implements TabExecutor {
                 }
                 session.setShine(shine);
             }
-            ShinePlace.of(player.getEyeLocation(), new Vector(0.0, 2.0, 0.0), 2.0).show(shine);
+            if (!plugin.shinesDisabled) {
+                ShinePlace.of(player.getEyeLocation(), new Vector(0.0, 2.0, 0.0), 2.0).show(shine);
+            }
             player.sendMessage(Component.text()
                                .content("Shine selected: " + shine.humanName)
                                .color(shine.color).build());
