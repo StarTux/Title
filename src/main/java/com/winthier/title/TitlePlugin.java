@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.winthier.playercache.PlayerCache;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.PlayerInfo;
@@ -262,7 +263,7 @@ public final class TitlePlugin extends JavaPlugin {
                 List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
                 Bukkit.getScheduler().runTask(this, () -> {
                         if (!player.isOnline()) return;
-                        sessions.put(uuid, new Session(this, player, playerRow, unlockedRows, suffixRows));
+                        sessions.put(uuid, new Session(this, uuid, player.getName(), playerRow, unlockedRows, suffixRows));
                         updatePlayerName(player);
                     });
             });
@@ -285,6 +286,16 @@ public final class TitlePlugin extends JavaPlugin {
 
     public Session findSession(Player player) {
         return sessions.get(player.getUniqueId());
+    }
+
+    public Session sessionOf(PlayerCache player) {
+        Session existingSession = sessions.get(player.uuid);
+        if (existingSession != null) return existingSession;
+        PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", player.uuid).findUnique();
+        if (playerRow == null) playerRow = new PlayerInfo(player.uuid);
+        List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", player.uuid).findList();
+        List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", player.uuid).findList();
+        return new Session(this, player.uuid, player.name, playerRow, unlockedRows, suffixRows);
     }
 
     protected boolean addTitle(Title title) {

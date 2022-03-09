@@ -33,6 +33,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
 public final class TitlesCommand implements TabExecutor {
@@ -143,6 +145,9 @@ public final class TitlesCommand implements TabExecutor {
         rootNode.addChild("session").arguments("[player]")
             .description("Session info")
             .senderCaller(this::session);
+        rootNode.addChild("transfer").arguments("<from> <to>")
+            .description("Transfer all player titles")
+            .senderCaller(this::transfer);
         // /titles suffix
         CommandNode suffixNode = rootNode.addChild("suffix")
             .description("Suffix commands");
@@ -854,6 +859,33 @@ public final class TitlesCommand implements TabExecutor {
         } else {
             return false;
         }
+    }
+
+    private boolean transfer(CommandSender sender, String[] args) {
+        if (args.length != 2) return false;
+        PlayerCache from = PlayerCache.forArg(args[0]);
+        if (from == null) throw new CommandWarn("Player not found: " + args[0]);
+        PlayerCache to = PlayerCache.forArg(args[1]);
+        if (to == null) throw new CommandWarn("Player not found: " + args[1]);
+        if (from.equals(to)) throw new CommandWarn("Players are identical: " + from.getName());
+        Session fromSession = plugin.sessionOf(from);
+        Session toSession = plugin.sessionOf(to);
+        List<String> playerTitles = List.copyOf(fromSession.unlockedRows.keySet());
+        if (playerTitles.isEmpty()) throw new CommandWarn(from.name + " does not have any titles");
+        int count = 0;
+        for (String titleName : playerTitles) {
+            Title title = plugin.getTitle(titleName);
+            if (title == null) {
+                sender.sendMessage(text("Title not found: " + titleName, RED));
+                continue;
+            }
+            fromSession.lockTitle(title);
+            if (toSession.unlockTitle(title)) count += 1;
+        }
+        sender.sendMessage(text("Transferred titles from " + from.name + " to " + to.name + ":"
+                                + " titles=" + playerTitles.size()
+                                + " count=" + count, YELLOW));
+        return true;
     }
 
     boolean suffixList(CommandSender sender, String[] args) {

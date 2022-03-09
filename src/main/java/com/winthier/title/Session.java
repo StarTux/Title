@@ -42,11 +42,11 @@ public final class Session {
     protected Component teamPrefix = Component.empty(); // derived
     protected Component teamSuffix = Component.empty(); // derived
 
-    public Session(final TitlePlugin plugin, final Player player, final PlayerInfo playerRow,
+    public Session(final TitlePlugin plugin, final UUID uuid, final String playerName, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {
         this.plugin = plugin;
-        this.uuid = player.getUniqueId();
-        this.playerName = player.getName();
+        this.uuid = uuid;
+        this.playerName = playerName;
         this.playerRow = playerRow;
         for (UnlockedInfo row : unlockedList) {
             unlockedRows.put(row.getTitle(), row);
@@ -120,7 +120,10 @@ public final class Session {
     }
 
     public boolean resetTitle() {
-        return resetTitle(getPlayer());
+        Player player = getPlayer();
+        return player != null
+            ? resetTitle(player)
+            : false;
     }
 
     public boolean resetTitle(Player player) {
