@@ -147,6 +147,7 @@ public final class TitlesCommand implements TabExecutor {
             .senderCaller(this::session);
         rootNode.addChild("transfer").arguments("<from> <to>")
             .description("Transfer all player titles")
+            .completers(PlayerCache.NAME_COMPLETER, PlayerCache.NAME_COMPLETER)
             .senderCaller(this::transfer);
         // /titles suffix
         CommandNode suffixNode = rootNode.addChild("suffix")
