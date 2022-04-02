@@ -34,6 +34,7 @@ public enum TitleCategory {
     SPLEEF(Group.EVENT),
     SURVIVAL_GAMES(Group.EVENT),
     SWITCHCARTS(Group.EVENT),
+    TETRIS(Group.EVENT),
     TREASURE_HUNT(Group.EVENT),
     ULTRA_HARDCORE(Group.EVENT),
     VERTIGO(Group.EVENT),
