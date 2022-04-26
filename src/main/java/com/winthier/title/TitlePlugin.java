@@ -209,7 +209,9 @@ public final class TitlePlugin extends JavaPlugin {
         team.addEntry(owner.getName());
         team.prefix(session.teamPrefix);
         team.suffix(session.teamSuffix);
-        team.color(session.color);
+        try {
+            team.color(session.color);
+        } catch (NullPointerException npe) { }
     }
 
     protected void resetPlayerScoreboards(Player owner) {
