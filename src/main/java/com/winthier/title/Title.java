@@ -1,6 +1,7 @@
 package com.winthier.title;
 
 import com.cavetale.core.font.Emoji;
+import com.winthier.sql.SQLRow;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -16,7 +17,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 @Data @Table(name = "titles")
-public final class Title implements Comparable<Title> {
+public final class Title implements SQLRow, Comparable<Title> {
     @Id
     private Integer id;
     @Column(nullable = false, length = 32, unique = true)

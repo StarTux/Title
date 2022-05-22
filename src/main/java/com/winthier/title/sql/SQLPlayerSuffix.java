@@ -1,5 +1,6 @@
 package com.winthier.title.sql;
 
+import com.winthier.sql.SQLRow;
 import java.util.Date;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -16,7 +17,7 @@ import lombok.Data;
        uniqueConstraints = {
            @UniqueConstraint(columnNames = {"player", "suffix"})
        })
-public final class SQLPlayerSuffix {
+public final class SQLPlayerSuffix implements SQLRow {
     @Id
     private Integer id;
     @Column(nullable = false)

@@ -1,10 +1,11 @@
 main: com.winthier.title.TitlePlugin
 name: Title
-description: Manage custom player titles
 
-author: StarTux
 version: 0.1
-api-version: 1.17
+api-version: 1.18
+
+description: Manage custom player titles
+author: StarTux
 website: https://cavetale.com
 
 depend: [Core, Perm, SQL, PlayerCache]

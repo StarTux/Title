@@ -119,8 +119,8 @@ public final class TitleCommand implements TabExecutor {
         player.sendMessage(Component.text()
                            .append(Component.text("Set title to ", NamedTextColor.AQUA))
                            .append(title.getTitleTag()));
-        PluginPlayerEvent.Name.SELECT_PLAYER_TITLE.ultimate(plugin, player)
-            .detail(Detail.NAME, title.getName()).call();
+        PluginPlayerEvent.Name.SELECT_PLAYER_TITLE.make(plugin, player)
+            .detail(Detail.NAME, title.getName()).callEvent();
         return true;
     }
 }

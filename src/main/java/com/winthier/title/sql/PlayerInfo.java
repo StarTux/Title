@@ -1,5 +1,6 @@
 package com.winthier.title.sql;
 
+import com.winthier.sql.SQLRow;
 import com.winthier.title.Shine;
 import com.winthier.title.TitlePlugin;
 import java.util.UUID;
@@ -9,7 +10,7 @@ import javax.persistence.Table;
 import lombok.Data;
 
 @Data @Table(name = "players")
-public final class PlayerInfo {
+public final class PlayerInfo implements SQLRow {
     @Id
     private Integer id;
     @Column(nullable = false, unique = true)

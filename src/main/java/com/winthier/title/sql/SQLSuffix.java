@@ -2,6 +2,7 @@ package com.winthier.title.sql;
 
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.font.Unicode;
+import com.winthier.sql.SQLRow;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -9,7 +10,7 @@ import lombok.Data;
 import net.kyori.adventure.text.Component;
 
 @Data @Table(name = "suffixes")
-public final class SQLSuffix implements Comparable<SQLSuffix> {
+public final class SQLSuffix implements SQLRow, Comparable<SQLSuffix> {
     @Id
     private Integer id;
     @Column(nullable = false, length = 32, unique = true)

@@ -1,5 +1,6 @@
 package com.winthier.title.sql;
 
+import com.winthier.sql.SQLRow;
 import java.util.Date;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -15,7 +16,7 @@ import lombok.Data;
 @Data
 @Table(name = "unlocked",
        uniqueConstraints = {@UniqueConstraint(columnNames = {"player", "title"})})
-public class UnlockedInfo {
+public final class UnlockedInfo implements SQLRow {
     @Id
     private Integer id;
     @Column(nullable = false)
