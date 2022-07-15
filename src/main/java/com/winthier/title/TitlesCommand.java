@@ -5,7 +5,7 @@ import com.cavetale.core.command.CommandContext;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
 import com.cavetale.core.font.Emoji;
-import com.winthier.playercache.PlayerCache;
+import com.cavetale.core.playercache.PlayerCache;
 import com.winthier.title.html.HtmlExporter;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.SQLSuffix;

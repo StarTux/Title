@@ -1,6 +1,6 @@
 package com.winthier.title;
 
-import com.winthier.perm.event.PlayerPermissionUpdateEvent;
+import com.cavetale.core.event.perm.PlayerPermissionUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

@@ -1,6 +1,6 @@
 package com.winthier.title;
 
-import com.winthier.playercache.PlayerCache;
+import com.cavetale.core.playercache.PlayerCache;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.PlayerInfo;
