@@ -51,11 +51,11 @@ public final class TitlePlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
         db = new SQLDatabase(this);
-        db.registerTables(PlayerInfo.class,
-                          Title.class,
-                          UnlockedInfo.class,
-                          SQLSuffix.class,
-                          SQLPlayerSuffix.class);
+        db.registerTables(List.of(PlayerInfo.class,
+                                  Title.class,
+                                  UnlockedInfo.class,
+                                  SQLSuffix.class,
+                                  SQLPlayerSuffix.class));
         if (!db.createAllTables()) {
             throw new IllegalStateException("Database init failed!");
         }
@@ -152,7 +152,7 @@ public final class TitlePlugin extends JavaPlugin {
         } else {
             TextComponent.Builder displayNameBuilder = Component.text();
             if (title.isPrefix()) {
-                Component titleTag = title.getTitleTag();
+                Component titleTag = title.getTitleTag(player.getUniqueId());
                 displayNameBuilder.append(titleTag);
                 session.teamPrefix = titleTag;
             }

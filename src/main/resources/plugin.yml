@@ -8,7 +8,7 @@ description: Manage custom player titles
 author: StarTux
 website: https://cavetale.com
 
-depend: [Core, SQL]
+depend: [Core, SQL, Mytems]
 softdepend: []
 
 commands:

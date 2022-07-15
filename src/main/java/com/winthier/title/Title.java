@@ -1,7 +1,10 @@
 package com.winthier.title;
 
 import com.cavetale.core.font.Emoji;
+import com.cavetale.core.perm.Perm;
+import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLRow;
+import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -52,6 +55,20 @@ public final class Title implements SQLRow, Comparable<Title> {
         this.description = description;
     }
 
+    /** Copy constructor. */
+    public Title(final Title other) {
+        this.name = other.name;
+        this.description = other.description;
+        this.priority = other.priority;
+        this.titleJson = other.titleJson;
+        this.nameColor = other.nameColor;
+        this.prefix = other.prefix;
+        this.shine = other.shine;
+        this.category = other.category;
+        this.suffix = other.suffix;
+        this.categoryCache = other.categoryCache;
+    }
+
     private static String colorize(String in) {
         return ChatColor.translateAlternateColorCodes('&', in);
     }
@@ -73,6 +90,12 @@ public final class Title implements SQLRow, Comparable<Title> {
         return ChatColor.stripColor(formattedDescription());
     }
 
+    public Component getTitleComponent(UUID owner) {
+        return owner != null && name.equals("Tier")
+            ? Glyph.toComponent("" + Perm.get().getLevel(owner))
+            : getTitleComponent();
+    }
+
     public Component getTitleComponent() {
         if (titleJson == null) return Component.text(formatted());
         if (titleJson.startsWith(":") && titleJson.endsWith(":")) {
@@ -81,16 +104,20 @@ public final class Title implements SQLRow, Comparable<Title> {
         return Msg.parseComponent(titleJson);
     }
 
-    public Component getTitleTag() {
-        return getTitleComponent()
+    public Component getTitleTag(UUID owner) {
+        return getTitleComponent(owner)
             .insertion(name)
-            .hoverEvent(HoverEvent.showText(getTooltip()))
+            .hoverEvent(HoverEvent.showText(getTooltip(owner)))
             .clickEvent(ClickEvent.suggestCommand("/title " + name));
     }
 
-    public Component getTooltip() {
+    public Component getTitleTag() {
+        return getTitleTag(null);
+    }
+
+    public Component getTooltip(UUID owner) {
         TextComponent.Builder tooltip = Component.text();
-        tooltip.append(getTitleComponent());
+        tooltip.append(getTitleComponent(owner));
         if (prefix) {
             tooltip.append(Component.space());
             TextFormat textFormat = getNameTextFormat();
@@ -104,6 +131,10 @@ public final class Title implements SQLRow, Comparable<Title> {
             tooltip.append(Component.text(formattedDescription(), NamedTextColor.WHITE));
         }
         return tooltip.build();
+    }
+
+    public Component getTooltip() {
+        return getTooltip(null);
     }
 
     public TextFormat getNameTextFormat() {

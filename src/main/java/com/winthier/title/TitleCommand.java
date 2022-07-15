@@ -69,7 +69,7 @@ public final class TitleCommand implements TabExecutor {
                            .append(Component.space())
                            .append(Component.text("(Current:", NamedTextColor.DARK_AQUA))
                            .append(Component.space())
-                           .append(currentTitle != null ? currentTitle.getTitleComponent() : Component.empty())
+                           .append(currentTitle != null ? currentTitle.getTitleComponent(player.getUniqueId()) : Component.empty())
                            .append(Component.text(")", NamedTextColor.DARK_AQUA))
                            .append(Component.space())
                            .append(Component.text("Click to switch", NamedTextColor.GRAY, TextDecoration.ITALIC))
@@ -78,14 +78,14 @@ public final class TitleCommand implements TabExecutor {
         for (Title title : titles) {
             cb.append(Component.text(" "));
             TextComponent.Builder tooltip = Component.text();
-            tooltip.append(title.getTitleComponent());
+            tooltip.append(title.getTitleComponent(player.getUniqueId()));
             if (title.getDescription() != null) {
                 tooltip.append(Component.text("\n" + title.formattedDescription()));
             }
             tooltip.append(Component.text("\nClick to use this title", NamedTextColor.AQUA, TextDecoration.ITALIC));
             cb.append(Component.text()
                       .append(Component.text("["))
-                      .append(title.getTitleComponent())
+                      .append(title.getTitleComponent(player.getUniqueId()))
                       .append(Component.text("]"))
                       .hoverEvent(HoverEvent.showText(tooltip.build()))
                       .clickEvent(ClickEvent.runCommand("/title " + title.getName())));
@@ -118,7 +118,7 @@ public final class TitleCommand implements TabExecutor {
         }
         player.sendMessage(Component.text()
                            .append(Component.text("Set title to ", NamedTextColor.AQUA))
-                           .append(title.getTitleTag()));
+                           .append(title.getTitleTag(player.getUniqueId())));
         PluginPlayerEvent.Name.SELECT_PLAYER_TITLE.make(plugin, player)
             .detail(Detail.NAME, title.getName()).callEvent();
         return true;
