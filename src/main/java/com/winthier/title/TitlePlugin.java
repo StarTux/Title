@@ -1,6 +1,8 @@
 package com.winthier.title;
 
+import com.cavetale.core.perm.Perm;
 import com.cavetale.core.playercache.PlayerCache;
+import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.PlayerInfo;
@@ -28,6 +30,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 /**
  * Plugin class.
@@ -126,6 +132,11 @@ public final class TitlePlugin extends JavaPlugin {
             });
     }
 
+    private static Component tierForPlayerList(Player player) {
+        return join(noSeparators(), text("["), Glyph.toComponent("" + Perm.get().getLevel(player.getUniqueId())), text("]"))
+            .color(GRAY);
+    }
+
     public void updatePlayerName(Player player) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null) return;
@@ -137,13 +148,15 @@ public final class TitlePlugin extends JavaPlugin {
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             player.displayName(null);
-            player.playerListName(null);
+            player.playerListName(join(noSeparators(), tierForPlayerList(player), text(player.getName())));
             resetPlayerScoreboards(player);
             return;
         }
         TextComponent.Builder playerListBuilder = Component.text();
         if (session.playerListPrefix != null) {
             playerListBuilder.append(session.playerListPrefix);
+        } else if (!title.isPrefix()) {
+            playerListBuilder.append(tierForPlayerList(player));
         }
         Component displayName;
         if (nameColor == null && !title.isPrefix() && suffix == null) {
