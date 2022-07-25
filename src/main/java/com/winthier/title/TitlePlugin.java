@@ -134,7 +134,8 @@ public final class TitlePlugin extends JavaPlugin {
 
     private static Component tierForPlayerList(Player player) {
         return join(noSeparators(), text("["), Glyph.toComponent("" + Perm.get().getLevel(player.getUniqueId())), text("]"))
-            .color(GRAY);
+            .color(GRAY)
+            .decoration(TextDecoration.ITALIC, false);
     }
 
     public void updatePlayerName(Player player) {
