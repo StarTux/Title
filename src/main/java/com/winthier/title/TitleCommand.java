@@ -2,8 +2,8 @@ package com.winthier.title;
 
 import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
 import com.cavetale.core.event.player.PluginPlayerEvent;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -48,10 +48,17 @@ public final class TitleCommand implements TabExecutor {
         Player player = (Player) sender;
         if (args.length == 0) return null;
         if (args.length == 1) {
-            return plugin.getPlayerTitles(player).stream()
-                .map(Title::getName)
-                .filter(s -> s.startsWith(args[0]))
-                .collect(Collectors.toList());
+            List<String> result = new ArrayList<>();
+            String lower = args[0].toLowerCase();
+            for (Title title : plugin.getPlayerTitles(player)) {
+                if (title.getName().toLowerCase().contains(lower)) {
+                    result.add(title.getName());
+                }
+            }
+            if ("default".contains(lower)) {
+                result.add("default");
+            }
+            return result;
         }
         return null;
     }
