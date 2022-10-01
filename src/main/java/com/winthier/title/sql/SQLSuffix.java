@@ -8,6 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.Component.text;
 
 @Data @Table(name = "suffixes")
 public final class SQLSuffix implements SQLRow, Comparable<SQLSuffix> {
@@ -62,6 +63,10 @@ public final class SQLSuffix implements SQLRow, Comparable<SQLSuffix> {
                 this.partOfName = false;
                 this.character = (char) 0;
             }
+        } else if (format.length() == 1) {
+            this.partOfName = true;
+            this.component = text(format);
+            this.character = format.charAt(0);
         } else {
             invalidate();
         }
