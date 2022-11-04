@@ -4,20 +4,29 @@ import com.cavetale.core.font.Emoji;
 import com.cavetale.core.perm.Perm;
 import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLRow;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import static com.cavetale.mytems.util.Text.ITEM_LORE_WIDTH;
+import static com.cavetale.mytems.util.Text.wrapLine;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.newline;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Data @Table(name = "titles")
 public final class Title implements SQLRow, Comparable<Title> {
@@ -98,7 +107,7 @@ public final class Title implements SQLRow, Comparable<Title> {
     }
 
     public Component getTitleComponent() {
-        if (titleJson == null) return Component.text(formatted());
+        if (titleJson == null) return text(formatted());
         if (titleJson.startsWith(":") && titleJson.endsWith(":")) {
             return Emoji.getComponent(titleJson.substring(1, titleJson.length() - 1));
         }
@@ -117,21 +126,25 @@ public final class Title implements SQLRow, Comparable<Title> {
     }
 
     public Component getTooltip(UUID owner) {
-        TextComponent.Builder tooltip = Component.text();
-        tooltip.append(getTitleComponent(owner));
-        if (prefix) {
-            tooltip.append(Component.space());
+        List<Component> lines = new ArrayList<>();
+        if (!prefix) {
+            lines.add(getTitleComponent(owner));
+        } else {
             TextFormat textFormat = getNameTextFormat();
             TextColor titleColor = textFormat != null && textFormat instanceof TextColor
                 ? (TextColor) textFormat
                 : TextColor.color(0xffffff);
-            tooltip.append(Component.text(name, titleColor));
+            lines.add(join(noSeparators(),
+                           getTitleComponent(owner),
+                           space(),
+                           text(name, titleColor)));
         }
         if (description != null) {
-            tooltip.append(Component.newline());
-            tooltip.append(Component.text(formattedDescription(), NamedTextColor.WHITE));
+            for (String line : wrapLine(description, ITEM_LORE_WIDTH)) {
+                lines.add(text(line, GRAY));
+            }
         }
-        return tooltip.build();
+        return join(separator(newline()), lines);
     }
 
     public Component getTooltip() {
@@ -147,7 +160,7 @@ public final class Title implements SQLRow, Comparable<Title> {
                 TitlePlugin.getInstance().getLogger().warning("Invalid color code: " + nameColor);
             }
         }
-        TextColor textColor = NamedTextColor.NAMES.value(nameColor);
+        TextColor textColor = NAMES.value(nameColor);
         if (textColor != null) return textColor;
         return TextEffect.of(nameColor);
     }

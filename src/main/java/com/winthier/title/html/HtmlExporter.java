@@ -39,7 +39,9 @@ public final class HtmlExporter {
         }
         Map<TitleCategory, List<TitleEntry>> titlesMap = new EnumMap<>(TitleCategory.class);
         for (Title title : titles) {
-            titlesMap.computeIfAbsent(title.parseCategory(), c -> new ArrayList<>())
+            TitleCategory category = title.parseCategory();
+            if (category == TitleCategory.HIDDEN) continue;
+            titlesMap.computeIfAbsent(category, c -> new ArrayList<>())
                 .add(TitleEntry.of(title, unlockedMap.getOrDefault(title.getName(), 0)));
         }
         HtmlNode rootNode = HtmlNode.Type.HTML.node();

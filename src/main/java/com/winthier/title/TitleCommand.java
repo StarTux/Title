@@ -9,15 +9,14 @@ import com.cavetale.core.event.player.PluginPlayerEvent;
 import com.cavetale.core.font.DefaultFont;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -34,7 +33,9 @@ import static net.kyori.adventure.text.event.ClickEvent.changePage;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextColor.color;
 import static net.kyori.adventure.text.format.TextDecoration.*;
+import static org.bukkit.ChatColor.stripColor;
 
 public final class TitleCommand extends AbstractCommand<TitlePlugin> {
     protected TitleCommand(final TitlePlugin plugin) {
@@ -111,41 +112,37 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
 
     @AllArgsConstructor
     private static final class BookLine {
-        private static final BookLine EMPTY = new BookLine(empty(), null, null);
+        private static final BookLine EMPTY = new BookLine(empty());
         private Component component;
-        /** This will be absorbed by BookPage and tells which page a link should go to. */
-        private final TitleGroup group;
-        /** This will be absorbed by BookPage and tells which page a link should go to. */
-        private final TitleCategory category;
     }
 
     @RequiredArgsConstructor
     private static final class BookPage {
+        private final List<Component> header;
         private final List<BookLine> lines;
         private TitleGroup group;
-        private final Set<TitleCategory> categories = EnumSet.noneOf(TitleCategory.class);
+        private TitleCategory category;
 
         private Component build() {
             List<ComponentLike> components = new ArrayList<>(lines.size());
+            components.addAll(header);
             for (BookLine line : lines) {
                 components.add(line.component);
             }
             return join(separator(newline()), components);
         }
 
-        private static List<BookPage> fromLines(List<BookLine> lines) {
+        private static List<BookPage> fromLines(List<Component> header, List<BookLine> lines, TitleGroup group, TitleCategory category) {
             final int lineCount = lines.size();
-            final int linesPerPage = 14;
+            final int linesPerPage = 14 - header.size();
             List<BookPage> pages = new ArrayList<>((lineCount - 1) / linesPerPage + 1);
             for (int i = 0; i < lineCount; i += linesPerPage) {
                 List<BookLine> subLines = List.copyOf(lines.subList(i, Math.min(lines.size(), i + linesPerPage)));
-                BookPage page = new BookPage(subLines);
-                for (BookLine line : subLines) {
-                    if (line.group != null) page.group = line.group;
-                    if (line.category != null) page.categories.add(line.category);
-                }
+                BookPage page = new BookPage(header, subLines);
                 pages.add(page);
             }
+            pages.get(0).group = group;
+            pages.get(0).category = category;
             lines.clear();
             return pages;
         }
@@ -165,6 +162,19 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 });
             player.openBook(book);
         }
+    }
+
+    private static Component gray(Component component) {
+        component = component.color(color(0x282828));
+        if (component instanceof TextComponent tc) {
+            component = tc.content(stripColor(tc.content()));
+        }
+        List<Component> children = new ArrayList<>(component.children());
+        for (int i = 0; i < children.size(); i += 1) {
+            children.set(i, gray(children.get(i)));
+        }
+        component = component.children(children);
+        return component;
     }
 
     /**
@@ -189,71 +199,79 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
         Map<TitleCategory, BookLine> categoryLinks = new EnumMap<>(TitleCategory.class);
         Map<TitleGroup, Integer> groupCounts = new EnumMap<>(TitleGroup.class);
         Map<TitleCategory, Integer> categoryCounts = new EnumMap<>(TitleCategory.class);
+        Map<TitleGroup, Integer> groupMax = new EnumMap<>(TitleGroup.class);
+        Map<TitleCategory, Integer> categoryMax = new EnumMap<>(TitleCategory.class);
         List<ComponentLike> linkComponents = new ArrayList<>();
         // Make the Group links
-        lines.add(new BookLine(text("Your Titles", DARK_AQUA, BOLD), null, null));
-        lines.add(BookLine.EMPTY);
         List<PlayerTitleCollection.GroupCollection> groups = collection.allGroups();
         for (int i = 0; i < groups.size(); i += 1) {
             final PlayerTitleCollection.GroupCollection group = groups.get(i);
             final int count = group.countUnlocked();
             groupCounts.put(group.getGroup(), count);
-            if (count == 0) continue;
+            final int max = group.count();
+            groupMax.put(group.getGroup(), max);
+            if (max == 0) continue;
+            // TOC
             BookLine line = new BookLine(join(noSeparators(),
                                               text(subscript(roman(i + 1).toLowerCase()) + ". ", DARK_GRAY),
-                                              text(group.getGroup().getDisplayName(), DARK_BLUE)),
-                                         null, null); // This is a TOC entry!
+                                              text(group.getGroup().getDisplayName(), DARK_BLUE)));
             groupLinks.put(group.getGroup(), line);
             lines.add(line);
         }
-        bookPages.addAll(BookPage.fromLines(lines)); // clear lines
+        bookPages.addAll(BookPage.fromLines(List.of(text("Your Titles", DARK_AQUA, BOLD),
+                                                    text("(" + collection.countUnlocked() + "/" + collection.count() + ")", GRAY),
+                                                    empty()),
+                                            lines, null, null)); // clear lines
         final UUID uuid = player.getUniqueId();
         for (PlayerTitleCollection.GroupCollection group : groups) {
             if (group.countUnlocked() == 0) continue;
-            // Group Header
-            lines.add(new BookLine(text(group.getGroup().getDisplayName(), DARK_AQUA, BOLD)
-                                   .hoverEvent(showText(join(separator(newline()),
-                                                             text(group.getGroup().getDisplayName(), AQUA),
-                                                             text("Group", DARK_GRAY, ITALIC),
-                                                             text("Go Back", GRAY))))
-                                   .clickEvent(changePage(1)),
-                                   group.getGroup(), null));
-            lines.add(BookLine.EMPTY);
             // Make category TOC
             List<PlayerTitleCollection.CategoryCollection> categories = group.allCategories();
             for (int i = 0; i < categories.size(); i += 1) {
                 PlayerTitleCollection.CategoryCollection category = categories.get(i);
                 final int count = category.countUnlocked();
                 categoryCounts.put(category.getCategory(), count);
-                if (count == 0) continue;
+                final int max = category.count();
+                categoryMax.put(category.getCategory(), max);
+                if (max == 0) continue;
+                // TOC
                 BookLine line = new BookLine(join(noSeparators(),
                                                   text(subscript((i + 1) + ") "), DARK_GRAY),
-                                                  text(category.getCategory().getShorthand(), DARK_BLUE)),
-                                             null, null); // This is a TOC entry!
+                                                  text(category.getCategory().getShorthand(), DARK_BLUE)));
                 categoryLinks.put(category.getCategory(), line);
                 lines.add(line);
             }
-            bookPages.addAll(BookPage.fromLines(lines)); // clear
+            bookPages.addAll(BookPage.fromLines(List.of(text(group.getGroup().getDisplayName(), DARK_AQUA, BOLD)
+                                                        .hoverEvent(showText(join(separator(newline()),
+                                                                                  text(group.getGroup().getDisplayName(), AQUA),
+                                                                                  text("Group", DARK_GRAY, ITALIC),
+                                                                                  text("Go Back", GRAY))))
+                                                        .clickEvent(changePage(1)),
+                                                        empty()),
+                                                lines, group.getGroup(), null)); // clear
             // Make categories
             for (PlayerTitleCollection.CategoryCollection category : categories) {
                 if (category.countUnlocked() == 0) continue;
                 // Category Header
-                lines.add(new BookLine(text(category.getCategory().getShorthand(), DARK_AQUA, UNDERLINED)
-                                       .hoverEvent(showText(join(separator(newline()),
-                                                                 text(category.getCategory().getDisplayName(), AQUA),
-                                                                 text("Category", DARK_GRAY, ITALIC),
-                                                                 text("Go Back", GRAY))))
-                                       .clickEvent(changePage(1)),
-                                       null, category.getCategory()));
-                lines.add(BookLine.EMPTY);
                 for (PlayerTitleCollection.CollectedTitle title : category.allTitles()) {
-                    if (!title.isUnlocked()) continue;
-                    lines.add(new BookLine(DefaultFont.bookmarked(title.getTitle().getTitleComponent(uuid))
-                                           .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
-                                           .clickEvent(runCommand("/title " + title.getTitle().getName())),
-                                           null, null));
+                    if (!title.isUnlocked()) {
+                        lines.add(new BookLine(DefaultFont.bookmarked(color(0x505050), gray(title.getTitle().getTitleComponent(uuid)))
+                                               .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
+                                               .clickEvent(runCommand("/title " + title.getTitle().getName()))));
+                    } else {
+                        lines.add(new BookLine(DefaultFont.bookmarked(color(0x000030), title.getTitle().getTitleComponent(uuid))
+                                               .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
+                                               .clickEvent(runCommand("/title " + title.getTitle().getName()))));
+                    }
                 }
-                bookPages.addAll(BookPage.fromLines(lines)); // clear
+                bookPages.addAll(BookPage.fromLines(List.of(text(category.getCategory().getShorthand(), DARK_AQUA, UNDERLINED)
+                                                            .hoverEvent(showText(join(separator(newline()),
+                                                                                      text(category.getCategory().getDisplayName(), AQUA),
+                                                                                      text("Category", DARK_GRAY, ITALIC),
+                                                                                      text("Go Back", GRAY))))
+                                                            .clickEvent(changePage(1)),
+                                                            empty()),
+                                                    lines, null, category.getCategory())); // clear
             }
         }
         for (int i = 0; i < bookPages.size(); i += 1) {
@@ -263,25 +281,27 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 BookLine link = groupLinks.get(page.group);
                 if (link != null) {
                     final int count = groupCounts.get(page.group);
+                    final int max = groupMax.get(page.group);
                     link.component = link.component
                         .hoverEvent(join(separator(newline()),
                                          text(page.group.getDisplayName(), BLUE),
                                          text("Group", DARK_GRAY, ITALIC),
                                          text("Page " + pageNo, GRAY),
-                                         text(count + (count == 1 ? " Title" : " Titles"), GRAY)))
+                                         text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
                         .clickEvent(changePage(i + 1));
                 }
             }
-            for (TitleCategory category : page.categories) {
-                BookLine link = categoryLinks.get(category);
+            if (page.category != null) {
+                BookLine link = categoryLinks.get(page.category);
                 if (link != null) {
-                    final int count = categoryCounts.get(category);
+                    final int count = categoryCounts.get(page.category);
+                    final int max = categoryMax.get(page.category);
                     link.component = link.component
                         .hoverEvent(join(separator(newline()),
-                                         text(category.getDisplayName(), BLUE),
+                                         text(page.category.getDisplayName(), BLUE),
                                          text("Category", DARK_GRAY, ITALIC),
                                          text("Page " + pageNo, DARK_GRAY),
-                                         text(count + (count == 1 ? " Title" : " Titles"), GRAY)))
+                                         text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
                         .clickEvent(changePage(i + 1));
                 }
             }

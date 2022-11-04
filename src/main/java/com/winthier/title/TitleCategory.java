@@ -56,6 +56,7 @@ public enum TitleCategory {
     LEGACY(TitleGroup.OTHER),
     ACHIEVEMENT(TitleGroup.OTHER),
     UNKNOWN(TitleGroup.UNKNOWN),
+    HIDDEN(TitleGroup.UNKNOWN),
     ;
 
     private static final Map<String, TitleCategory> KEY_MAP = new HashMap<>();
