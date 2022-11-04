@@ -3,6 +3,7 @@ package com.winthier.title.html;
 import com.winthier.title.Msg;
 import com.winthier.title.Title;
 import com.winthier.title.TitleCategory;
+import com.winthier.title.TitleGroup;
 import com.winthier.title.TitlePlugin;
 import com.winthier.title.sql.UnlockedInfo;
 import java.io.File;
@@ -76,8 +77,8 @@ public final class HtmlExporter {
                     });
             });
         rootNode.withChild(HtmlNode.Type.BODY, body -> {
-                for (TitleCategory.Group group : TitleCategory.Group.values()) {
-                    if (group == TitleCategory.Group.UNKNOWN) continue;
+                for (TitleGroup group : TitleGroup.values()) {
+                    if (group == TitleGroup.UNKNOWN) continue;
                     body.withChild(HtmlNode.Type.H2, h2 -> {
                             h2.withChild(HtmlNode.Type.A, a -> {
                                     a.withText(Msg.toCamelCase(group));

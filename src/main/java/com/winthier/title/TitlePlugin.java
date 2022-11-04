@@ -65,7 +65,7 @@ public final class TitlePlugin extends JavaPlugin {
         if (!db.createAllTables()) {
             throw new IllegalStateException("Database init failed!");
         }
-        getCommand("title").setExecutor(new TitleCommand(this));
+        new TitleCommand(this).enable();
         new TitlesCommand(this).enable();
         getCommand("shine").setExecutor(new ShineCommand(this));
         getCommand("badge").setExecutor(new BadgeCommand(this));

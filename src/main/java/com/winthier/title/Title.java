@@ -46,6 +46,7 @@ public final class Title implements SQLRow, Comparable<Title> {
     @Column(nullable = true, length = 32)
     private String suffix;
     private transient TitleCategory categoryCache;
+    private transient String permission;
 
     public Title() { }
 
@@ -173,9 +174,19 @@ public final class Title implements SQLRow, Comparable<Title> {
         return shine == null ? null : Shine.ofKey(shine);
     }
 
+    public String getPermission() {
+        if (permission == null) {
+            permission = "title.unlock." + name.toLowerCase();
+        }
+        return permission;
+    }
+
     public boolean hasPermission(Player player) {
-        final String permission = "title.unlock." + name.toLowerCase();
-        return player.isPermissionSet(permission) && player.hasPermission(permission);
+        return player.isPermissionSet(getPermission()) && player.hasPermission(getPermission());
+    }
+
+    public boolean hasPermission(UUID owner) {
+        return Perm.get().has(owner, getPermission());
     }
 
     public TitleCategory parseCategory() {

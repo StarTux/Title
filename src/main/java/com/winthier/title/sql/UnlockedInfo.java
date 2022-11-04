@@ -1,29 +1,29 @@
 package com.winthier.title.sql;
 
+import com.winthier.sql.SQLRow.Name;
+import com.winthier.sql.SQLRow.NotNull;
+import com.winthier.sql.SQLRow.UniqueKey;
 import com.winthier.sql.SQLRow;
 import java.util.Date;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import lombok.Data;
 
 /**
  * Every title has a name and a title string, which is what it's
  * displayed at.
  */
-@Data
-@Table(name = "unlocked",
-       uniqueConstraints = {@UniqueConstraint(columnNames = {"player", "title"})})
+@Data @Name("unlocked") @NotNull
+@UniqueKey(value = {"player", "title"}, name = "player_title")
 public final class UnlockedInfo implements SQLRow {
     @Id
     private Integer id;
-    @Column(nullable = false)
+
     private UUID player;
-    @Column(nullable = false, length = 32)
+
+    @Keyed
     private String title;
-    @Column(nullable = false, columnDefinition = "DATETIME DEFAULT NOW()")
+
+    @Default("NOW()")
     private Date time;
 
     public UnlockedInfo() { }
