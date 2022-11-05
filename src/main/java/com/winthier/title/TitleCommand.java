@@ -255,7 +255,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 // Category Header
                 for (PlayerTitleCollection.CollectedTitle title : category.allTitles()) {
                     if (!title.isUnlocked()) {
-                        lines.add(new BookLine(DefaultFont.bookmarked(color(0x505050), gray(title.getTitle().getTitleComponent(uuid)))
+                        lines.add(new BookLine(DefaultFont.bookmarked(color(0xBEB8AA), gray(title.getTitle().getTitleComponent(uuid)))
                                                .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
                                                .clickEvent(runCommand("/title " + title.getTitle().getName()))));
                     } else {
