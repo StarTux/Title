@@ -178,7 +178,7 @@ public final class Title implements SQLRow, Comparable<Title> {
         if (prio != 0) return prio;
         prio = Integer.compare(cat.ordinal(), cat2.ordinal());
         if (prio != 0) return prio;
-        prio = Integer.compare(other.priority, priority); // highest first
+        prio = Integer.compare(priority, other.priority);
         if (prio != 0) return prio;
         return name.compareToIgnoreCase(other.name);
     }
