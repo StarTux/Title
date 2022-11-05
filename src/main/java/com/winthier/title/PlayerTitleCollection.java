@@ -95,6 +95,7 @@ public final class PlayerTitleCollection {
             TitleCategory category = title.parseCategory();
             final boolean isUnlocked = unlockedInfo != null || title.hasPermission(session.uuid);
             if (!isUnlocked && category == TitleCategory.HIDDEN) continue;
+            if (!isUnlocked && category == TitleCategory.LEGACY) continue;
             final boolean isFavorite = false;
             final CollectedTitle collected = new CollectedTitle(title, unlockedInfo, isUnlocked, isFavorite);
             groupMap.computeIfAbsent(category.group, t -> new GroupCollection(t))
