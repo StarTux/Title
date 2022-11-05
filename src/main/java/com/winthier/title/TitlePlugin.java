@@ -2,6 +2,7 @@ package com.winthier.title;
 
 import com.cavetale.core.perm.Perm;
 import com.cavetale.core.playercache.PlayerCache;
+import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
@@ -96,6 +97,19 @@ public final class TitlePlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             enter(player);
         }
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    Session session = sessions.get(player.getUniqueId());
+                    if (session == null || !session.animated) continue;
+                    session.animationFrame += 1;
+                    if (session.animationFrame >= session.displayNameAnimation.size()) {
+                        session.animationFrame = 0;
+                    }
+                    player.displayName(session.displayNameAnimation.get(session.animationFrame));
+                    player.playerListName(session.displayNameAnimation.get(session.animationFrame));
+                    updatePlayerScoreboards(player, session);
+                }
+            }, 4L, 4L);
     }
 
     @Override
@@ -146,6 +160,10 @@ public final class TitlePlugin extends JavaPlugin {
         SQLSuffix suffix = session.getSuffix(player);
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
+        session.animated = false;
+        session.animationFrame = 0;
+        session.displayNameAnimation = null;
+        session.teamPrefixAnimation = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             player.displayName(null);
@@ -164,28 +182,40 @@ public final class TitlePlugin extends JavaPlugin {
             displayName = Component.text(player.getName());
             player.displayName(null);
         } else {
-            TextComponent.Builder displayNameBuilder = Component.text();
+            List<Component> displayNameList = new ArrayList<>();
             if (title.isPrefix()) {
                 Component titleTag = title.getTitleTag(player.getUniqueId());
-                displayNameBuilder.append(titleTag);
+                displayNameList.add(titleTag);
                 session.teamPrefix = titleTag;
             }
             String playerName = suffix != null && suffix.isPartOfName()
                 ? player.getName() + suffix.getCharacter()
                 : player.getName();
             if (nameColor instanceof TextColor) {
-                displayNameBuilder.append(Component.text(playerName, (TextColor) nameColor));
+                displayNameList.add(Component.text(playerName, (TextColor) nameColor));
             } else if (nameColor instanceof TextEffect) {
                 TextEffect textEffect = (TextEffect) nameColor;
-                displayNameBuilder.append(textEffect.format(playerName));
+                displayNameList.add(textEffect.format(playerName));
             } else {
-                displayNameBuilder.append(Component.text(playerName));
+                displayNameList.add(Component.text(playerName));
             }
             if (suffix != null && !suffix.isPartOfName()) {
-                displayNameBuilder.append(suffix.getComponent());
+                displayNameList.add(suffix.getComponent());
             }
-            displayName = displayNameBuilder.build();
+            displayName = join(noSeparators(), displayNameList);
             player.displayName(displayName);
+            Mytems mytems = title.getMytems();
+            if (mytems != null && mytems.isAnimated()) {
+                session.animated = true;
+                session.displayNameAnimation = new ArrayList<>();
+                session.teamPrefixAnimation = new ArrayList<>();
+                for (int i = 0; i < mytems.getAnimationFrameCount(); i += 1) {
+                    List<Component> displayNameFrame = new ArrayList<>(displayNameList);
+                    displayNameFrame.set(0, mytems.getAnimationFrame(i));
+                    session.displayNameAnimation.add(join(noSeparators(), displayNameFrame));
+                    session.teamPrefixAnimation.add(mytems.getAnimationFrame(i));
+                }
+            }
         }
         playerListBuilder.append(Component.text().append(displayName).decoration(TextDecoration.ITALIC, false));
         if (session.playerListSuffix != null) {
@@ -221,7 +251,11 @@ public final class TitlePlugin extends JavaPlugin {
         Team team = scoreboard.getTeam(teamName);
         if (team == null) team = scoreboard.registerNewTeam(teamName);
         team.addEntry(owner.getName());
-        team.prefix(session.teamPrefix);
+        if (session.animated) {
+            team.prefix(session.teamPrefixAnimation.get(session.animationFrame));
+        } else {
+            team.prefix(session.teamPrefix);
+        }
         team.suffix(session.teamSuffix);
         try {
             team.color(session.color);

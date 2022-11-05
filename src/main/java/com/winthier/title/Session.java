@@ -41,6 +41,11 @@ public final class Session {
     protected Vector lastFlyingShine;
     protected Component teamPrefix = Component.empty(); // derived
     protected Component teamSuffix = Component.empty(); // derived
+    // Animation
+    protected boolean animated = false;
+    protected int animationFrame;
+    protected List<Component> displayNameAnimation;
+    protected List<Component> teamPrefixAnimation;
 
     public Session(final TitlePlugin plugin, final UUID uuid, final String playerName, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {

@@ -2,6 +2,7 @@ package com.winthier.title;
 
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.perm.Perm;
+import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLRow;
 import java.util.ArrayList;
@@ -104,6 +105,14 @@ public final class Title implements SQLRow, Comparable<Title> {
         return owner != null && name.equals("Tier")
             ? Glyph.toComponent("" + Perm.get().getLevel(owner))
             : getTitleComponent();
+    }
+
+    public Mytems getMytems() {
+        if (titleJson == null) return null;
+        if (titleJson.startsWith(":") && titleJson.endsWith(":")) {
+            return Mytems.forId(titleJson.substring(1, titleJson.length() - 1));
+        }
+        return null;
     }
 
     public Component getTitleComponent() {
