@@ -67,6 +67,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             select(player, args[0]);
         } else {
             list(player);
+            PluginPlayerEvent.Name.LIST_PLAYER_TITLES.call(plugin, player);
         }
         return true;
     }
