@@ -51,6 +51,7 @@ public enum TitleCategory {
     // Store
     SHINE(TitleGroup.STORE),
     FLAG(TitleGroup.STORE),
+    COIN(TitleGroup.STORE),
     DONATION(TitleGroup.STORE),
     // ?
     LEGACY(TitleGroup.OTHER),
