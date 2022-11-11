@@ -431,6 +431,7 @@ public final class TitlesCommand implements TabExecutor {
                                .build());
         } else {
             title = new Title(args[0], format, null);
+            title.setCategory(TitleCategory.HIDDEN.name().toLowerCase());
             if (!plugin.addTitle(title)) {
                 throw new CommandWarn("Could not save title " + args[0] + "! Different case already exists?");
             }
