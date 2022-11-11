@@ -51,7 +51,7 @@ public final class ShinePlace {
         case SILVER_COIN:
         case GOLDEN_COIN:
         case DIAMOND_COIN:
-        case RUBY_COIN:
+        case RUBY_COIN: {
             final Item entity = eye.getWorld().dropItem(eye, shine.mytems.createIcon(), item -> {
                     item.setPersistent(false);
                     item.setCanMobPickup(false);
@@ -65,6 +65,7 @@ public final class ShinePlace {
             if (entity == null) return;
             final UUID uuid = entity.getUniqueId();
             ENTITIES.add(uuid);
+            final double y = eye.getY() - 1.0;
             new BukkitRunnable() {
                 int ticks = 0;
 
@@ -83,10 +84,15 @@ public final class ShinePlace {
                                                         8, 0.125, 0.125, 0.125, 0.0,
                                                         new Particle.DustOptions(Color.fromRGB(shine.hex), 0.75f));
                     }
+                    if (entity.getLocation().getY() <= y) {
+                        entity.setGravity(false);
+                        entity.setVelocity(entity.getVelocity().multiply(0.9));
+                    }
                     ticks += 1;
                 }
             }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
             break;
+        }
         case MOON: {
             double[][] points = {
                 {-0.20, 1.00}, {-0.07, 1.00}, {0.07, 1.00}, {0.20,

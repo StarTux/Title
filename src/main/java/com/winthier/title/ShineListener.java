@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -126,6 +127,13 @@ public final class ShineListener implements Listener {
     private void onInventoryPickupItem(InventoryPickupItemEvent event) {
         if (ShinePlace.ENTITIES.contains(event.getItem().getUniqueId())) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    private void onEntityRemoveFromWorld(EntityRemoveFromWorldEvent event) {
+        if (ShinePlace.ENTITIES.contains(event.getEntity().getUniqueId())) {
+            Bukkit.getScheduler().runTask(plugin, () -> event.getEntity().remove());
         }
     }
 }
