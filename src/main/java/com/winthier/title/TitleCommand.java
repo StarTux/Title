@@ -225,7 +225,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                                             lines, null, null)); // clear lines
         final UUID uuid = player.getUniqueId();
         for (PlayerTitleCollection.GroupCollection group : groups) {
-            if (group.countUnlocked() == 0) continue;
+            if (group.count() == 0) continue;
             // Make category TOC
             List<PlayerTitleCollection.CategoryCollection> categories = group.allCategories();
             for (int i = 0; i < categories.size(); i += 1) {
@@ -252,7 +252,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                                                 lines, group.getGroup(), null)); // clear
             // Make categories
             for (PlayerTitleCollection.CategoryCollection category : categories) {
-                if (category.countUnlocked() == 0) continue;
+                if (category.count() == 0) continue;
                 // Category Header
                 for (PlayerTitleCollection.CollectedTitle title : category.allTitles()) {
                     if (!title.isUnlocked()) {
