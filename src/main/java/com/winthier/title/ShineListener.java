@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
@@ -86,7 +87,7 @@ public final class ShineListener implements Listener {
                 up = new Vector(0.0, 0.0, -1.0);
                 right = new Vector(1.0, 0.0, 0.0);
             }
-            new ShinePlace(location, right, up, 2.0).show(shine);
+            new ShinePlace(location, location, right, up, 2.0).show(shine);
             return;
         }
         Entity entity = event.getHitEntity();
@@ -96,7 +97,8 @@ public final class ShineListener implements Listener {
             if (right.length() < 0.1) return;
             right = right.normalize().rotateAroundY(Math.PI * -0.5);
             Vector up = new Vector(0.0, 1.0, 0.0);
-            new ShinePlace(proj.getLocation(), right, up, 2.0).show(shine);
+            Location location = proj.getLocation();
+            new ShinePlace(location, location, right, up, 2.0).show(shine);
             return;
         }
     }
@@ -110,7 +112,7 @@ public final class ShineListener implements Listener {
         if (session == null) return;
         Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
-        Location location = player.getLocation();
+        Location location = player.getEyeLocation();
         Vector vector = location.toVector();
         Vector lastFlyingShine = session.lastFlyingShine;
         if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 64.0) {
@@ -118,5 +120,12 @@ public final class ShineListener implements Listener {
         }
         session.lastFlyingShine = vector;
         ShinePlace.of(location, 3.0).show(shine);
+    }
+
+    @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
+    private void onInventoryPickupItem(InventoryPickupItemEvent event) {
+        if (ShinePlace.ENTITIES.contains(event.getItem().getUniqueId())) {
+            event.setCancelled(true);
+        }
     }
 }

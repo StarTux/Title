@@ -27,6 +27,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
@@ -35,6 +36,7 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 /**
  * Plugin class.
@@ -117,6 +119,11 @@ public final class TitlePlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             exit(player);
         }
+        for (UUID uuid : ShinePlace.ENTITIES) {
+            Entity entity = Bukkit.getEntity(uuid);
+            if (entity != null) entity.remove();
+        }
+        ShinePlace.ENTITIES.clear();
     }
 
     protected void reloadAllData() {
@@ -211,7 +218,7 @@ public final class TitlePlugin extends JavaPlugin {
                 session.teamPrefixAnimation = new ArrayList<>();
                 for (int i = 0; i < mytems.getAnimationFrameCount(); i += 1) {
                     List<Component> displayNameFrame = new ArrayList<>(displayNameList);
-                    displayNameFrame.set(0, mytems.getAnimationFrame(i));
+                    displayNameFrame.set(0, mytems.getAnimationFrame(i).decoration(ITALIC, false));
                     session.displayNameAnimation.add(join(noSeparators(), displayNameFrame));
                     session.teamPrefixAnimation.add(mytems.getAnimationFrame(i));
                 }

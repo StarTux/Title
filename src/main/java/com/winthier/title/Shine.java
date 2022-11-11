@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.mytems.Mytems;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
@@ -21,17 +22,31 @@ public enum Shine {
     GOAT(0xFFCD79), // gold
     PUMPKIN(0xFF8000), // orange
     SKULL(0xFFBBFF), // neon purple
-    MOON(0x80ff00);
+    MOON(0x80ff00),
+    COPPER_COIN(0xe77c56, Mytems.COPPER_COIN),
+    SILVER_COIN(0xd8d8d8, Mytems.SILVER_COIN),
+    GOLDEN_COIN(0xfdf55f, Mytems.GOLDEN_COIN),
+    DIAMOND_COIN(0x4aedd9, Mytems.DIAMOND_COIN),
+    RUBY_COIN(0xd92d45, Mytems.RUBY_COIN),
+    ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();
+    public final int hex;
     public final String key;
     public final String humanName;
     public final TextColor color;
+    public final Mytems mytems;
 
-    Shine(final int hex) {
+    Shine(final int hex, final Mytems mytems) {
+        this.hex = hex;
         this.key = name().toLowerCase();
         this.color = TextColor.color(hex);
         this.humanName = Msg.toCamelCase(this);
+        this.mytems = mytems;
+    }
+
+    Shine(final int hex) {
+        this(hex, null);
     }
 
     static {

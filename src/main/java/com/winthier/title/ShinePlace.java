@@ -1,32 +1,40 @@
 package com.winthier.title;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import lombok.Value;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.entity.Item;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 @Value
 public final class ShinePlace {
+    private final Location eye;
     private final Location offset;
     private final Vector right;
     private final Vector up;
     private final double scale;
     static Random random = new Random();
+    protected static final Set<UUID> ENTITIES = new HashSet<>();
 
-    public static ShinePlace of(Location location, double scale) {
-        return of(location, new Vector(0, 0, 0), scale);
+    public static ShinePlace of(Location eye, double scale) {
+        return of(eye, new Vector(0, 0, 0), scale);
     }
 
-    public static ShinePlace of(Location location, Vector add, double scale) {
+    public static ShinePlace of(Location eye, Vector add, double scale) {
+        Location location = eye.clone();
         location.setPitch(0f);
         Vector right = location.getDirection()
             .normalize()
             .rotateAroundY(Math.PI * 0.5);
         Vector up = new Vector(0, 1, 0);
-        return new ShinePlace(location.add(add), right, up, scale);
+        return new ShinePlace(eye, location.add(add), right, up, scale);
     }
 
     public Vector right() {
@@ -39,6 +47,46 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case COPPER_COIN:
+        case SILVER_COIN:
+        case GOLDEN_COIN:
+        case DIAMOND_COIN:
+        case RUBY_COIN:
+            final Item entity = eye.getWorld().dropItem(eye, shine.mytems.createIcon(), item -> {
+                    item.setPersistent(false);
+                    item.setCanMobPickup(false);
+                    item.setCanPlayerPickup(false);
+                    item.setPersistent(false);
+                    item.setOwner(java.util.UUID.randomUUID());
+                    item.setPickupDelay(32767);
+                    item.setGlowing(true);
+                    item.setInvulnerable(true);
+                });
+            if (entity == null) return;
+            final UUID uuid = entity.getUniqueId();
+            ENTITIES.add(uuid);
+            new BukkitRunnable() {
+                int ticks = 0;
+
+                @Override public void run() {
+                    if (entity == null || entity.isDead()) {
+                        cancel();
+                        ENTITIES.remove(uuid);
+                        return;
+                    }
+                    if (ticks > 100) {
+                        entity.remove();
+                        return;
+                    }
+                    if (ticks % 10 == 0) {
+                        entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation().add(0.0, 0.25, 0.0),
+                                                        8, 0.125, 0.125, 0.125, 0.0,
+                                                        new Particle.DustOptions(Color.fromRGB(shine.hex), 0.75f));
+                    }
+                    ticks += 1;
+                }
+            }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
+            break;
         case MOON: {
             double[][] points = {
                 {-0.20, 1.00}, {-0.07, 1.00}, {0.07, 1.00}, {0.20,
