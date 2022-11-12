@@ -2,6 +2,7 @@ package com.winthier.title.sql;
 
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.Title;
+import com.winthier.title.TitleCategory;
 import com.winthier.title.TitlePlugin;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,15 @@ public final class Database {
      */
     public static boolean lockTitle(UUID uuid, Title title) {
         return 0 != db().find(UnlockedInfo.class).where().eq("player", uuid).eq("title", title.getName()).delete();
+    }
+
+    public static boolean unlockCategory(UUID uuid, TitleCategory category) {
+        UnlockedInfo info = new UnlockedInfo(uuid, "#" + category.key);
+        return 0 != db().insertIgnore(info);
+    }
+
+    public static boolean lockCategory(UUID uuid, TitleCategory category) {
+        return 0 != db().find(UnlockedInfo.class).where().eq("player", uuid).eq("title", "#" + category.key).delete();
     }
 
     public static PlayerInfo getPlayerInfo(UUID uuid) {

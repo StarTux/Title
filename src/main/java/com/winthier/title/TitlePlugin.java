@@ -13,10 +13,12 @@ import com.winthier.title.sql.UnlockedInfo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
@@ -413,13 +415,30 @@ public final class TitlePlugin extends JavaPlugin {
 
     public List<Title> unlocks2Titles(List<UnlockedInfo> rows) {
         List<Title> result = new ArrayList<>(rows.size());
+        Set<TitleCategory> categories = EnumSet.noneOf(TitleCategory.class);
         for (UnlockedInfo row : rows) {
-            Title title = getTitle(row.getTitle());
-            if (title != null) {
-                result.add(title);
+            if (row.getTitle().startsWith("#")) {
+                String key = row.getTitle().substring(1);
+                TitleCategory cat = TitleCategory.ofKey(key);
+                if (cat == null) {
+                    getLogger().warning("convertUnlocks: Title category not found: " + row);
+                    continue;
+                }
+                categories.add(cat);
             } else {
-                getLogger().warning("convertUnlocks: Title not found: " + row);
-                continue;
+                Title title = getTitle(row.getTitle());
+                if (title == null) {
+                    getLogger().warning("convertUnlocks: Title not found: " + row);
+                    continue;
+                }
+                result.add(title);
+            }
+        }
+        if (!categories.isEmpty()) {
+            for (Title title : titles) {
+                if (categories.contains(title.parseCategory())) {
+                    result.add(title);
+                }
             }
         }
         return result;
@@ -518,5 +537,17 @@ public final class TitlePlugin extends JavaPlugin {
         return session != null
             ? session.lockSuffix(suffixName)
             : 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
+    }
+
+    public boolean unlockPlayerCategory(UUID uuid, TitleCategory category) {
+        Session session = sessions.get(uuid);
+        if (session != null) return session.unlockCategory(category);
+        return Database.unlockCategory(uuid, category);
+    }
+
+    public boolean lockPlayerCategory(UUID uuid, TitleCategory category) {
+        Session session = sessions.get(uuid);
+        if (session != null) return session.lockCategory(category);
+        return Database.lockCategory(uuid, category);
     }
 }

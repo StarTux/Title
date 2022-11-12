@@ -4,6 +4,8 @@ import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandContext;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
+import com.cavetale.core.command.RemotePlayer;
+import com.cavetale.core.connect.Connect;
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.playercache.PlayerCache;
 import com.winthier.title.html.HtmlExporter;
@@ -22,10 +24,7 @@ import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -33,8 +32,18 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.newline;
+import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
+import static net.kyori.adventure.text.event.ClickEvent.runCommand;
+import static net.kyori.adventure.text.event.ClickEvent.suggestCommand;
+import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 @RequiredArgsConstructor
 public final class TitlesCommand implements TabExecutor {
@@ -210,19 +219,29 @@ public final class TitlesCommand implements TabExecutor {
 
     private static Component button(Title title) {
         Component titleComponent = title.getTitleComponent();
-        Component tooltip = Component.join(JoinConfiguration.separator(Component.newline()),
-                                           Component.text(title.getName(), NamedTextColor.GRAY),
-                                           Component.text(title.formattedDescription()));
-        return Component.text()
+        Component tooltip = join(JoinConfiguration.separator(newline()),
+                                 text(title.getName(), GRAY),
+                                 text(title.formattedDescription()));
+        return text()
             .append(titleComponent)
             .insertion(title.getName())
-            .hoverEvent(HoverEvent.showText(tooltip))
-            .clickEvent(ClickEvent.runCommand("/title:titles info " + title.getName()))
+            .hoverEvent(showText(tooltip))
+            .clickEvent(runCommand("/title:titles info " + title.getName()))
             .build();
     }
 
     List<String> completeTitleArg(CommandContext context, CommandNode node, String arg) {
         String lower = arg.toLowerCase();
+        if (lower.startsWith("#")) {
+            String key = lower.substring(1);
+            List<String> result = new ArrayList<>();
+            for (TitleCategory cat : TitleCategory.values()) {
+                if (cat.key.contains(key)) {
+                    result.add("#" + cat.key);
+                }
+            }
+            return result;
+        }
         return plugin.getTitles().stream()
             .map(Title::getName)
             .filter(name -> name.toLowerCase().contains(lower))
@@ -263,6 +282,12 @@ public final class TitlesCommand implements TabExecutor {
         return title;
     }
 
+    private TitleCategory requireCategory(String key) {
+        TitleCategory result = TitleCategory.ofKey(key.toLowerCase());
+        if (result == null) throw new CommandWarn("Unknown category: #" + key);
+        return result;
+    }
+
     SQLSuffix requireSuffix(String name) {
         SQLSuffix suffix = plugin.getSuffixes().get(name);
         if (suffix == null) throw new CommandWarn("Unknown suffix: " + name);
@@ -277,10 +302,10 @@ public final class TitlesCommand implements TabExecutor {
 
     boolean list(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
-        TextComponent.Builder cb = Component.text();
-        cb.append(Component.text("All titles:", NamedTextColor.YELLOW));
+        TextComponent.Builder cb = text();
+        cb.append(text("All titles:", YELLOW));
         for (Title title : plugin.getTitles()) {
-            cb.append(Component.text(" "));
+            cb.append(text(" "));
             cb.append(button(title));
         }
         sender.sendMessage(cb.build());
@@ -292,14 +317,14 @@ public final class TitlesCommand implements TabExecutor {
         PlayerCache player = requirePlayerCache(args[0]);
         List<Title> titles = plugin.getPlayerTitles(player.uuid);
         Title selectedTitle = plugin.getPlayerTitle(player.uuid);
-        TextComponent.Builder cb = Component.text();
-        cb.append(Component.text("Titles of " + player.name + ":", NamedTextColor.YELLOW));
+        TextComponent.Builder cb = text();
+        cb.append(text("Titles of " + player.name + ":", YELLOW));
         for (Title title: titles) {
-            cb.append(Component.text(" "));
+            cb.append(text(" "));
             if (selectedTitle != null && selectedTitle.getName().equals(title.getName())) {
-                cb.append(Component.text("[", NamedTextColor.WHITE));
+                cb.append(text("[", WHITE));
                 cb.append(button(title));
-                cb.append(Component.text("]", NamedTextColor.WHITE));
+                cb.append(text("]", WHITE));
             } else {
                 cb.append(button(title));
             }
@@ -312,71 +337,71 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length != 1) return false;
         Title title = requireTitle(args[0]);
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.text()
-                  .append(Component.text("Name: ", NamedTextColor.GRAY))
-                  .append(Component.text(title.getName(), NamedTextColor.WHITE))
+        lines.add(text()
+                  .append(text("Name: ", GRAY))
+                  .append(text(title.getName(), WHITE))
                   .insertion(title.getName()).build());
-        lines.add(Component.text()
-                  .append(Component.text("Title: ", NamedTextColor.GRAY))
-                  .append(Component.text(title.formatted()))
+        lines.add(text()
+                  .append(text("Title: ", GRAY))
+                  .append(text(title.formatted()))
                   .insertion(title.getTitle()).build());
         String json = title.getTitleJson();
         if (json != null) {
-            lines.add(Component.text()
-                      .append(Component.text("Component: ", NamedTextColor.GRAY))
+            lines.add(text()
+                      .append(text("Component: ", GRAY))
                       .append(title.getTitleComponent())
                       .insertion(title.getTitleJson()).build());
         }
         if (json == null) json = "";
-        lines.add(Component.text()
-                  .append(Component.text("Json: ", NamedTextColor.GRAY))
-                  .append(Component.text(json, NamedTextColor.WHITE))
-                  .clickEvent(ClickEvent.suggestCommand("/titles json " + title.getName() + " " + json))
+        lines.add(text()
+                  .append(text("Json: ", GRAY))
+                  .append(text(json, WHITE))
+                  .clickEvent(suggestCommand("/titles json " + title.getName() + " " + json))
                   .insertion(json).build());
         String description = title.getDescription();
         if (description == null) description = "";
-        lines.add(Component.text()
-                  .append(Component.text("Description: ", NamedTextColor.GRAY))
-                  .append(Component.text(description, NamedTextColor.WHITE))
+        lines.add(text()
+                  .append(text("Description: ", GRAY))
+                  .append(text(description, WHITE))
                   .insertion(description)
-                  .clickEvent(ClickEvent.suggestCommand("/titles desc " + title.getName() + " " + description))
+                  .clickEvent(suggestCommand("/titles desc " + title.getName() + " " + description))
                   .build());
         String nameColor = title.getNameColor();
         if (nameColor == null) nameColor = "";
-        lines.add(Component.text()
-                  .append(Component.text("Color: ", NamedTextColor.GRAY))
-                  .append(Component.text(nameColor, NamedTextColor.WHITE))
+        lines.add(text()
+                  .append(text("Color: ", GRAY))
+                  .append(text(nameColor, WHITE))
                   .insertion(nameColor)
-                  .clickEvent(ClickEvent.suggestCommand("/titles color " + title.getName() + " " + nameColor))
+                  .clickEvent(suggestCommand("/titles color " + title.getName() + " " + nameColor))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Prefix: ", NamedTextColor.GRAY))
-                  .append(Component.text(title.isPrefix(), NamedTextColor.WHITE))
-                  .clickEvent(ClickEvent.suggestCommand("/titles prefix " + title.getName() + " "))
+        lines.add(text()
+                  .append(text("Prefix: ", GRAY))
+                  .append(text(title.isPrefix(), WHITE))
+                  .clickEvent(suggestCommand("/titles prefix " + title.getName() + " "))
                   .build());
         String shine = title.getShine();
         if (shine == null) shine = "";
-        lines.add(Component.text()
-                  .append(Component.text("Shine: ", NamedTextColor.GRAY))
-                  .append(Component.text(shine, NamedTextColor.WHITE))
+        lines.add(text()
+                  .append(text("Shine: ", GRAY))
+                  .append(text(shine, WHITE))
                   .insertion(shine).build());
-        lines.add(Component.text()
-                  .append(Component.text("Priority: ", NamedTextColor.GRAY))
-                  .append(Component.text(title.getPriority(), NamedTextColor.WHITE))
+        lines.add(text()
+                  .append(text("Priority: ", GRAY))
+                  .append(text(title.getPriority(), WHITE))
                   .insertion("" + title.getPriority()).build());
-        lines.add(Component.text()
-                  .append(Component.text("Category: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Category: ", GRAY))
                   .append(title.getCategory() == null
-                          ? Component.text("None", NamedTextColor.DARK_GRAY)
-                          : Component.text(title.getCategory(), NamedTextColor.WHITE))
+                          ? text("None", DARK_GRAY)
+                          : text(title.getCategory(), WHITE))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Suffix: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Suffix: ", GRAY))
                   .append(title.getSuffix() == null
-                          ? Component.text("None", NamedTextColor.DARK_GRAY)
-                          : Component.text(title.getSuffix(), NamedTextColor.WHITE))
+                          ? text("None", DARK_GRAY)
+                          : text(title.getSuffix(), WHITE))
                   .build());
-        sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
+        sender.sendMessage(join(JoinConfiguration.separator(newline()), lines));
         return true;
     }
 
@@ -390,7 +415,7 @@ public final class TitlesCommand implements TabExecutor {
             String name = PlayerCache.nameForUuid(uuid);
             sb.append(" ").append(name);
         }
-        sender.sendMessage(Component.text(sb.toString(), NamedTextColor.YELLOW));
+        sender.sendMessage(text(sb.toString(), YELLOW));
         return true;
     }
 
@@ -409,7 +434,7 @@ public final class TitlesCommand implements TabExecutor {
         }
         Collections.sort(ranks, (b, a) -> Integer.compare(a.count, b.count));
         int rankIter = 1;
-        sender.sendMessage(Component.text("Ranking of titles by ownership (" + ranks.size() + ")", NamedTextColor.YELLOW));
+        sender.sendMessage(text("Ranking of titles by ownership (" + ranks.size() + ")", YELLOW));
         for (Rank rank: ranks) {
             sender.sendMessage("" + rankIter++ + ") " + rank.count + " " + rank.title.getName());
         }
@@ -425,8 +450,8 @@ public final class TitlesCommand implements TabExecutor {
             if (0 == plugin.getDb().update(title, "title")) {
                 throw new CommandWarn("Failed to update title " + title.getName() + "!");
             }
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Title " + title.getName() + " updated: ", NamedTextColor.YELLOW))
+            sender.sendMessage(text()
+                               .append(text("Title " + title.getName() + " updated: ", YELLOW))
                                .append(title.getTitleTag())
                                .build());
         } else {
@@ -435,8 +460,8 @@ public final class TitlesCommand implements TabExecutor {
             if (!plugin.addTitle(title)) {
                 throw new CommandWarn("Could not save title " + args[0] + "! Different case already exists?");
             }
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Title " + title.getName() + " created: ", NamedTextColor.YELLOW))
+            sender.sendMessage(text()
+                               .append(text("Title " + title.getName() + " created: ", YELLOW))
                                .append(title.getTitleComponent())
                                .build());
         }
@@ -453,45 +478,42 @@ public final class TitlesCommand implements TabExecutor {
         String description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
         title.setDescription(description);
         plugin.getDb().update(title, "description");
-        sender.sendMessage(Component.text()
-                           .append(Component.text("Description of " + title.getName() + " updated: ", NamedTextColor.YELLOW))
-                           .append(Component.text(title.getDescription(), NamedTextColor.GRAY))
+        sender.sendMessage(text()
+                           .append(text("Description of " + title.getName() + " updated: ", YELLOW))
+                           .append(text(title.getDescription(), GRAY))
                            .build());
         return true;
     }
 
-    boolean unlock(CommandSender sender, String[] args) {
+    protected boolean unlock(CommandSender sender, String[] args) {
         if (args.length != 2) return false;
         PlayerCache player = requirePlayerCache(args[0]);
         Title title = requireTitle(args[1]);
         if (plugin.unlockPlayerTitle(player.uuid, title)) {
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Unlocked title for " + player.name + ": ", NamedTextColor.YELLOW))
-                               .append(title.getTitleTag())
-                               .build());
+            sender.sendMessage(textOfChildren(text("Unlocked title for " + player.name + ": ", YELLOW), title.getTitleTag()));
         } else {
-            sender.sendMessage(Component.text()
-                               .append(Component.text(player.name + " already had title: ", NamedTextColor.RED))
-                               .append(title.getTitleTag())
-                               .build());
+            sender.sendMessage(textOfChildren(text(player.name + " already had title: ", RED), title.getTitleTag()));
         }
         return true;
     }
 
-    boolean lock(CommandSender sender, String[] args) {
+    protected boolean lock(CommandSender sender, String[] args) {
         if (args.length != 2) return false;
         PlayerCache player = requirePlayerCache(args[0]);
-        Title title = requireTitle(args[1]);
-        if (plugin.lockPlayerTitle(player.uuid, title)) {
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Locked title for " + player.name + ": ", NamedTextColor.YELLOW))
-                               .append(title.getTitleTag())
-                               .build());
+        if (args[1].startsWith("#")) {
+            TitleCategory category = requireCategory(args[1].substring(1));
+            if (plugin.lockPlayerCategory(player.uuid, category)) {
+                sender.sendMessage(text("Locked category for " + player.name + ": #" + category.key, YELLOW));
+            } else {
+                sender.sendMessage(text(player.name + " doesn't have category: #" + category.key, RED));
+            }
         } else {
-            sender.sendMessage(Component.text()
-                               .append(Component.text(player.name + " doesn't have title: ", NamedTextColor.RED))
-                               .append(title.getTitleTag())
-                               .build());
+            Title title = requireTitle(args[1]);
+            if (plugin.lockPlayerTitle(player.uuid, title)) {
+                sender.sendMessage(textOfChildren(text("Locked title for " + player.name + ": ", YELLOW), title.getTitleTag()));
+            } else {
+                sender.sendMessage(textOfChildren(text(player.name + " doesn't have title: ", RED), title.getTitleTag()));
+            }
         }
         return true;
     }
@@ -506,11 +528,11 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.setPlayerTitle(player.uuid, title)) {
             throw new CommandWarn("Setting title " + title.getName() + " for " + player.name + " failed!");
         }
-        sender.sendMessage(Component.join(JoinConfiguration.noSeparators(),
-                                          Component.text("Set title ", NamedTextColor.YELLOW),
-                                          title.getTitleTag(),
-                                          Component.text(" for  ", NamedTextColor.YELLOW),
-                                          Component.text(player.name)));
+        sender.sendMessage(join(JoinConfiguration.noSeparators(),
+                                text("Set title ", YELLOW),
+                                title.getTitleTag(),
+                                text(" for  ", YELLOW),
+                                text(player.name)));
         return true;
     }
 
@@ -520,8 +542,8 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.resetPlayerTitle(player.uuid)) {
             throw new CommandWarn("Resetting title of " + player.name + " failed!");
         }
-        sender.sendMessage(Component.text()
-                           .append(Component.text("Reset title of " + player.name + " to ", NamedTextColor.YELLOW))
+        sender.sendMessage(text()
+                           .append(text("Reset title of " + player.name + " to ", YELLOW))
                            .append(plugin.getPlayerTitle(player.uuid).getTitleComponent())
                            .build());
         return true;
@@ -532,52 +554,74 @@ public final class TitlesCommand implements TabExecutor {
         PlayerCache player = requirePlayerCache(args[0]);
         Title title = requireTitle(args[1]);
         if (plugin.playerHasTitle(player.uuid, title)) {
-            sender.sendMessage(Component.text()
-                               .append(Component.text(player.name + " has title: ", NamedTextColor.GREEN))
+            sender.sendMessage(text()
+                               .append(text(player.name + " has title: ", GREEN))
                                .append(title.getTitleComponent())
                                .build());
         } else {
-            sender.sendMessage(Component.text()
-                               .append(Component.text(player.getName() + " does not have title: ", NamedTextColor.RED))
+            sender.sendMessage(text()
+                               .append(text(player.getName() + " does not have title: ", RED))
                                .append(title.getTitleComponent())
                                .build());
         }
         return true;
     }
 
-    boolean unlockSet(CommandSender sender, String[] args) {
+    private boolean unlockSet(CommandSender sender, String[] args) {
         if (args.length < 2) return false;
         PlayerCache player = requirePlayerCache(args[0]);
-        List<Title> titles = new ArrayList<>(args.length - 2);
-        for (int i = 1; i < args.length; i += 1) {
-            titles.add(requireTitle(args[i]));
-        }
-        Title title = null;
-        boolean success = false;
-        for (Title it : titles) {
-            title = it;
-            success = plugin.unlockPlayerTitle(player.uuid, title);
-            if (success) break;
-        }
-        if (!success) {
-            throw new CommandWarn(player.name + " already has title " + title.getName());
-        }
-        plugin.setPlayerTitle(player.uuid, title);
-        sender.sendMessage(Component.text()
-                           .append(Component.text("Unlocked and set title ", NamedTextColor.YELLOW))
-                           .append(title.getTitleTag())
-                           .append(Component.text(" for player ", NamedTextColor.YELLOW))
-                           .append(Component.text(player.getName(), NamedTextColor.WHITE))
-                           .build());
-        Player online = Bukkit.getPlayer(player.uuid);
-        if (online != null) {
-            online.sendMessage(Component.text()
-                               .append(Component.text("Title unlocked: ", NamedTextColor.WHITE))
-                               .append(title.getTitleTag())
-                               .build());
-            net.kyori.adventure.title.Title titleComponent = net.kyori.adventure.title.Title
-                .title(title.getTitleComponent(), Component.text("Title unlocked", NamedTextColor.WHITE));
-            online.showTitle(titleComponent);
+        if (args.length == 2 && args[1].startsWith("#")) {
+            String key = args[1].substring(1);
+            TitleCategory category = TitleCategory.ofKey(key);
+            if (category == null) throw new CommandWarn("Unknown title category: #" + key);
+            if (!plugin.unlockPlayerCategory(player.uuid, category)) {
+                throw new CommandWarn(player.name + " already has category #" + category.key);
+            }
+            RemotePlayer online = Connect.get().getRemotePlayer(player.uuid);
+            if (online != null) {
+                List<Title> titles = category.getTitles();
+                Collections.sort(titles);
+                List<Component> messages = new ArrayList<>();
+                final int sz = titles.size();
+                messages.add(text(sz + " title" + (sz == 1 ? "" : "s") + " unlocked. Click to wear:", GREEN)
+                             .hoverEvent(showText(text("/title", GRAY)))
+                             .clickEvent(runCommand("/title")));
+                for (Title title : titles) {
+                    messages.add(title.getTitleTag(player.uuid));
+                }
+                online.sendMessage(textOfChildren(newline(), join(separator(space()), messages), newline()));
+            }
+            sender.sendMessage(text("Title category #" + category.key + " unlocked for " + player.name, YELLOW));
+            return true;
+        } else {
+            List<Title> titles = new ArrayList<>(args.length - 2);
+            for (int i = 1; i < args.length; i += 1) {
+                titles.add(requireTitle(args[i]));
+            }
+            Title title = null;
+            boolean success = false;
+            for (Title it : titles) {
+                title = it;
+                success = plugin.unlockPlayerTitle(player.uuid, title);
+                if (success) break;
+            }
+            if (!success) {
+                throw new CommandWarn(player.name + " already has title " + title.getName());
+            }
+            sender.sendMessage(textOfChildren(text("Unlocked and offered title ", YELLOW),
+                                              title.getTitleTag(),
+                                              text(" for player ", YELLOW),
+                                              text(player.getName(), WHITE)));
+            RemotePlayer online = Connect.get().getRemotePlayer(player.uuid);
+            if (online != null) {
+                List<Component> messages = new ArrayList<>();
+                final int sz = titles.size();
+                messages.add(text("Title unlocked. Click to wear:", GREEN)
+                             .hoverEvent(showText(text("/title", GRAY)))
+                             .clickEvent(runCommand("/title")));
+                messages.add(title.getTitleTag(player.uuid));
+                online.sendMessage(textOfChildren(newline(), join(separator(space()), messages), newline()));
+            }
         }
         return true;
     }
@@ -594,10 +638,10 @@ public final class TitlesCommand implements TabExecutor {
             }
         }
         if (matches.isEmpty()) throw new CommandWarn("No match: " + term);
-        TextComponent.Builder cb = Component.text();
-        cb.append(Component.text("" + matches.size() + " titles matching: ", NamedTextColor.YELLOW));
+        TextComponent.Builder cb = text();
+        cb.append(text("" + matches.size() + " titles matching: ", YELLOW));
         for (Title title : matches) {
-            cb.append(Component.text(" "));
+            cb.append(text(" "));
             cb.append(button(title));
         }
         sender.sendMessage(cb.build());
@@ -606,7 +650,7 @@ public final class TitlesCommand implements TabExecutor {
 
     boolean reload(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
-        sender.sendMessage(Component.text("Reloading database...", NamedTextColor.YELLOW));
+        sender.sendMessage(text("Reloading database...", YELLOW));
         plugin.reloadAllData();
         return true;
     }
@@ -619,17 +663,17 @@ public final class TitlesCommand implements TabExecutor {
             ? null
             : String.join(" ", Arrays.copyOfRange(args, 1, args.length));
         title.setTitleJson(json);
-        if (title.getTitleComponent().equals(Component.empty())) {
+        if (title.getTitleComponent().equals(empty())) {
             throw new CommandWarn("Bad Json format: " + json);
         }
         if (0 == plugin.getDb().update(title, "title_json")) {
             throw new CommandWarn("Could not update title: " + title.getName() + "!");
         }
         if (json == null) {
-            sender.sendMessage(Component.text("Json of title " + title.getName() + " reset", NamedTextColor.YELLOW));
+            sender.sendMessage(text("Json of title " + title.getName() + " reset", YELLOW));
         } else {
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Json of title " + title.getName() + " set: ", NamedTextColor.YELLOW))
+            sender.sendMessage(text()
+                               .append(text("Json of title " + title.getName() + " set: ", YELLOW))
                                .append(title.getTitleComponent())
                                .build());
         }
@@ -647,9 +691,9 @@ public final class TitlesCommand implements TabExecutor {
             throw new CommandWarn("Could not save title " + title.getName() + "!");
         }
         if (value == null) {
-            sender.sendMessage(Component.text("Color of title " + title.getName() + " reset"));
+            sender.sendMessage(text("Color of title " + title.getName() + " reset"));
         } else {
-            sender.sendMessage(Component.text("Color of title " + title.getName() + " set: " + value));
+            sender.sendMessage(text("Color of title " + title.getName() + " set: " + value));
         }
         return true;
     }
@@ -667,38 +711,38 @@ public final class TitlesCommand implements TabExecutor {
         if (0 == plugin.getDb().update(title, "prefix")) {
             throw new CommandWarn("Could not save title " + title.getName() + "!");
         }
-        sender.sendMessage(Component.text("Prefix of title " + title.getName() + " set: " + value, NamedTextColor.YELLOW));
+        sender.sendMessage(text("Prefix of title " + title.getName() + " set: " + value, YELLOW));
         return true;
     }
 
     boolean shine(CommandSender sender, String[] args) {
         if (args.length != 1 && args.length != 2) return false;
-            Title title = requireTitle(args[0]);
-            Shine shine;
-            Component text;
-            if (args.length < 2) {
-                shine = null;
-                text = null;
-            } else {
-                shine = Shine.ofKey(args[1]);
-                if (shine == null) {
-                    throw new CommandWarn("Shine not found: " + args[1]);
-                }
-                text = Component.text(shine.name(), shine.color);
-            }
-            title.setShine(shine != null ? shine.key : null);
-            if (0 == plugin.getDb().update(title, "shine")) {
-                throw new CommandWarn("Could not save title: " + title.getName());
-            }
+        Title title = requireTitle(args[0]);
+        Shine shine;
+        Component text;
+        if (args.length < 2) {
+            shine = null;
+            text = null;
+        } else {
+            shine = Shine.ofKey(args[1]);
             if (shine == null) {
-                sender.sendMessage(Component.text("Shine of title " + title.getName() + " reset", NamedTextColor.YELLOW));
-            } else {
-                sender.sendMessage(Component.text()
-                                   .append(Component.text("Shine of title " + title.getName() + " set: ", NamedTextColor.YELLOW))
-                                   .append(text)
-                                   .build());
+                throw new CommandWarn("Shine not found: " + args[1]);
             }
-            return true;
+            text = text(shine.name(), shine.color);
+        }
+        title.setShine(shine != null ? shine.key : null);
+        if (0 == plugin.getDb().update(title, "shine")) {
+            throw new CommandWarn("Could not save title: " + title.getName());
+        }
+        if (shine == null) {
+            sender.sendMessage(text("Shine of title " + title.getName() + " reset", YELLOW));
+        } else {
+            sender.sendMessage(text()
+                               .append(text("Shine of title " + title.getName() + " set: ", YELLOW))
+                               .append(text)
+                               .build());
+        }
+        return true;
     }
 
     boolean prio(CommandSender sender, String[] args) {
@@ -715,8 +759,8 @@ public final class TitlesCommand implements TabExecutor {
         if (0 == plugin.getDb().update(title, "priority")) {
             throw new CommandWarn("Could not update title: " + title.getName());
         }
-        sender.sendMessage(Component.text("Priority of title " + title.getName() + " set to "
-                                          + priority, NamedTextColor.YELLOW));
+        sender.sendMessage(text("Priority of title " + title.getName() + " set to "
+                                + priority, YELLOW));
         return true;
     }
 
@@ -725,7 +769,7 @@ public final class TitlesCommand implements TabExecutor {
         Title title = requireTitle(args[0]);
         String category = args.length >= 2 ? args[1] : null;
         if (Objects.equals(title.getCategory(), category)) {
-            throw new CommandWarn(title.getName() + " already has category " + category + "!");
+            throw new CommandWarn(title.getName() + " already has category #" + category + "!");
         }
         title.setCategory(category);
         title.setCategoryCache(null);
@@ -733,8 +777,8 @@ public final class TitlesCommand implements TabExecutor {
         if (0 == plugin.getDb().update(title, "category")) {
             throw new CommandWarn("Could not update title: " + title.getName());
         }
-        sender.sendMessage(Component.text("Category of title " + title.getName() + " set to "
-                                          + title.getCategory(), NamedTextColor.YELLOW));
+        sender.sendMessage(text("Category of title " + title.getName() + " set to "
+                                + title.getCategory(), YELLOW));
         return true;
     }
 
@@ -749,14 +793,14 @@ public final class TitlesCommand implements TabExecutor {
         if (0 == plugin.getDb().update(title, "suffix")) {
             throw new CommandWarn("Could not update title: " + title.getName());
         }
-        sender.sendMessage(Component.text().content("Suffix of title " + title.getName() + " set to "
-                                                    + title.getSuffix()).build());
+        sender.sendMessage(text().content("Suffix of title " + title.getName() + " set to "
+                                          + title.getSuffix()).build());
         return true;
     }
 
     boolean html(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
-        sender.sendMessage(Component.text("Exporting html..."));
+        sender.sendMessage(text("Exporting html..."));
         HtmlExporter exporter = new HtmlExporter(plugin, sender);
         exporter.export();
         sender.sendMessage("Image files: " + exporter.getImageFiles());
@@ -769,8 +813,8 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.deleteTitle(title)) {
             throw new CommandWarn("Could not delete title " + title.getName() + "!");
         }
-        sender.sendMessage(Component.text()
-                           .append(Component.text("Title deleted: ", NamedTextColor.YELLOW))
+        sender.sendMessage(text()
+                           .append(text("Title deleted: ", YELLOW))
                            .append(title.getTitleComponent())
                            .build());
         return true;
@@ -781,7 +825,7 @@ public final class TitlesCommand implements TabExecutor {
         for (Player player : Bukkit.getOnlinePlayers()) {
             plugin.updatePlayerName(player);
         }
-        sender.sendMessage(Component.text("All player names refreshed", NamedTextColor.YELLOW));
+        sender.sendMessage(text("All player names refreshed", YELLOW));
         return true;
     }
 
@@ -790,72 +834,72 @@ public final class TitlesCommand implements TabExecutor {
             int errors = 0;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.findSession(player) == null) {
-                    sender.sendMessage(Component.text("Player without session: " + player.getName(), NamedTextColor.RED));
+                    sender.sendMessage(text("Player without session: " + player.getName(), RED));
                     errors += 1;
                 }
             }
             for (Session session : plugin.getSessions().values()) {
                 if (session.getPlayer() == null) {
-                    sender.sendMessage(Component.text("Session without player: " + session.getPlayerName(), NamedTextColor.RED));
+                    sender.sendMessage(text("Session without player: " + session.getPlayerName(), RED));
                     errors += 1;
                 }
             }
             if (errors > 0) {
-                sender.sendMessage(Component.text(errors + " errors!", NamedTextColor.RED));
+                sender.sendMessage(text(errors + " errors!", RED));
             } else {
-                sender.sendMessage(Component.text("No errors!", NamedTextColor.GREEN));
+                sender.sendMessage(text("No errors!", GREEN));
             }
             return true;
         } else if (args.length == 1) {
             PlayerCache player = requirePlayerCache(args[0]);
             Session session = plugin.getSessions().get(player.uuid);
             if (session == null) {
-                sender.sendMessage(Component.text("No session: " + player.name, NamedTextColor.YELLOW));
+                sender.sendMessage(text("No session: " + player.name, YELLOW));
                 return true;
             }
-            TextComponent.Builder cb = Component.text();
-            cb.append(Component.text("Session info of " + player.name, NamedTextColor.YELLOW));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("UUID: ", NamedTextColor.GRAY))
-                      .append(Component.text("" + session.getUuid(), NamedTextColor.WHITE)));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Title: ", NamedTextColor.GRAY))
+            TextComponent.Builder cb = text();
+            cb.append(text("Session info of " + player.name, YELLOW));
+            cb.append(newline());
+            cb.append(text().append(text("UUID: ", GRAY))
+                      .append(text("" + session.getUuid(), WHITE)));
+            cb.append(newline());
+            cb.append(text().append(text("Title: ", GRAY))
                       .append(session.playerRow.getTitle() != null
-                              ? Component.text(session.playerRow.getTitle(), NamedTextColor.WHITE)
-                              : Component.empty()));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Shine: ", NamedTextColor.GRAY))
+                              ? text(session.playerRow.getTitle(), WHITE)
+                              : empty()));
+            cb.append(newline());
+            cb.append(text().append(text("Shine: ", GRAY))
                       .append(session.playerRow.getShine() != null
-                              ? Component.text(session.playerRow.getShine(), NamedTextColor.WHITE)
-                              : Component.empty()));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Suffix: ", NamedTextColor.GRAY))
+                              ? text(session.playerRow.getShine(), WHITE)
+                              : empty()));
+            cb.append(newline());
+            cb.append(text().append(text("Suffix: ", GRAY))
                       .append(session.playerRow.getSuffix() != null
-                              ? Component.text(session.playerRow.getSuffix(), NamedTextColor.WHITE)
-                              : Component.empty()));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Player List Prefix: ", NamedTextColor.GRAY))
-                      .append(session.playerListPrefix != null ? session.playerListPrefix : Component.empty()));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Player List Suffix: ", NamedTextColor.GRAY))
-                      .append(session.playerListSuffix != null ? session.playerListSuffix : Component.empty()));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Team Prefix: ", NamedTextColor.GRAY))
+                              ? text(session.playerRow.getSuffix(), WHITE)
+                              : empty()));
+            cb.append(newline());
+            cb.append(text().append(text("Player List Prefix: ", GRAY))
+                      .append(session.playerListPrefix != null ? session.playerListPrefix : empty()));
+            cb.append(newline());
+            cb.append(text().append(text("Player List Suffix: ", GRAY))
+                      .append(session.playerListSuffix != null ? session.playerListSuffix : empty()));
+            cb.append(newline());
+            cb.append(text().append(text("Team Prefix: ", GRAY))
                       .append(session.teamPrefix));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Team Suffix: ", NamedTextColor.GRAY))
+            cb.append(newline());
+            cb.append(text().append(text("Team Suffix: ", GRAY))
                       .append(session.teamSuffix));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Color: ", NamedTextColor.GRAY))
-                      .append(Component.text(NamedTextColor.NAMES.key(session.color), NamedTextColor.WHITE)));
-            cb.append(Component.newline());
-            cb.append(Component.text().append(Component.text("Last Flying Shine: ", NamedTextColor.GRAY))
+            cb.append(newline());
+            cb.append(text().append(text("Color: ", GRAY))
+                      .append(text(NamedTextColor.NAMES.key(session.color), WHITE)));
+            cb.append(newline());
+            cb.append(text().append(text("Last Flying Shine: ", GRAY))
                       .append(session.lastFlyingShine != null
-                              ? Component.text("" + session.lastFlyingShine.getBlockX()
-                                               + " " + session.lastFlyingShine.getBlockY()
-                                               + " " + session.lastFlyingShine.getBlockZ(),
-                                               NamedTextColor.WHITE)
-                              : Component.empty()));
+                              ? text("" + session.lastFlyingShine.getBlockX()
+                                     + " " + session.lastFlyingShine.getBlockY()
+                                     + " " + session.lastFlyingShine.getBlockZ(),
+                                     WHITE)
+                              : empty()));
             sender.sendMessage(cb.build());
             return true;
         } else {
@@ -892,24 +936,24 @@ public final class TitlesCommand implements TabExecutor {
 
     boolean suffixList(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
-        TextComponent.Builder cb = Component.text();
-        cb.append(Component.text("Categories:", NamedTextColor.YELLOW));
+        TextComponent.Builder cb = text();
+        cb.append(text("Categories:", YELLOW));
         for (String cat : plugin.getSuffixCategories().keySet()) {
-            cb.append(Component.space());
-            cb.append(Component.text()
-                      .content("#" + cat).color(NamedTextColor.GRAY)
-                      .hoverEvent(HoverEvent.showText(Component.text("/titles suffix info #" + cat)))
-                      .clickEvent(ClickEvent.runCommand("/titles suffix info #" + cat))
+            cb.append(space());
+            cb.append(text()
+                      .content("#" + cat).color(GRAY)
+                      .hoverEvent(showText(text("/titles suffix info #" + cat)))
+                      .clickEvent(runCommand("/titles suffix info #" + cat))
                       .insertion("#" + cat).build());
         }
-        cb.append(Component.newline());
-        cb.append(Component.text("Suffixes:", NamedTextColor.YELLOW));
+        cb.append(newline());
+        cb.append(text("Suffixes:", YELLOW));
         for (SQLSuffix suffix : plugin.getSuffixes().values()) {
-            cb.append(Component.space());
-            cb.append(Component.text()
-                      .content(suffix.getName()).color(NamedTextColor.WHITE)
-                      .hoverEvent(HoverEvent.showText(suffix.getComponent()))
-                      .clickEvent(ClickEvent.runCommand("/titles suffix info " + suffix.getName()))
+            cb.append(space());
+            cb.append(text()
+                      .content(suffix.getName()).color(WHITE)
+                      .hoverEvent(showText(suffix.getComponent()))
+                      .clickEvent(runCommand("/titles suffix info " + suffix.getName()))
                       .insertion(suffix.getName()).build());
         }
         sender.sendMessage(cb.build());
@@ -924,13 +968,13 @@ public final class TitlesCommand implements TabExecutor {
             if (suffixList == null) {
                 throw new CommandWarn("Suffix category not found: " + key);
             }
-            TextComponent.Builder cb = Component.text();
-            cb.append(Component.text("Category " + key + " has " + suffixList.size()
-                                     + " suffixes:", NamedTextColor.YELLOW));
+            TextComponent.Builder cb = text();
+            cb.append(text("Category " + key + " has " + suffixList.size()
+                           + " suffixes:", YELLOW));
             for (SQLSuffix suffix : suffixList) {
-                cb.append(Component.newline());
-                cb.append(Component.text("- " + suffix.getName(), NamedTextColor.WHITE));
-                cb.append(Component.space());
+                cb.append(newline());
+                cb.append(text("- " + suffix.getName(), WHITE));
+                cb.append(space());
                 cb.append(suffix.getComponent().insertion(suffix.getFormat()));
             }
             sender.sendMessage(cb.build());
@@ -938,42 +982,42 @@ public final class TitlesCommand implements TabExecutor {
         }
         SQLSuffix suffix = requireSuffix(args[0]);
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.text("Suffix Information", NamedTextColor.YELLOW));
-        lines.add(Component.text()
-                  .append(Component.text("Name: ", NamedTextColor.GRAY))
-                  .append(Component.text(suffix.getName(), NamedTextColor.WHITE).insertion(suffix.getName()))
+        lines.add(text("Suffix Information", YELLOW));
+        lines.add(text()
+                  .append(text("Name: ", GRAY))
+                  .append(text(suffix.getName(), WHITE).insertion(suffix.getName()))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Format: ", NamedTextColor.GRAY))
-                  .append(Component.text(suffix.getFormat(), NamedTextColor.WHITE).insertion(suffix.getFormat()))
+        lines.add(text()
+                  .append(text("Format: ", GRAY))
+                  .append(text(suffix.getFormat(), WHITE).insertion(suffix.getFormat()))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Priority: ", NamedTextColor.GRAY))
-                  .append(Component.text("" + suffix.getPriority(), NamedTextColor.WHITE).insertion("" + suffix.getPriority()))
+        lines.add(text()
+                  .append(text("Priority: ", GRAY))
+                  .append(text("" + suffix.getPriority(), WHITE).insertion("" + suffix.getPriority()))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Category: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Category: ", GRAY))
                   .append(suffix.getCategory() == null
-                          ? Component.text("None", NamedTextColor.DARK_GRAY)
-                          : Component.text(suffix.getCategory(), NamedTextColor.WHITE).insertion("#" + suffix.getCategory()))
+                          ? text("None", DARK_GRAY)
+                          : text(suffix.getCategory(), WHITE).insertion("#" + suffix.getCategory()))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Component: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Component: ", GRAY))
                   .append(suffix.getComponent())
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Part of Name: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Part of Name: ", GRAY))
                   .append(suffix.isPartOfName()
-                          ? Component.text("Yes", NamedTextColor.GREEN)
-                          : Component.text("No", NamedTextColor.DARK_GRAY))
+                          ? text("Yes", GREEN)
+                          : text("No", DARK_GRAY))
                   .build());
-        lines.add(Component.text()
-                  .append(Component.text("Invalid: ", NamedTextColor.GRAY))
+        lines.add(text()
+                  .append(text("Invalid: ", GRAY))
                   .append(suffix.isInvalid()
-                          ? Component.text("Yes", NamedTextColor.RED, TextDecoration.BOLD)
-                          : Component.text("No", NamedTextColor.DARK_GRAY))
+                          ? text("Yes", RED, BOLD)
+                          : text("No", DARK_GRAY))
                   .build());
-        sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
+        sender.sendMessage(join(JoinConfiguration.separator(newline()), lines));
         return true;
     }
 
@@ -994,8 +1038,8 @@ public final class TitlesCommand implements TabExecutor {
             if (0 == plugin.getDb().update(suffix, "format")) {
                 throw new CommandWarn("Could not update suffix " + suffix.getName() + "!");
             }
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Suffix " + suffix.getName() + " updated: ", NamedTextColor.YELLOW))
+            sender.sendMessage(text()
+                               .append(text("Suffix " + suffix.getName() + " updated: ", YELLOW))
                                .append(suffix.getComponent())
                                .build());
         } else {
@@ -1008,8 +1052,8 @@ public final class TitlesCommand implements TabExecutor {
                 throw new CommandWarn("Could not create suffix " + name + "! Different case already exists?");
             }
             plugin.getSuffixes().put(suffix.getName(), suffix);
-            sender.sendMessage(Component.text()
-                               .append(Component.text("Suffix " + suffix.getName() + " created: ", NamedTextColor.YELLOW))
+            sender.sendMessage(text()
+                               .append(text("Suffix " + suffix.getName() + " created: ", YELLOW))
                                .append(suffix.getComponent())
                                .build());
         }
@@ -1025,15 +1069,15 @@ public final class TitlesCommand implements TabExecutor {
             category = category.substring(1);
         }
         if (Objects.equals(old, category)) {
-            throw new CommandWarn("Suffix " + suffix.getName() + " already has category " + category + "!");
+            throw new CommandWarn("Suffix " + suffix.getName() + " already has category #" + category + "!");
         }
         suffix.setCategory(category);
         if (0 == plugin.getDb().update(suffix, "category")) {
             suffix.setCategory(old);
             throw new CommandWarn("Could not update suffix " + suffix.getName() + "!");
         }
-        sender.sendMessage(Component.text("Set category of suffix " + suffix.getName() + " to "
-                                          + suffix.getCategory(), NamedTextColor.YELLOW));
+        sender.sendMessage(text("Set category of suffix " + suffix.getName() + " to "
+                                + suffix.getCategory(), YELLOW));
         return true;
     }
 
@@ -1045,7 +1089,7 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.unlockPlayerSuffix(player.uuid, suffixName)) {
             throw new CommandWarn(player.name + " already has suffix " + suffixName + " unlocked!");
         }
-        sender.sendMessage(Component.text("Suffix " + suffixName + " unlocked for " + player.name, NamedTextColor.YELLOW));
+        sender.sendMessage(text("Suffix " + suffixName + " unlocked for " + player.name, YELLOW));
         return true;
     }
 
@@ -1057,7 +1101,7 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.lockPlayerSuffix(player.uuid, suffixName)) {
             throw new CommandWarn(player.name + " does not not have suffix " + suffixName + " unlocked!");
         }
-        sender.sendMessage(Component.text("Suffix " + suffixName + " locked for " + player.name, NamedTextColor.YELLOW));
+        sender.sendMessage(text("Suffix " + suffixName + " locked for " + player.name, YELLOW));
         return true;
     }
 
@@ -1065,13 +1109,13 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length != 1) return false;
         PlayerCache player = requirePlayerCache(args[0]);
         List<SQLSuffix> list = plugin.getPlayerSuffixes(player.uuid);
-        TextComponent.Builder cb = Component.text();
-        cb.append(Component.text(player.name + " has " + list.size() + " suffixes:", NamedTextColor.YELLOW));
+        TextComponent.Builder cb = text();
+        cb.append(text(player.name + " has " + list.size() + " suffixes:", YELLOW));
         for (SQLSuffix suffix : list) {
-            cb.append(Component.space());
-            cb.append(Component.text().content(suffix.getName()).color(NamedTextColor.YELLOW)
-                      .hoverEvent(HoverEvent.showText(Component.text("/titles suffix info " + suffix.getName())))
-                      .clickEvent(ClickEvent.runCommand("/titles suffix info " + suffix.getName())));
+            cb.append(space());
+            cb.append(text().content(suffix.getName()).color(YELLOW)
+                      .hoverEvent(showText(text("/titles suffix info " + suffix.getName())))
+                      .clickEvent(runCommand("/titles suffix info " + suffix.getName())));
         }
         sender.sendMessage(cb.build());
         return true;
@@ -1109,14 +1153,14 @@ public final class TitlesCommand implements TabExecutor {
     protected boolean shinesDisable(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
         plugin.shinesDisabled = true;
-        sender.sendMessage(Component.text("Shines disabled!", NamedTextColor.RED));
+        sender.sendMessage(text("Shines disabled!", RED));
         return true;
     }
 
     protected boolean shinesEnable(CommandSender sender, String[] args) {
         if (args.length != 0) return false;
         plugin.shinesDisabled = false;
-        sender.sendMessage(Component.text("Shines enabled!", NamedTextColor.AQUA));
+        sender.sendMessage(text("Shines enabled!", AQUA));
         return true;
     }
 }

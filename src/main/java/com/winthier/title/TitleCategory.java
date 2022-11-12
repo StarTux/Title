@@ -1,6 +1,8 @@
 package com.winthier.title;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import static com.cavetale.core.util.CamelCase.toCamelCase;
@@ -93,5 +95,15 @@ public enum TitleCategory {
     public static TitleCategory ofKey(String key) {
         TitleCategory result = KEY_MAP.get(key);
         return result != null ? result : UNKNOWN;
+    }
+
+    public List<Title> getTitles() {
+        List<Title> result = new ArrayList<>();
+        for (Title title : TitlePlugin.getInstance().getTitles()) {
+            if (title.parseCategory() == this) {
+                result.add(title);
+            }
+        }
+        return result;
     }
 }

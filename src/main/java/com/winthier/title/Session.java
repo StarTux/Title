@@ -6,6 +6,7 @@ import com.winthier.title.sql.SQLSuffix;
 import com.winthier.title.sql.UnlockedInfo;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ public final class Session {
     protected final PlayerInfo playerRow;
     protected final Map<String, UnlockedInfo> unlockedRows = new HashMap<>();
     protected final Map<String, SQLPlayerSuffix> suffixRows = new HashMap<>();
+    protected final Map<TitleCategory, UnlockedInfo> unlockedCategories = new EnumMap<>(TitleCategory.class);
     // Cache
     protected Component playerListPrefix = null;
     protected Component playerListSuffix = null;
@@ -54,7 +56,13 @@ public final class Session {
         this.playerName = playerName;
         this.playerRow = playerRow;
         for (UnlockedInfo row : unlockedList) {
-            unlockedRows.put(row.getTitle(), row);
+            if (row.getTitle().startsWith("#")) {
+                String key = row.getTitle().substring(1);
+                TitleCategory cat = TitleCategory.ofKey(key);
+                if (cat != null) unlockedCategories.put(cat, row);
+            } else {
+                unlockedRows.put(row.getTitle(), row);
+            }
         }
         for (SQLPlayerSuffix row : suffixList) {
             suffixRows.put(row.getSuffix(), row);
@@ -73,7 +81,9 @@ public final class Session {
         List<Title> all = plugin.getTitles();
         List<Title> result = new ArrayList<>(all.size());
         for (Title title : all) {
-            if (unlockedRows.containsKey(title.getName()) || title.hasPermission(player)) {
+            if (unlockedRows.containsKey(title.getName())
+                || unlockedCategories.containsKey(title.parseCategory())
+                || title.hasPermission(player)) {
                 result.add(title);
             }
         }
@@ -336,5 +346,26 @@ public final class Session {
             plugin.getLogger().info(player.getName() + " has invalid title selected: " + title.getName());
             resetTitle(player);
         }
+    }
+
+    public boolean unlockCategory(TitleCategory category) {
+        if (unlockedCategories.containsKey(category)) return false;
+        UnlockedInfo row = new UnlockedInfo(uuid, "#" + category.key);
+        unlockedCategories.put(category, row);
+        plugin.getDb().insertIgnoreAsync(row, result -> {
+                if (result != 0) return;
+                plugin.getLogger().info("Insert row " + row + ": " + result);
+            });
+        return true;
+    }
+
+    public boolean lockCategory(TitleCategory category) {
+        UnlockedInfo row = unlockedCategories.remove(category);
+        if (row == null) return false;
+        plugin.getDb().deleteAsync(row, result -> {
+                if (result != 0) return;
+                plugin.getLogger().info("Delete row " + row + ": " + result);
+            });
+        return true;
     }
 }

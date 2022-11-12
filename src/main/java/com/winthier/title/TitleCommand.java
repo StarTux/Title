@@ -96,7 +96,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
         Session session = requireSession(player);
         Title title = plugin.getTitle(titleName);
         if (title == null || !session.hasTitle(player, title)) {
-            throw new CommandWarn("You don't have that title.");
+            throw new CommandWarn(text("You don't have that title", RED)
+                                  .hoverEvent(showText(text("/title", GRAY)))
+                                  .clickEvent(runCommand("/title")));
         }
         List<Title> titles = session.getTitles(player);
         if (titles.indexOf(title) == 0) {
