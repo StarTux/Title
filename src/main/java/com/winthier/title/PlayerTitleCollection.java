@@ -92,6 +92,7 @@ public final class PlayerTitleCollection {
     public void load(Session session) {
         for (Title title : TitlePlugin.getInstance().getTitles()) {
             UnlockedInfo unlockedInfo = session.unlockedRows.get(title.getName());
+            if (unlockedInfo == null) unlockedInfo = session.unlockedCategories.get(title.parseCategory());
             TitleCategory category = title.parseCategory();
             final boolean isUnlocked = unlockedInfo != null || title.hasPermission(session.uuid);
             if (!isUnlocked && category == TitleCategory.HIDDEN) continue;
