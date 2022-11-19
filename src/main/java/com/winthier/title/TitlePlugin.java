@@ -110,7 +110,11 @@ public final class TitlePlugin extends JavaPlugin {
                         session.animationFrame = 0;
                     }
                     player.displayName(session.displayNameAnimation.get(session.animationFrame));
-                    player.playerListName(session.displayNameAnimation.get(session.animationFrame));
+                    List<Component> playerListList = new ArrayList<>();
+                    if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
+                    playerListList.add(session.displayNameAnimation.get(session.animationFrame));
+                    if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
+                    player.playerListName(join(noSeparators(), playerListList));
                     updatePlayerScoreboards(player, session);
                 }
             }, 4L, 4L);
@@ -220,7 +224,9 @@ public final class TitlePlugin extends JavaPlugin {
                 session.teamPrefixAnimation = new ArrayList<>();
                 for (int i = 0; i < mytems.getAnimationFrameCount(); i += 1) {
                     List<Component> displayNameFrame = new ArrayList<>(displayNameList);
-                    displayNameFrame.set(0, mytems.getAnimationFrame(i).decoration(ITALIC, false));
+                    displayNameFrame.set(0, mytems.getAnimationFrame(i)
+                                         .hoverEvent(title.getTooltip(player.getUniqueId()))
+                                         .decoration(ITALIC, false));
                     session.displayNameAnimation.add(join(noSeparators(), displayNameFrame));
                     session.teamPrefixAnimation.add(mytems.getAnimationFrame(i));
                 }
