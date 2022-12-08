@@ -163,6 +163,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                         meta.pages(pages);
                     }
                 });
+            player.closeInventory();
             player.openBook(book);
         }
     }
