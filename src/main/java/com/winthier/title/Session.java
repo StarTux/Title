@@ -96,9 +96,10 @@ public final class Session {
         UnlockedInfo row = new UnlockedInfo(uuid, title.getName());
         unlockedRows.put(title.getName(), row);
         plugin.getDb().insertIgnoreAsync(row, result -> {
-                if (result != 0) return;
-                plugin.getLogger().info("Insert row " + row + ": " + result);
                 broadcastUpdate();
+                if (result == 0) {
+                    plugin.getLogger().info("Insert row " + row + ": " + result);
+                }
             });
         return true;
     }
@@ -107,9 +108,10 @@ public final class Session {
         UnlockedInfo row = unlockedRows.remove(title.getName());
         if (row == null) return false;
         plugin.getDb().deleteAsync(row, result -> {
-                if (result != 0) return;
-                plugin.getLogger().info("Delete row " + row + ": " + result);
                 broadcastUpdate();
+                if (result == 0) {
+                    plugin.getLogger().info("Delete row " + row + ": " + result);
+                }
             });
         if (Objects.equals(playerRow.getTitle(), title.getName())) {
             resetTitle();
@@ -310,8 +312,9 @@ public final class Session {
         UnlockedInfo row = new UnlockedInfo(uuid, "#" + category.key);
         unlockedCategories.put(category, row);
         plugin.getDb().insertIgnoreAsync(row, result -> {
-                if (result != 0) return;
-                plugin.getLogger().info("Insert row " + row + ": " + result);
+                if (result == 0) {
+                    plugin.getLogger().info("Insert row " + row + ": " + result);
+                }
                 broadcastUpdate();
             });
         return true;
@@ -321,8 +324,9 @@ public final class Session {
         UnlockedInfo row = unlockedCategories.remove(category);
         if (row == null) return false;
         plugin.getDb().deleteAsync(row, result -> {
-                if (result != 0) return;
-                plugin.getLogger().info("Delete row " + row + ": " + result);
+                if (result == 0) {
+                    plugin.getLogger().info("Delete row " + row + ": " + result);
+                }
                 broadcastUpdate();
             });
         return true;
