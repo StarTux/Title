@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.core.connect.Connect;
 import com.cavetale.core.perm.Perm;
 import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.mytems.Mytems;
@@ -516,13 +517,17 @@ public final class TitlePlugin extends JavaPlugin {
     public boolean lockPlayerTitle(UUID uuid, Title title) {
         Session session = findSession(uuid);
         if (session != null) return session.lockTitle(title);
-        return Database.lockTitle(uuid, title);
+        boolean result = Database.lockTitle(uuid, title);
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public boolean playerHasTitle(UUID uuid, Title title) {
         Session session = findSession(uuid);
         if (session != null) return session.hasTitle(title);
-        return Database.playerHasTitle(uuid, title);
+        boolean result = Database.playerHasTitle(uuid, title);
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     /**
@@ -532,19 +537,23 @@ public final class TitlePlugin extends JavaPlugin {
     public boolean setPlayerTitle(UUID uuid, @NonNull Title title) {
         Session session = findSession(uuid);
         if (session != null) return session.setTitle(title);
-        return 0 != db.update(PlayerInfo.class)
+        boolean result = 0 != db.update(PlayerInfo.class)
             .where(w -> w.eq("uuid", uuid))
             .set("title", title.getName())
             .sync();
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public boolean resetPlayerTitle(UUID uuid) {
         Session session = findSession(uuid);
         if (session != null) return session.resetTitle();
-        return 0 != db.update(PlayerInfo.class)
+        boolean result = 0 != db.update(PlayerInfo.class)
             .where(w -> w.eq("uuid", uuid))
             .set("title", null)
             .sync();
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public SQLSuffix getPlayerSuffix(Player player) {
@@ -563,28 +572,34 @@ public final class TitlePlugin extends JavaPlugin {
 
     public boolean unlockPlayerSuffix(UUID uuid, String suffixName) {
         Session session = findSession(uuid);
-        return session != null
-            ? session.unlockSuffix(suffixName)
-            : 0 != db.insert(new SQLPlayerSuffix(uuid, suffixName));
+        if (session != null) return session.unlockSuffix(suffixName);
+        boolean result = 0 != db.insert(new SQLPlayerSuffix(uuid, suffixName));
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public boolean lockPlayerSuffix(UUID uuid, String suffixName) {
         Session session = findSession(uuid);
-        return session != null
-            ? session.lockSuffix(suffixName)
-            : 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
+        if (session != null) return session.lockSuffix(suffixName);
+        boolean result = 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public boolean unlockPlayerCategory(UUID uuid, TitleCategory category) {
         Session session = findSession(uuid);
         if (session != null) return session.unlockCategory(category);
-        return Database.unlockCategory(uuid, category);
+        boolean result = Database.unlockCategory(uuid, category);
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public boolean lockPlayerCategory(UUID uuid, TitleCategory category) {
         Session session = findSession(uuid);
         if (session != null) return session.lockCategory(category);
-        return Database.lockCategory(uuid, category);
+        boolean result = Database.lockCategory(uuid, category);
+        if (result) broadcastUpdate(uuid);
+        return result;
     }
 
     public static Component getPlayerDisplayName(UUID uuid) {
@@ -599,5 +614,9 @@ public final class TitlePlugin extends JavaPlugin {
         return session != null
             ? session.getPlayerListName()
             : text(PlayerCache.nameForUuid(uuid));
+    }
+
+    private void broadcastUpdate(UUID uuid) {
+        Connect.get().broadcastMessage("connect:player_update", uuid.toString());
     }
 }
