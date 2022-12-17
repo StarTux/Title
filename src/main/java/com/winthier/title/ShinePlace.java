@@ -50,6 +50,7 @@ public final class ShinePlace {
         case COPPER_COIN:
         case SILVER_COIN:
         case GOLDEN_COIN:
+        case GOLDEN_HOOP:
         case DIAMOND_COIN:
         case RUBY_COIN: {
             final Item entity = eye.getWorld().dropItem(eye, shine.mytems.createIcon(), item -> {
