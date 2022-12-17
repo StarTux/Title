@@ -34,8 +34,8 @@ public final class BadgeCommand implements TabExecutor {
             player.sendMessage(Component.text("Please try again later!", NamedTextColor.RED));
             return true;
         }
-        List<SQLSuffix> suffixes = session.getSuffixes(player);
-        SQLSuffix activeSuffix = session.getSuffix(player);
+        List<SQLSuffix> suffixes = session.getSuffixes();
+        SQLSuffix activeSuffix = session.getSuffix();
         if (args.length == 0) {
             if (suffixes.isEmpty()) {
                 sender.sendMessage(Component.text("No badges to show", NamedTextColor.RED));
@@ -68,12 +68,12 @@ public final class BadgeCommand implements TabExecutor {
                 player.sendMessage(Component.text("You aren't wearing a badge!", NamedTextColor.RED));
                 return true;
             }
-            session.resetSuffix(player);
+            session.resetSuffix();
             player.sendMessage(Component.text("Badge deactivated", NamedTextColor.GREEN));
             return true;
         }
         SQLSuffix suffix = plugin.getSuffixes().get(args[0]);
-        if (suffix == null || !session.hasSuffix(player, suffix)) {
+        if (suffix == null || !session.hasSuffix(suffix)) {
             player.sendMessage(Component.text("You don't have that badge!", NamedTextColor.RED));
             return true;
         }
@@ -81,7 +81,7 @@ public final class BadgeCommand implements TabExecutor {
             player.sendMessage(Component.text("You're already wearing this badge!", NamedTextColor.RED));
             return true;
         }
-        session.setSuffix(player, suffix);
+        session.setSuffix(suffix);
         player.sendMessage(Component.text()
                            .append(Component.text("Badge selected: "))
                            .append(suffix.getComponent()));

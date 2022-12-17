@@ -73,7 +73,7 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
     }
 
     private void defaultTitle(Player player) {
-        requireSession(player).resetTitle(player);
+        requireSession(player).resetTitle();
         player.sendMessage(text("Using default title", AQUA));
     }
 
@@ -95,16 +95,16 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
     private void select(Player player, String titleName) {
         Session session = requireSession(player);
         Title title = plugin.getTitle(titleName);
-        if (title == null || !session.hasTitle(player, title)) {
+        if (title == null || !session.hasTitle(title)) {
             throw new CommandWarn(text("You don't have that title", RED)
                                   .hoverEvent(showText(text("/title", GRAY)))
                                   .clickEvent(runCommand("/title")));
         }
-        List<Title> titles = session.getTitles(player);
+        List<Title> titles = session.getTitles();
         if (titles.indexOf(title) == 0) {
-            session.resetTitle(player);
+            session.resetTitle();
         } else {
-            session.setTitle(player, title);
+            session.setTitle(title);
         }
         player.sendMessage(text()
                            .append(text("Set title to ", AQUA))

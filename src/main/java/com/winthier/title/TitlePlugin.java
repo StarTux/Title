@@ -168,9 +168,9 @@ public final class TitlePlugin extends JavaPlugin {
     public void updatePlayerName(Player player) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null) return;
-        Title title = session.getTitle(player);
+        Title title = session.getTitle();
         TextFormat nameColor = title.getNameTextFormat();
-        SQLSuffix suffix = session.getSuffix(player);
+        SQLSuffix suffix = session.getSuffix();
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
         session.animated = false;
@@ -388,13 +388,13 @@ public final class TitlePlugin extends JavaPlugin {
     public List<Title> getPlayerTitles(Player player) {
         Session session = findSession(player);
         if (session == null) return Collections.emptyList();
-        return session.getTitles(player);
+        return session.getTitles();
     }
 
     public Title getPlayerTitle(Player player) {
         Session session = findSession(player);
         if (session == null) return null;
-        return session.getTitle(player);
+        return session.getTitle();
     }
 
     public Title getTitle(String name) {
@@ -404,13 +404,13 @@ public final class TitlePlugin extends JavaPlugin {
     public Shine getPlayerShine(Player player) {
         Session session = findSession(player);
         if (session == null) return null;
-        return session.getShine(player);
+        return session.getShine();
     }
 
     public Collection<Shine> getPlayerShines(Player player) {
         Session session = findSession(player);
         if (session == null) return Collections.emptyList();
-        return session.getShines(player);
+        return session.getShines();
     }
 
     public boolean playerHasShine(Player player, Shine shine) {
@@ -520,7 +520,7 @@ public final class TitlePlugin extends JavaPlugin {
     public SQLSuffix getPlayerSuffix(Player player) {
         Session session = sessions.get(player.getUniqueId());
         return session != null
-            ? session.getSuffix(player)
+            ? session.getSuffix()
             : null;
     }
 

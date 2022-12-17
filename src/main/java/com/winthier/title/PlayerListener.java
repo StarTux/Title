@@ -37,7 +37,7 @@ public final class PlayerListener implements Listener {
         Player player = event.getPlayer();
         Session session = plugin.findSession(player);
         if (session != null) {
-            session.updateValidity(player);
+            session.updateValidity();
         }
         plugin.updatePlayerName(player);
     }

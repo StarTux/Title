@@ -19,8 +19,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 /**
@@ -69,21 +67,13 @@ public final class Session {
         }
     }
 
-    public Player getPlayer() {
-        return Bukkit.getPlayer(uuid);
-    }
-
     public List<Title> getTitles() {
-        return getTitles(getPlayer());
-    }
-
-    public List<Title> getTitles(Player player) {
         List<Title> all = plugin.getTitles();
         List<Title> result = new ArrayList<>(all.size());
         for (Title title : all) {
             if (unlockedRows.containsKey(title.getName())
                 || unlockedCategories.containsKey(title.parseCategory())
-                || title.hasPermission(player)) {
+                || title.hasPermission(uuid)) {
                 result.add(title);
             }
         }
@@ -116,11 +106,7 @@ public final class Session {
     }
 
     public boolean setTitle(Title title) {
-        return setTitle(getPlayer(), title);
-    }
-
-    public boolean setTitle(Player player, Title title) {
-        List<Title> titles = getTitles(player);
+        List<Title> titles = getTitles();
         if (0 == titles.indexOf(title)) {
             // Default title
             if (playerRow.getTitle() == null) return false;
@@ -130,58 +116,39 @@ public final class Session {
             playerRow.setTitle(title.getName());
         }
         plugin.getDb().updateAsync(playerRow, null, "title");
-        plugin.updatePlayerName(player);
+        plugin.updatePlayerName(uuid);
         return true;
     }
 
     public boolean resetTitle() {
-        Player player = getPlayer();
-        return player != null
-            ? resetTitle(player)
-            : false;
-    }
-
-    public boolean resetTitle(Player player) {
         if (playerRow.getTitle() != null) {
             playerRow.setTitle(null);
             plugin.getDb().updateAsync(playerRow, null, "title");
         }
-        plugin.updatePlayerName(player);
+        plugin.updatePlayerName(uuid);
         return true;
     }
 
     public Title getTitle() {
-        return getTitle(getPlayer());
-    }
-
-    public Title getTitle(Player player) {
         String selectedTitleName = playerRow.getTitle();
         if (selectedTitleName != null) {
             Title selectedTitle = plugin.getTitle(selectedTitleName);
             if (selectedTitle != null) return selectedTitle;
         }
-        return getTitles(player).get(0);
-    }
-
-    public Shine getShine() {
-        return getShine(getPlayer());
+        return getTitles().get(0);
     }
 
     // Nullable
-    public Shine getShine(Player player) {
+    public Shine getShine() {
         Shine selectedShine = playerRow.parseShine();
         if (selectedShine != null) {
             return selectedShine;
         }
-        Title title = getTitle(player);
+        Title title = getTitle();
         return title.parseShine();
     }
 
     public boolean hasTitle(Title title) {
-        return hasTitle(getPlayer(), title);
-    }
-
-    public boolean hasTitle(Player player, Title title) {
         if (unlockedRows.containsKey(title.getName())) return true;
         for (Title it : getTitles()) {
             if (it.getName().equals(title.getName())) return true;
@@ -190,12 +157,8 @@ public final class Session {
     }
 
     public Set<Shine> getShines() {
-        return getShines(getPlayer());
-    }
-
-    public Set<Shine> getShines(Player player) {
         Set<Shine> result = EnumSet.noneOf(Shine.class);
-        for (Title title : getTitles(player)) {
+        for (Title title : getTitles()) {
             Shine titleShine = title.parseShine();
             if (titleShine != null) result.add(titleShine);
         }
@@ -203,11 +166,7 @@ public final class Session {
     }
 
     public boolean hasShine(Shine shine) {
-        return hasShine(getPlayer(), shine);
-    }
-
-    public boolean hasShine(Player player, Shine shine) {
-        for (Title title : getTitles(player)) {
+        for (Title title : getTitles()) {
             Shine titleShine = title.parseShine();
             if (titleShine != null && shine == titleShine) {
                 return true;
@@ -229,19 +188,11 @@ public final class Session {
     }
 
     public SQLSuffix getSuffix() {
-        return getSuffix(getPlayer());
-    }
-
-    // Nullable
-    public SQLSuffix getSuffix(Player player) {
         return playerRow.findSuffix();
     }
 
+    // Nullable
     public List<SQLSuffix> getSuffixes() {
-        return getSuffixes(getPlayer());
-    }
-
-    public List<SQLSuffix> getSuffixes(Player player) {
         Set<String> set = new HashSet<>();
         for (SQLPlayerSuffix unlocked : suffixRows.values()) {
             String name = unlocked.getSuffix();
@@ -256,7 +207,7 @@ public final class Session {
                 set.add(name);
             }
         }
-        for (Title title : getTitles(player)) {
+        for (Title title : getTitles()) {
             String name = title.getSuffix();
             if (name != null) {
                 if (name.startsWith("#")) {
@@ -284,20 +235,16 @@ public final class Session {
         return suffixRows.containsKey(suffixName);
     }
 
-    public boolean hasSuffix(Player player, SQLSuffix suffix) {
-        for (SQLSuffix it : getSuffixes(player)) {
+    public boolean hasSuffix(SQLSuffix suffix) {
+        for (SQLSuffix it : getSuffixes()) {
             if (Objects.equals(it.getName(), suffix.getName())) return true;
         }
         return false;
     }
 
     public boolean unlockSuffix(String suffixName) {
-        return unlockSuffix(getPlayer(), suffixName);
-    }
-
-    public boolean unlockSuffix(Player player, String suffixName) {
         if (suffixRows.containsKey(suffixName)) return false;
-        SQLPlayerSuffix row = new SQLPlayerSuffix(player.getUniqueId(), suffixName);
+        SQLPlayerSuffix row = new SQLPlayerSuffix(uuid, suffixName);
         plugin.getDb().insertIgnoreAsync(row, result -> {
                 if (result == 0) {
                     plugin.getLogger().info("Insert row " + row + ": " + result);
@@ -308,10 +255,6 @@ public final class Session {
     }
 
     public boolean lockSuffix(String suffixName) {
-        return lockSuffix(getPlayer(), suffixName);
-    }
-
-    public boolean lockSuffix(Player player, String suffixName) {
         SQLPlayerSuffix row = suffixRows.remove(suffixName);
         if (row == null) return false;
         plugin.getDb().deleteAsync(row, result -> {
@@ -322,29 +265,29 @@ public final class Session {
         return true;
     }
 
-    public void setSuffix(Player player, SQLSuffix suffix) {
+    public void setSuffix(SQLSuffix suffix) {
         if (Objects.equals(suffix.getName(), playerRow.getSuffix())) return;
         playerRow.setSuffix(suffix.getName());
         plugin.getDb().updateAsync(playerRow, null, "suffix");
-        plugin.updatePlayerName(player);
+        plugin.updatePlayerName(uuid);
     }
 
-    public void resetSuffix(Player player) {
+    public void resetSuffix() {
         if (playerRow.getSuffix() == null) return;
         playerRow.setSuffix(null);
         plugin.getDb().updateAsync(playerRow, null, "suffix");
-        plugin.updatePlayerName(player);
+        plugin.updatePlayerName(uuid);
     }
 
     /**
      * Check if current settings are valid and reset them if
      * necessary.
      */
-    public void updateValidity(Player player) {
-        Title title = getTitle(player);
-        if (title != null && !hasTitle(player, title)) {
-            plugin.getLogger().info(player.getName() + " has invalid title selected: " + title.getName());
-            resetTitle(player);
+    public void updateValidity() {
+        Title title = getTitle();
+        if (title != null && !hasTitle(title)) {
+            plugin.getLogger().info(playerName + " has invalid title selected: " + title.getName());
+            resetTitle();
         }
     }
 

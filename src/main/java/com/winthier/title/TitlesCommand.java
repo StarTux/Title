@@ -838,12 +838,6 @@ public final class TitlesCommand implements TabExecutor {
                     errors += 1;
                 }
             }
-            for (Session session : plugin.getSessions().values()) {
-                if (session.getPlayer() == null) {
-                    sender.sendMessage(text("Session without player: " + session.getPlayerName(), RED));
-                    errors += 1;
-                }
-            }
             if (errors > 0) {
                 sender.sendMessage(text(errors + " errors!", RED));
             } else {
