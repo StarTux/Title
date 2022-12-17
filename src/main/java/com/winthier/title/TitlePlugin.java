@@ -102,20 +102,30 @@ public final class TitlePlugin extends JavaPlugin {
             enter(player);
         }
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    Session session = sessions.get(player.getUniqueId());
+                final long then = System.currentTimeMillis() - 60000L;
+                for (UUID uuid : List.copyOf(sessions.keySet())) {
+                    Session session = sessions.get(uuid);
+                    if (session.lastUsed < then) {
+                        sessions.remove(uuid);
+                        continue;
+                    }
                     if (session == null || !session.animated) continue;
                     session.animationFrame += 1;
                     if (session.animationFrame >= session.displayNameAnimation.size()) {
                         session.animationFrame = 0;
                     }
-                    player.displayName(session.displayNameAnimation.get(session.animationFrame));
                     List<Component> playerListList = new ArrayList<>();
                     if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
                     playerListList.add(session.displayNameAnimation.get(session.animationFrame));
                     if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
-                    player.playerListName(join(noSeparators(), playerListList));
-                    updatePlayerScoreboards(player, session);
+                    session.displayName = session.displayNameAnimation.get(session.animationFrame);
+                    session.playerListName = join(noSeparators(), playerListList);
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null) {
+                        player.displayName(session.displayName);
+                        player.playerListName(session.playerListName);
+                        updatePlayerScoreboards(player, session);
+                    }
                 }
             }, 4L, 4L);
     }
@@ -159,15 +169,23 @@ public final class TitlePlugin extends JavaPlugin {
             });
     }
 
-    private static Component tierForPlayerList(Player player) {
-        return join(noSeparators(), text("["), Glyph.toComponent("" + Perm.get().getLevel(player.getUniqueId())), text("]"))
+    private static Component tierForPlayerList(UUID uuid) {
+        return join(noSeparators(), text("["), Glyph.toComponent("" + Perm.get().getLevel(uuid)), text("]"))
             .color(GRAY)
             .decoration(TextDecoration.ITALIC, false);
     }
 
     public void updatePlayerName(Player player) {
-        Session session = sessions.get(player.getUniqueId());
+        updatePlayerName(player.getUniqueId());
+    }
+
+    public void updatePlayerName(final UUID uuid) {
+        Session session = findSession(uuid);
         if (session == null) return;
+        final Player player = Bukkit.getPlayer(uuid);
+        final String name = player != null
+            ? player.getName()
+            : PlayerCache.nameForUuid(uuid);
         Title title = session.getTitle();
         TextFormat nameColor = title.getNameTextFormat();
         SQLSuffix suffix = session.getSuffix();
@@ -179,31 +197,34 @@ public final class TitlePlugin extends JavaPlugin {
         session.teamPrefixAnimation = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
-            player.displayName(null);
-            player.playerListName(join(noSeparators(), tierForPlayerList(player), text(player.getName())));
-            resetPlayerScoreboards(player);
+            session.displayName = text(name);
+            session.playerListSuffix = join(noSeparators(), tierForPlayerList(uuid), text(name));
+            if (player != null) {
+                player.displayName(null);
+                player.playerListName(session.playerListName);
+                resetPlayerScoreboards(player);
+            }
             return;
         }
         TextComponent.Builder playerListBuilder = Component.text();
         if (session.playerListPrefix != null) {
             playerListBuilder.append(session.playerListPrefix);
         } else if (!title.isPrefix()) {
-            playerListBuilder.append(tierForPlayerList(player));
+            playerListBuilder.append(tierForPlayerList(uuid));
         }
-        Component displayName;
         if (nameColor == null && !title.isPrefix() && suffix == null) {
-            displayName = Component.text(player.getName());
-            player.displayName(null);
+            session.displayName = Component.text(name);
+            if (player != null) player.displayName(null);
         } else {
             List<Component> displayNameList = new ArrayList<>();
             if (title.isPrefix()) {
-                Component titleTag = title.getTitleTag(player.getUniqueId());
+                Component titleTag = title.getTitleTag(uuid);
                 displayNameList.add(titleTag);
                 session.teamPrefix = titleTag;
             }
-            String playerName = suffix != null && suffix.isPartOfName()
-                ? player.getName() + suffix.getCharacter()
-                : player.getName();
+            final String playerName = suffix != null && suffix.isPartOfName()
+                ? name + suffix.getCharacter()
+                : name;
             if (nameColor instanceof TextColor) {
                 displayNameList.add(Component.text(playerName, (TextColor) nameColor));
             } else if (nameColor instanceof TextEffect) {
@@ -215,8 +236,8 @@ public final class TitlePlugin extends JavaPlugin {
             if (suffix != null && !suffix.isPartOfName()) {
                 displayNameList.add(suffix.getComponent());
             }
-            displayName = join(noSeparators(), displayNameList);
-            player.displayName(displayName);
+            session.displayName = join(noSeparators(), displayNameList);
+            if (player != null) player.displayName(session.displayName);
             Mytems mytems = title.getMytems();
             if (mytems != null && mytems.isAnimated()) {
                 session.animated = true;
@@ -225,14 +246,14 @@ public final class TitlePlugin extends JavaPlugin {
                 for (int i = 0; i < mytems.getAnimationFrameCount(); i += 1) {
                     List<Component> displayNameFrame = new ArrayList<>(displayNameList);
                     displayNameFrame.set(0, mytems.getAnimationFrame(i)
-                                         .hoverEvent(title.getTooltip(player.getUniqueId()))
+                                         .hoverEvent(title.getTooltip(uuid))
                                          .decoration(ITALIC, false));
                     session.displayNameAnimation.add(join(noSeparators(), displayNameFrame));
                     session.teamPrefixAnimation.add(mytems.getAnimationFrame(i));
                 }
             }
         }
-        playerListBuilder.append(Component.text().append(displayName).decoration(TextDecoration.ITALIC, false));
+        playerListBuilder.append(Component.text().append(session.displayName).decoration(TextDecoration.ITALIC, false));
         if (session.playerListSuffix != null) {
             playerListBuilder.append(session.playerListSuffix);
         }
@@ -242,13 +263,11 @@ public final class TitlePlugin extends JavaPlugin {
             if (session.playerListSuffix != null) teamSuffixBuilder.append(session.playerListSuffix);
             session.teamSuffix = teamSuffixBuilder.build();
         }
-        player.playerListName(playerListBuilder.build());
-        updatePlayerScoreboards(player, session);
-    }
-
-    public void updatePlayerName(UUID uuid) {
-        Player player = Bukkit.getPlayer(uuid);
-        if (player != null) updatePlayerName(player);
+        session.playerListName = playerListBuilder.build();
+        if (player != null) {
+            player.playerListName(session.playerListName);
+            updatePlayerScoreboards(player, session);
+        }
     }
 
     private static void updatePlayerScoreboards(Player owner, Session session) {
@@ -293,7 +312,7 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public void setPlayerListSuffix(Player player, Component suffix) {
-        Session session = sessions.get(player.getUniqueId());
+        Session session = findSession(player.getUniqueId());
         if (session == null) return;
         if (Objects.equals(session.playerListSuffix, suffix)) return;
         session.playerListSuffix = suffix;
@@ -301,7 +320,7 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public void setPlayerListPrefix(Player player, Component prefix) {
-        Session session = sessions.get(player.getUniqueId());
+        Session session = findSession(player.getUniqueId());
         if (session == null) return;
         if (Objects.equals(session.playerListPrefix, prefix)) return;
         session.playerListPrefix = prefix;
@@ -309,7 +328,7 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public void setColor(Player player, NamedTextColor color) {
-        Session session = sessions.get(player.getUniqueId());
+        Session session = findSession(player.getUniqueId());
         if (session == null) return;
         if (Objects.equals(session.color, color)) return;
         session.color = color;
@@ -317,21 +336,7 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     protected void enter(final Player player) {
-        UUID uuid = player.getUniqueId();
-        db.scheduleAsyncTask(() -> {
-                db.insertIgnore(new PlayerInfo(uuid));
-                PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", uuid).findUnique();
-                if (playerRow == null) {
-                    throw new IllegalStateException(player.getName() + ": playerRow=null");
-                }
-                List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
-                List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
-                Bukkit.getScheduler().runTask(this, () -> {
-                        if (!player.isOnline()) return;
-                        sessions.put(uuid, new Session(this, uuid, player.getName(), playerRow, unlockedRows, suffixRows));
-                        updatePlayerName(player);
-                    });
-            });
+        enter(player.getUniqueId(), player.getName());
         Scoreboard scoreboard = player.getScoreboard();
         if (!Objects.equals(scoreboard, Bukkit.getScoreboardManager().getMainScoreboard())) {
             for (Player online : Bukkit.getOnlinePlayers()) {
@@ -344,17 +349,42 @@ public final class TitlePlugin extends JavaPlugin {
         }
     }
 
+    protected void enter(final UUID uuid, final String name) {
+        db.scheduleAsyncTask(() -> {
+                db.insertIgnore(new PlayerInfo(uuid));
+                PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", uuid).findUnique();
+                if (playerRow == null) {
+                    throw new IllegalStateException(name + ": playerRow=null");
+                }
+                List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
+                List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
+                Bukkit.getScheduler().runTask(this, () -> {
+                        sessions.put(uuid, new Session(this, uuid, name, playerRow, unlockedRows, suffixRows));
+                        updatePlayerName(uuid);
+                    });
+            });
+    }
+
     protected void exit(Player player) {
         player.playerListName(null);
-        sessions.remove(player.getUniqueId());
     }
 
     public Session findSession(Player player) {
-        return sessions.get(player.getUniqueId());
+        return findSession(player.getUniqueId());
+    }
+
+    public Session findSession(UUID uuid) {
+        Session session = sessions.get(uuid);
+        if (session != null) {
+            session.lastUsed = System.currentTimeMillis();
+        } else {
+            enter(uuid, PlayerCache.nameForUuid(uuid));
+        }
+        return session;
     }
 
     public Session sessionOf(PlayerCache player) {
-        Session existingSession = sessions.get(player.uuid);
+        Session existingSession = findSession(player.uuid);
         if (existingSession != null) return existingSession;
         PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", player.uuid).findUnique();
         if (playerRow == null) playerRow = new PlayerInfo(player.uuid);
@@ -478,19 +508,19 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public boolean unlockPlayerTitle(UUID uuid, Title title) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.unlockTitle(title);
         return Database.unlockTitle(uuid, title);
     }
 
     public boolean lockPlayerTitle(UUID uuid, Title title) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.lockTitle(title);
         return Database.lockTitle(uuid, title);
     }
 
     public boolean playerHasTitle(UUID uuid, Title title) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.hasTitle(title);
         return Database.playerHasTitle(uuid, title);
     }
@@ -500,7 +530,7 @@ public final class TitlePlugin extends JavaPlugin {
      * check if the player has the title unlocked!
      */
     public boolean setPlayerTitle(UUID uuid, @NonNull Title title) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.setTitle(title);
         return 0 != db.update(PlayerInfo.class)
             .where(w -> w.eq("uuid", uuid))
@@ -509,7 +539,7 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public boolean resetPlayerTitle(UUID uuid) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.resetTitle();
         return 0 != db.update(PlayerInfo.class)
             .where(w -> w.eq("uuid", uuid))
@@ -518,42 +548,56 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     public SQLSuffix getPlayerSuffix(Player player) {
-        Session session = sessions.get(player.getUniqueId());
+        Session session = findSession(player.getUniqueId());
         return session != null
             ? session.getSuffix()
             : null;
     }
 
     public List<SQLSuffix> getPlayerSuffixes(UUID uuid) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         return session != null
             ? session.getSuffixes()
             : Collections.emptyList();
     }
 
     public boolean unlockPlayerSuffix(UUID uuid, String suffixName) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         return session != null
             ? session.unlockSuffix(suffixName)
             : 0 != db.insert(new SQLPlayerSuffix(uuid, suffixName));
     }
 
     public boolean lockPlayerSuffix(UUID uuid, String suffixName) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         return session != null
             ? session.lockSuffix(suffixName)
             : 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
     }
 
     public boolean unlockPlayerCategory(UUID uuid, TitleCategory category) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.unlockCategory(category);
         return Database.unlockCategory(uuid, category);
     }
 
     public boolean lockPlayerCategory(UUID uuid, TitleCategory category) {
-        Session session = sessions.get(uuid);
+        Session session = findSession(uuid);
         if (session != null) return session.lockCategory(category);
         return Database.lockCategory(uuid, category);
+    }
+
+    public static Component getPlayerDisplayName(UUID uuid) {
+        Session session = instance.findSession(uuid);
+        return session != null
+            ? session.getDisplayName()
+            : text(PlayerCache.nameForUuid(uuid));
+    }
+
+    public static Component getPlayerListName(UUID uuid) {
+        Session session = instance.findSession(uuid);
+        return session != null
+            ? session.getPlayerListName()
+            : text(PlayerCache.nameForUuid(uuid));
     }
 }

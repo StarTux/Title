@@ -838,6 +838,7 @@ public final class TitlesCommand implements TabExecutor {
                     errors += 1;
                 }
             }
+            sender.sendMessage(text("Total " + plugin.getSessions().size() + " sessions"));
             if (errors > 0) {
                 sender.sendMessage(text(errors + " errors!", RED));
             } else {
@@ -885,7 +886,7 @@ public final class TitlesCommand implements TabExecutor {
                       .append(session.teamSuffix));
             cb.append(newline());
             cb.append(text().append(text("Color: ", GRAY))
-                      .append(text(NamedTextColor.NAMES.key(session.color), WHITE)));
+                      .append(text(session.color != null ? NamedTextColor.NAMES.key(session.color) : "none", WHITE)));
             cb.append(newline());
             cb.append(text().append(text("Last Flying Shine: ", GRAY))
                       .append(session.lastFlyingShine != null

@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.core.connect.Connect;
 import com.winthier.title.sql.PlayerInfo;
 import com.winthier.title.sql.SQLPlayerSuffix;
 import com.winthier.title.sql.SQLSuffix;
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.text;
 
 /**
  * A session is kept alive as long as a player stays logged in.
@@ -39,13 +42,17 @@ public final class Session {
     protected Component playerListSuffix = null;
     protected NamedTextColor color = null;
     protected Vector lastFlyingShine;
-    protected Component teamPrefix = Component.empty(); // derived
-    protected Component teamSuffix = Component.empty(); // derived
+    protected Component teamPrefix = empty(); // derived
+    protected Component teamSuffix = empty(); // derived
     // Animation
     protected boolean animated = false;
     protected int animationFrame;
     protected List<Component> displayNameAnimation;
     protected List<Component> teamPrefixAnimation;
+    // Timing
+    protected long lastUsed;
+    @Getter protected Component displayName;
+    @Getter protected Component playerListName;
 
     public Session(final TitlePlugin plugin, final UUID uuid, final String playerName, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {
@@ -65,6 +72,9 @@ public final class Session {
         for (SQLPlayerSuffix row : suffixList) {
             suffixRows.put(row.getSuffix(), row);
         }
+        lastUsed = System.currentTimeMillis();
+        displayName = text(playerName);
+        playerListName = text(playerName);
     }
 
     public List<Title> getTitles() {
@@ -88,6 +98,7 @@ public final class Session {
         plugin.getDb().insertIgnoreAsync(row, result -> {
                 if (result != 0) return;
                 plugin.getLogger().info("Insert row " + row + ": " + result);
+                broadcastUpdate();
             });
         return true;
     }
@@ -98,6 +109,7 @@ public final class Session {
         plugin.getDb().deleteAsync(row, result -> {
                 if (result != 0) return;
                 plugin.getLogger().info("Delete row " + row + ": " + result);
+                broadcastUpdate();
             });
         if (Objects.equals(playerRow.getTitle(), title.getName())) {
             resetTitle();
@@ -115,7 +127,7 @@ public final class Session {
             if (Objects.equals(playerRow.getTitle(), title.getName())) return false;
             playerRow.setTitle(title.getName());
         }
-        plugin.getDb().updateAsync(playerRow, null, "title");
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "title");
         plugin.updatePlayerName(uuid);
         return true;
     }
@@ -123,7 +135,7 @@ public final class Session {
     public boolean resetTitle() {
         if (playerRow.getTitle() != null) {
             playerRow.setTitle(null);
-            plugin.getDb().updateAsync(playerRow, null, "title");
+            plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "title");
         }
         plugin.updatePlayerName(uuid);
         return true;
@@ -178,13 +190,13 @@ public final class Session {
     public void setShine(Shine shine) {
         if (playerRow.parseShine() == shine) return;
         playerRow.setShine(shine.key);
-        plugin.getDb().update(playerRow, "shine");
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "shine");
     }
 
     public void resetShine() {
         if (playerRow.getShine() == null) return;
         playerRow.setShine(null);
-        plugin.getDb().update(playerRow, "shine");
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "shine");
     }
 
     public SQLSuffix getSuffix() {
@@ -249,6 +261,7 @@ public final class Session {
                 if (result == 0) {
                     plugin.getLogger().info("Insert row " + row + ": " + result);
                 }
+                broadcastUpdate();
             });
         suffixRows.put(suffixName, row);
         return true;
@@ -261,6 +274,7 @@ public final class Session {
                 if (result == 0) {
                     plugin.getLogger().info("Delete row " + row + ": " + result);
                 }
+                broadcastUpdate();
             });
         return true;
     }
@@ -268,14 +282,14 @@ public final class Session {
     public void setSuffix(SQLSuffix suffix) {
         if (Objects.equals(suffix.getName(), playerRow.getSuffix())) return;
         playerRow.setSuffix(suffix.getName());
-        plugin.getDb().updateAsync(playerRow, null, "suffix");
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "suffix");
         plugin.updatePlayerName(uuid);
     }
 
     public void resetSuffix() {
         if (playerRow.getSuffix() == null) return;
         playerRow.setSuffix(null);
-        plugin.getDb().updateAsync(playerRow, null, "suffix");
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "suffix");
         plugin.updatePlayerName(uuid);
     }
 
@@ -298,6 +312,7 @@ public final class Session {
         plugin.getDb().insertIgnoreAsync(row, result -> {
                 if (result != 0) return;
                 plugin.getLogger().info("Insert row " + row + ": " + result);
+                broadcastUpdate();
             });
         return true;
     }
@@ -308,7 +323,12 @@ public final class Session {
         plugin.getDb().deleteAsync(row, result -> {
                 if (result != 0) return;
                 plugin.getLogger().info("Delete row " + row + ": " + result);
+                broadcastUpdate();
             });
         return true;
+    }
+
+    public void broadcastUpdate() {
+        Connect.get().broadcastMessage("connect:player_update", uuid.toString());
     }
 }

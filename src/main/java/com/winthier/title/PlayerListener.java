@@ -1,6 +1,9 @@
 package com.winthier.title;
 
+import com.cavetale.core.event.connect.ConnectMessageEvent;
 import com.cavetale.core.event.perm.PlayerPermissionUpdateEvent;
+import com.cavetale.core.playercache.PlayerCache;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -40,5 +43,15 @@ public final class PlayerListener implements Listener {
             session.updateValidity();
         }
         plugin.updatePlayerName(player);
+    }
+
+    @EventHandler
+    private void onConnectMessage(ConnectMessageEvent event) {
+        if (event.getChannel().equals("connect:player_update")) {
+            final UUID uuid = UUID.fromString(event.getPayload(String.class));
+            final String name = PlayerCache.nameForUuid(uuid);
+            plugin.getLogger().info("Update received: " + name + " " + uuid);
+            plugin.enter(uuid, name);
+        }
     }
 }
