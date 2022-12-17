@@ -199,7 +199,7 @@ public final class TitlePlugin extends JavaPlugin {
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             session.displayName = text(name);
-            session.playerListSuffix = join(noSeparators(), tierForPlayerList(uuid), text(name));
+            session.playerListName = join(noSeparators(), tierForPlayerList(uuid), text(name));
             if (player != null) {
                 player.displayName(null);
                 player.playerListName(session.playerListName);
