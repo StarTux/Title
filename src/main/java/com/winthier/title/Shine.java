@@ -29,6 +29,7 @@ public enum Shine {
     GOLDEN_HOOP(0xffff18, Mytems.GOLDEN_HOOP),
     DIAMOND_COIN(0x4aedd9, Mytems.DIAMOND_COIN),
     RUBY_COIN(0xd92d45, Mytems.RUBY_COIN),
+    RAINBOW_BUTTERFLY(0xFFB6C1, Mytems.RAINBOW_BUTTERFLY),
     ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();
