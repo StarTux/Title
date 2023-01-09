@@ -52,6 +52,10 @@ public final class ShineCommand implements TabExecutor {
                 session.resetShine();
                 player.sendMessage(Component.text("Shine unselected", NamedTextColor.AQUA));
                 return true;
+            } else if (args[0].equals("none")) {
+                session.disableShine();
+                player.sendMessage(Component.text("Shine disabled", NamedTextColor.AQUA));
+                return true;
             } else {
                 shine = Shine.ofKey(args[0]);
                 if (shine == null) {
@@ -76,7 +80,7 @@ public final class ShineCommand implements TabExecutor {
         final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) return null;
         if (args.length == 1) {
-            return Stream.concat(Stream.of("default"),
+            return Stream.concat(Stream.of("default", "none"),
                                  plugin.getPlayerShines(player).stream()
                                  .map(Shine::getKey)
                                  .filter(s -> s.contains(args[0])))

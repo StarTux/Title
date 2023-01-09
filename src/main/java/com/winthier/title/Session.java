@@ -154,6 +154,9 @@ public final class Session {
 
     // Nullable
     public Shine getShine() {
+        if ("none".equals(playerRow.getShine())) {
+            return null;
+        }
         Shine selectedShine = playerRow.parseShine();
         if (selectedShine != null) {
             return selectedShine;
@@ -198,6 +201,12 @@ public final class Session {
     public void resetShine() {
         if (playerRow.getShine() == null) return;
         playerRow.setShine(null);
+        plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "shine");
+    }
+
+    public void disableShine() {
+        if ("none".equals(playerRow.getShine())) return;
+        playerRow.setShine("none");
         plugin.getDb().updateAsync(playerRow, x -> broadcastUpdate(), "shine");
     }
 
