@@ -127,7 +127,7 @@ public final class TitlePlugin extends JavaPlugin {
                         updatePlayerScoreboards(player, session);
                     }
                 }
-            }, 0L, 2L);
+            }, 0L, 1L);
     }
 
     @Override
