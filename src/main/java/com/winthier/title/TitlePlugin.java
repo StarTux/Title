@@ -58,6 +58,7 @@ public final class TitlePlugin extends JavaPlugin {
     private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
     private final Map<String, Title> nameTitleMap = new HashMap<>();
     protected boolean shinesDisabled = false;
+    private int animationTicks = 0;
 
     @Override
     public void onEnable() {
@@ -103,6 +104,7 @@ public final class TitlePlugin extends JavaPlugin {
             enter(player);
         }
         Bukkit.getScheduler().runTaskTimer(this, () -> {
+                final int tick = animationTicks++;
                 final long then = System.currentTimeMillis() - 60000L;
                 for (UUID uuid : List.copyOf(sessions.keySet())) {
                     Session session = sessions.get(uuid);
@@ -111,15 +113,12 @@ public final class TitlePlugin extends JavaPlugin {
                         continue;
                     }
                     if (session == null || !session.animated) continue;
-                    session.animationFrame += 1;
-                    if (session.animationFrame >= session.displayNameAnimation.size()) {
-                        session.animationFrame = 0;
-                    }
+                    final int frame = tick % session.displayNameAnimation.size();
                     List<Component> playerListList = new ArrayList<>();
                     if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
-                    playerListList.add(session.displayNameAnimation.get(session.animationFrame));
+                    playerListList.add(session.displayNameAnimation.get(frame));
                     if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
-                    session.displayName = session.displayNameAnimation.get(session.animationFrame);
+                    session.displayName = session.displayNameAnimation.get(frame);
                     session.playerListName = join(noSeparators(), playerListList);
                     Player player = Bukkit.getPlayer(uuid);
                     if (player != null) {
@@ -128,7 +127,7 @@ public final class TitlePlugin extends JavaPlugin {
                         updatePlayerScoreboards(player, session);
                     }
                 }
-            }, 4L, 4L);
+            }, 0L, 2L);
     }
 
     @Override
