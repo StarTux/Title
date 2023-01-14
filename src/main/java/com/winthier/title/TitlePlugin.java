@@ -192,7 +192,6 @@ public final class TitlePlugin extends JavaPlugin {
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
         session.animated = false;
-        session.animationFrame = 0;
         session.displayNameAnimation = null;
         session.teamPrefixAnimation = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
@@ -270,7 +269,7 @@ public final class TitlePlugin extends JavaPlugin {
         }
     }
 
-    private static void updatePlayerScoreboards(Player owner, Session session) {
+    private void updatePlayerScoreboards(Player owner, Session session) {
         Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
         // updatePlayerScoreboard(owner, session, main);
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -280,13 +279,14 @@ public final class TitlePlugin extends JavaPlugin {
         }
     }
 
-    private static void updatePlayerScoreboard(Player owner, Session session, Scoreboard scoreboard) {
+    private void updatePlayerScoreboard(Player owner, Session session, Scoreboard scoreboard) {
         String teamName = owner.getName().toLowerCase();
         Team team = scoreboard.getTeam(teamName);
         if (team == null) team = scoreboard.registerNewTeam(teamName);
         team.addEntry(owner.getName());
         if (session.animated) {
-            team.prefix(session.teamPrefixAnimation.get(session.animationFrame));
+            int frame = animationTicks % session.teamPrefixAnimation.size();
+            team.prefix(session.teamPrefixAnimation.get(frame));
         } else {
             team.prefix(session.teamPrefix);
         }

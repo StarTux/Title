@@ -46,7 +46,6 @@ public final class Session {
     protected Component teamSuffix = empty(); // derived
     // Animation
     protected boolean animated = false;
-    protected int animationFrame;
     protected List<Component> displayNameAnimation;
     protected List<Component> teamPrefixAnimation;
     // Timing
