@@ -30,7 +30,8 @@ public enum Shine {
     DIAMOND_COIN(0x4aedd9, Mytems.DIAMOND_COIN),
     RUBY_COIN(0xd92d45, Mytems.RUBY_COIN),
     RAINBOW_BUTTERFLY(0xFFB6C1, Mytems.RAINBOW_BUTTERFLY),
-    SNOWFLAKE(0xCCFFFF, Mytems.SNOWFLAKE);
+    SNOWFLAKE(0xCCFFFF, Mytems.SNOWFLAKE),
+    DICE(0xAAAAAA, Mytems.DICE_ROLL),
     ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();

@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.mytems.Mytems;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -47,6 +48,50 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case DICE: {
+            final Mytems mytems = switch (1 + random.nextInt(6)) {
+            case 1 -> Mytems.DICE_1;
+            case 2 -> Mytems.DICE_2;
+            case 3 -> Mytems.DICE_3;
+            case 4 -> Mytems.DICE_4;
+            case 5 -> Mytems.DICE_5;
+            case 6 -> Mytems.DICE_6;
+            default -> Mytems.DICE_1;
+            };
+            final Item entity = eye.getWorld().dropItem(eye, mytems.createIcon(), item -> {
+                    item.setPersistent(false);
+                    item.setCanMobPickup(false);
+                    item.setCanPlayerPickup(false);
+                    item.setPersistent(false);
+                    item.setOwner(java.util.UUID.randomUUID());
+                    item.setPickupDelay(32767);
+                    item.setInvulnerable(true);
+                });
+            if (entity == null) return;
+            final UUID uuid = entity.getUniqueId();
+            ENTITIES.add(uuid);
+            final double y = eye.getY() - 1.0;
+            new BukkitRunnable() {
+                int ticks = 0;
+                @Override public void run() {
+                    if (entity == null || entity.isDead()) {
+                        cancel();
+                        ENTITIES.remove(uuid);
+                        return;
+                    }
+                    if (ticks > 100) {
+                        entity.remove();
+                        return;
+                    }
+                    if (entity.getLocation().getY() <= y) {
+                        entity.setGravity(false);
+                        entity.setVelocity(entity.getVelocity().multiply(0.9));
+                    }
+                    ticks += 1;
+                }
+            }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
+            break;
+        }
         case SNOWFLAKE: {
             final double[][] points = {{0.00, 1.00}, {-0.14, 0.86},
             {0.00, 0.86}, {0.14, 0.86}, {-0.71, 0.71}, {-0.43, 0.71},
