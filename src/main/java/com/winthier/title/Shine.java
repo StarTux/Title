@@ -32,6 +32,7 @@ public enum Shine {
     RAINBOW_BUTTERFLY(0xFFB6C1, Mytems.RAINBOW_BUTTERFLY),
     SNOWFLAKE(0xCCFFFF, Mytems.SNOWFLAKE),
     DICE(0xAAAAAA, Mytems.DICE_ROLL),
+    LIGHTNING(0x00FFFF, Mytems.LIGHTNING),
     ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();

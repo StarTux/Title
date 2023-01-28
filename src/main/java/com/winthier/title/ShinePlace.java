@@ -48,6 +48,29 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case LIGHTNING: {
+            final double[][] points = {{-0.33, 1.00}, {-0.20, 1.00},
+                {-0.07, 1.00}, {0.07, 1.00}, {0.20, 1.00}, {0.33,
+                1.00}, {0.47, 1.00}, {0.60, 1.00}, {0.73, 1.00},
+                {0.87, 1.00}, {-0.33, 0.87}, {0.87, 0.87}, {-0.47,
+                0.73}, {0.73, 0.73}, {-0.47, 0.60}, {0.60, 0.60},
+                {-0.60, 0.47}, {0.47, 0.47}, {-0.60, 0.33}, {0.33,
+                0.33}, {-0.73, 0.20}, {0.20, 0.20}, {-0.73, 0.07},
+                {0.07, 0.07}, {0.20, 0.07}, {0.33, 0.07}, {0.47,
+                0.07}, {0.60, 0.07}, {-0.87, -0.07}, {0.60, -0.07},
+                {-0.87, -0.20}, {-0.73, -0.20}, {-0.60, -0.20},
+                {-0.47, -0.20}, {-0.33, -0.20}, {-0.20, -0.20}, {0.47,
+                -0.20}, {-0.33, -0.33}, {0.33, -0.33}, {-0.33, -0.47},
+                {0.20, -0.47}, {-0.47, -0.60}, {0.07, -0.60}, {-0.47,
+                -0.73}, {-0.07, -0.73}, {-0.60, -0.87}, {-0.20,
+                -0.87}, {-0.60, -1.00}, {-0.47, -1.00}, {-0.33,
+                -1.00}};
+            double f = random.nextBoolean() ? 1.0 : -1.0;
+            for (double[] p : points) {
+                showParticle(Particle.ELECTRIC_SPARK, null, 1, 0.0, 0.25, f * p[0], p[1]);
+            }
+            break;
+        }
         case DICE: {
             final Mytems mytems = switch (1 + random.nextInt(6)) {
             case 1 -> Mytems.DICE_1;
@@ -637,5 +660,12 @@ public final class ShinePlace {
             .add(right().multiply(x * scale))
             .add(up().multiply(y * scale));
         offset.getWorld().spawnParticle(particle, v.getX(), v.getY(), v.getZ(), amount, spread, spread, spread, 0.0, data);
+    }
+
+    public <T> void showParticle(Particle particle, T data, int amount, double spread, double speed, double x, double y) {
+        Vector v = offset.toVector()
+            .add(right().multiply(x * scale))
+            .add(up().multiply(y * scale));
+        offset.getWorld().spawnParticle(particle, v.getX(), v.getY(), v.getZ(), amount, spread, spread, spread, speed, data);
     }
 }
