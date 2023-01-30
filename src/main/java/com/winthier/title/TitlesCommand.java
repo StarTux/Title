@@ -852,50 +852,40 @@ public final class TitlesCommand implements TabExecutor {
                 sender.sendMessage(text("No session: " + player.name, YELLOW));
                 return true;
             }
-            TextComponent.Builder cb = text();
-            cb.append(text("Session info of " + player.name, YELLOW));
-            cb.append(newline());
-            cb.append(text().append(text("UUID: ", GRAY))
-                      .append(text("" + session.getUuid(), WHITE)));
-            cb.append(newline());
-            cb.append(text().append(text("Title: ", GRAY))
-                      .append(session.playerRow.getTitle() != null
-                              ? text(session.playerRow.getTitle(), WHITE)
-                              : empty()));
-            cb.append(newline());
-            cb.append(text().append(text("Shine: ", GRAY))
-                      .append(session.playerRow.getShine() != null
-                              ? text(session.playerRow.getShine(), WHITE)
-                              : empty()));
-            cb.append(newline());
-            cb.append(text().append(text("Suffix: ", GRAY))
-                      .append(session.playerRow.getSuffix() != null
-                              ? text(session.playerRow.getSuffix(), WHITE)
-                              : empty()));
-            cb.append(newline());
-            cb.append(text().append(text("Player List Prefix: ", GRAY))
-                      .append(session.playerListPrefix != null ? session.playerListPrefix : empty()));
-            cb.append(newline());
-            cb.append(text().append(text("Player List Suffix: ", GRAY))
-                      .append(session.playerListSuffix != null ? session.playerListSuffix : empty()));
-            cb.append(newline());
-            cb.append(text().append(text("Team Prefix: ", GRAY))
-                      .append(session.teamPrefix));
-            cb.append(newline());
-            cb.append(text().append(text("Team Suffix: ", GRAY))
-                      .append(session.teamSuffix));
-            cb.append(newline());
-            cb.append(text().append(text("Color: ", GRAY))
-                      .append(text(session.color != null ? NamedTextColor.NAMES.key(session.color) : "none", WHITE)));
-            cb.append(newline());
-            cb.append(text().append(text("Last Flying Shine: ", GRAY))
-                      .append(session.lastFlyingShine != null
-                              ? text("" + session.lastFlyingShine.getBlockX()
-                                     + " " + session.lastFlyingShine.getBlockY()
-                                     + " " + session.lastFlyingShine.getBlockZ(),
-                                     WHITE)
-                              : empty()));
-            sender.sendMessage(cb.build());
+            List<Component> lines = new ArrayList<>();
+            lines.add(text("Session info of " + player.name, YELLOW));
+            lines.add(textOfChildren(text("UUID: ", GRAY), text("" + session.getUuid(), WHITE)));
+            lines.add(textOfChildren(text("Title: ", GRAY), session.playerRow.getTitle() != null
+                                     ? text(session.playerRow.getTitle(), WHITE)
+                                     : empty()));
+            lines.add(textOfChildren(text("Shine: ", GRAY), session.playerRow.getShine() != null
+                                     ? text(session.playerRow.getShine(), WHITE)
+                                     : empty()));
+            lines.add(textOfChildren(text("Suffix: ", GRAY), session.playerRow.getSuffix() != null
+                                     ? text(session.playerRow.getSuffix(), WHITE)
+                                     : empty()));
+            lines.add(textOfChildren(text("Player List Prefix: ", GRAY), (session.playerListPrefix != null
+                                                                          ? session.playerListPrefix
+                                                                          : empty())));
+            lines.add(textOfChildren(text("Player List Suffix: ", GRAY), (session.playerListSuffix != null
+                                                                          ? session.playerListSuffix
+                                                                          : empty())));
+            lines.add(textOfChildren(text("Team Prefix: ", GRAY), session.teamPrefix));
+            lines.add(textOfChildren(text("Team Suffix: ", GRAY), session.teamSuffix));
+            lines.add(textOfChildren(text("Color: ", GRAY), text(session.color != null
+                                                                 ? NamedTextColor.NAMES.key(session.color)
+                                                                 : "none", WHITE)));
+            lines.add(textOfChildren(text("Last Flying Shine: ", GRAY), (session.lastFlyingShine != null
+                                                                         ? text("" + session.lastFlyingShine.getBlockX()
+                                                                                + " " + session.lastFlyingShine.getBlockY()
+                                                                                + " " + session.lastFlyingShine.getBlockZ(),
+                                                                                WHITE)
+                                                                         : empty())));
+            lines.add(textOfChildren(text("Animated: ", GRAY), (session.animated
+                                                                ? text("Yes", GREEN)
+                                                                : text("No", DARK_GRAY))));
+            lines.add(textOfChildren(text("Last Used: ", GRAY), text(((System.currentTimeMillis() - session.lastUsed) / 1000L) + "s")));
+            sender.sendMessage(join(separator(newline()), lines));
             return true;
         } else {
             return false;
