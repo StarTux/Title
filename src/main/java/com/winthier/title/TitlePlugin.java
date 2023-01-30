@@ -104,11 +104,18 @@ public final class TitlePlugin extends JavaPlugin {
             enter(player);
         }
         Bukkit.getScheduler().runTaskTimer(this, () -> {
+                final long now = System.currentTimeMillis();
                 final int tick = animationTicks++;
-                final long then = System.currentTimeMillis() - 60000L;
+                final long then = now - 5000L;
+                Set<UUID> online = Connect.get().getOnlinePlayers();
+                for (UUID uuid : online) findSession(uuid); // update lastUsed
                 for (UUID uuid : List.copyOf(sessions.keySet())) {
                     Session session = sessions.get(uuid);
-                    if (session.lastUsed < then) {
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null || online.contains(uuid)) {
+                        session.lastUsed = now;
+                    } else if (player == null && session.lastUsed < then && !online.contains(uuid)) {
+                        getLogger().info("Discard session: " + session.playerName);
                         sessions.remove(uuid);
                         continue;
                     }
@@ -120,7 +127,6 @@ public final class TitlePlugin extends JavaPlugin {
                     if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
                     session.displayName = session.displayNameAnimation.get(frame);
                     session.playerListName = join(noSeparators(), playerListList);
-                    Player player = Bukkit.getPlayer(uuid);
                     if (player != null) {
                         player.displayName(session.displayName);
                         player.playerListName(session.playerListName);
