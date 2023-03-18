@@ -123,7 +123,7 @@ public final class TitlePlugin extends JavaPlugin {
                     if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
                     if (session.mytemsPrefix != null) {
                         Component frame = session.mytemsPrefix.getCurrentAnimationFrame();
-                        displayNameList.add(frame);
+                        displayNameList.add(frame.hoverEvent(session.titleTooltip));
                         playerListList.add(frame);
                     }
                     displayNameList.add(session.rawDisplayName);
@@ -210,6 +210,7 @@ public final class TitlePlugin extends JavaPlugin {
         session.rawDisplayName = null;
         session.mytemsPrefix = null;
         session.mytemsSuffix = null;
+        session.titleTooltip = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             session.displayName = text(name);
@@ -259,6 +260,7 @@ public final class TitlePlugin extends JavaPlugin {
                 if (mytemsSuffix != null) {
                     session.animated = true;
                     session.mytemsSuffix = mytemsSuffix;
+                    session.titleTooltip = title.getTooltip(uuid);
                 } else {
                     displayNameList.add(suffix.getComponent());
                 }

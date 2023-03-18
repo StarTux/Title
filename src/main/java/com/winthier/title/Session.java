@@ -50,6 +50,7 @@ public final class Session {
     protected Component rawDisplayName;
     protected Mytems mytemsPrefix;
     protected Mytems mytemsSuffix;
+    protected Component titleTooltip;
     // Timing
     protected long lastUsed;
     @Getter protected Component displayName;
