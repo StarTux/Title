@@ -1,10 +1,8 @@
 package com.winthier.title;
 
 import com.winthier.title.sql.SQLSuffix;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -93,12 +91,15 @@ public final class BadgeCommand implements TabExecutor {
         final Player player = sender instanceof Player ? (Player) sender : null;
         if (player == null) return null;
         if (args.length == 1) {
-            return Stream.concat(Stream.of("none"),
-                                 plugin.getPlayerSuffixes(player.getUniqueId()).stream()
-                                 .map(SQLSuffix::getName)
-                                 .filter(s -> s.contains(args[0])))
-                .collect(Collectors.toList());
+            String lower = args[0].toLowerCase();
+            List<String> result = new ArrayList<>();
+            if ("none".contains(lower)) result.add("none");
+            for (SQLSuffix it : plugin.getPlayerSuffixes(player.getUniqueId())) {
+                String name = it.getName();
+                if (name.toLowerCase().contains(lower)) result.add(name);
+            }
+            return result;
         }
-        return Collections.emptyList();
+        return List.of();
     }
 }

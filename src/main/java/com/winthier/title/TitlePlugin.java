@@ -58,7 +58,6 @@ public final class TitlePlugin extends JavaPlugin {
     private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
     private final Map<String, Title> nameTitleMap = new HashMap<>();
     protected boolean shinesDisabled = false;
-    private int animationTicks = 0;
 
     @Override
     public void onEnable() {
@@ -105,7 +104,6 @@ public final class TitlePlugin extends JavaPlugin {
         }
         Bukkit.getScheduler().runTaskTimer(this, () -> {
                 final long now = System.currentTimeMillis();
-                final int tick = animationTicks++;
                 final long then = now - 5000L;
                 Set<UUID> online = Connect.get().getOnlinePlayers();
                 for (UUID uuid : online) findSession(uuid); // update lastUsed
@@ -120,12 +118,23 @@ public final class TitlePlugin extends JavaPlugin {
                         continue;
                     }
                     if (session == null || !session.animated) continue;
-                    final int frame = tick % session.displayNameAnimation.size();
+                    List<Component> displayNameList = new ArrayList<>();
                     List<Component> playerListList = new ArrayList<>();
                     if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
-                    playerListList.add(session.displayNameAnimation.get(frame));
+                    if (session.mytemsPrefix != null) {
+                        Component frame = session.mytemsPrefix.getCurrentAnimationFrame();
+                        displayNameList.add(frame);
+                        playerListList.add(frame);
+                    }
+                    displayNameList.add(session.rawDisplayName);
+                    playerListList.add(session.rawDisplayName);
+                    if (session.mytemsSuffix != null) {
+                        Component frame = session.mytemsSuffix.getCurrentAnimationFrame();
+                        displayNameList.add(frame);
+                        playerListList.add(frame);
+                    }
                     if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
-                    session.displayName = session.displayNameAnimation.get(frame);
+                    session.displayName = join(noSeparators(), displayNameList);
                     session.playerListName = join(noSeparators(), playerListList);
                     if (player != null) {
                         player.displayName(session.displayName);
@@ -198,8 +207,9 @@ public final class TitlePlugin extends JavaPlugin {
         session.teamPrefix = Component.empty();
         session.teamSuffix = Component.empty();
         session.animated = false;
-        session.displayNameAnimation = null;
-        session.teamPrefixAnimation = null;
+        session.rawDisplayName = null;
+        session.mytemsPrefix = null;
+        session.mytemsSuffix = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             session.displayName = text(name);
@@ -223,9 +233,15 @@ public final class TitlePlugin extends JavaPlugin {
         } else {
             List<Component> displayNameList = new ArrayList<>();
             if (title.isPrefix()) {
-                Component titleTag = title.getTitleTag(uuid);
-                displayNameList.add(titleTag);
-                session.teamPrefix = titleTag;
+                Mytems mytemsPrefix = title.getMytems();
+                if (mytemsPrefix != null && mytemsPrefix.isAnimated()) {
+                    session.animated = true;
+                    session.mytemsPrefix = mytemsPrefix;
+                } else {
+                    Component titleTag = title.getTitleTag(uuid);
+                    displayNameList.add(titleTag);
+                    session.teamPrefix = titleTag;
+                }
             }
             final String playerName = suffix != null && suffix.isPartOfName()
                 ? name + suffix.getCharacter()
@@ -239,24 +255,17 @@ public final class TitlePlugin extends JavaPlugin {
                 displayNameList.add(Component.text(playerName));
             }
             if (suffix != null && !suffix.isPartOfName()) {
-                displayNameList.add(suffix.getComponent());
-            }
-            session.displayName = join(noSeparators(), displayNameList);
-            if (player != null) player.displayName(session.displayName);
-            Mytems mytems = title.getMytems();
-            if (mytems != null && mytems.isAnimated()) {
-                session.animated = true;
-                session.displayNameAnimation = new ArrayList<>();
-                session.teamPrefixAnimation = new ArrayList<>();
-                for (int i = 0; i < mytems.getAnimationFrameCount(); i += 1) {
-                    List<Component> displayNameFrame = new ArrayList<>(displayNameList);
-                    displayNameFrame.set(0, mytems.getAnimationFrame(i)
-                                         .hoverEvent(title.getTooltip(uuid))
-                                         .decoration(ITALIC, false));
-                    session.displayNameAnimation.add(join(noSeparators(), displayNameFrame));
-                    session.teamPrefixAnimation.add(mytems.getAnimationFrame(i));
+                Mytems mytemsSuffix = suffix.getMytems();
+                if (mytemsSuffix != null) {
+                    session.animated = true;
+                    session.mytemsSuffix = mytemsSuffix;
+                } else {
+                    displayNameList.add(suffix.getComponent());
                 }
             }
+            session.rawDisplayName = join(noSeparators(), displayNameList);
+            session.displayName = join(noSeparators(), displayNameList);
+            if (player != null) player.displayName(session.displayName);
         }
         playerListBuilder.append(Component.text().append(session.displayName).decoration(TextDecoration.ITALIC, false));
         if (session.playerListSuffix != null) {
@@ -290,9 +299,8 @@ public final class TitlePlugin extends JavaPlugin {
         Team team = scoreboard.getTeam(teamName);
         if (team == null) team = scoreboard.registerNewTeam(teamName);
         team.addEntry(owner.getName());
-        if (session.animated) {
-            int frame = animationTicks % session.teamPrefixAnimation.size();
-            team.prefix(session.teamPrefixAnimation.get(frame));
+        if (session.animated && session.mytemsSuffix != null) {
+            team.prefix(session.mytemsSuffix.getCurrentAnimationFrame());
         } else {
             team.prefix(session.teamPrefix);
         }

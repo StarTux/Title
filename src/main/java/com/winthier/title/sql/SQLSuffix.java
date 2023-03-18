@@ -2,6 +2,7 @@ package com.winthier.title.sql;
 
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.font.Unicode;
+import com.cavetale.mytems.Mytems;
 import com.winthier.sql.SQLRow;
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -22,6 +23,7 @@ public final class SQLSuffix implements SQLRow, Comparable<SQLSuffix> {
     private int priority;
     @Column(nullable = true, length = 32)
     private String category;
+    private transient Mytems mytems;
     private transient Component component;
     private transient boolean partOfName;
     private transient char character = (char) 0;
@@ -74,5 +76,13 @@ public final class SQLSuffix implements SQLRow, Comparable<SQLSuffix> {
 
     public boolean is(SQLSuffix other) {
         return other != null && name.equals(other.name);
+    }
+
+    public Mytems getMytems() {
+        if (format.startsWith(":") && format.endsWith(":")) {
+            return Mytems.forId(format.substring(1, format.length() - 1));
+        } else {
+            return null;
+        }
     }
 }

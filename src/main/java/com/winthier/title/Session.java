@@ -1,6 +1,7 @@
 package com.winthier.title;
 
 import com.cavetale.core.connect.Connect;
+import com.cavetale.mytems.Mytems;
 import com.winthier.title.sql.PlayerInfo;
 import com.winthier.title.sql.SQLPlayerSuffix;
 import com.winthier.title.sql.SQLSuffix;
@@ -46,8 +47,9 @@ public final class Session {
     protected Component teamSuffix = empty(); // derived
     // Animation
     protected boolean animated = false;
-    protected List<Component> displayNameAnimation;
-    protected List<Component> teamPrefixAnimation;
+    protected Component rawDisplayName;
+    protected Mytems mytemsPrefix;
+    protected Mytems mytemsSuffix;
     // Timing
     protected long lastUsed;
     @Getter protected Component displayName;
