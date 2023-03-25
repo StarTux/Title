@@ -2,7 +2,6 @@ package com.winthier.title;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextFormat;
+import static net.kyori.adventure.text.Component.text;
 
 public abstract class TextEffect implements TextFormat {
     private static final List<TextEffect> VALUES = new ArrayList<>();
@@ -20,6 +20,7 @@ public abstract class TextEffect implements TextFormat {
     public static final TextEffect SEQUENCE = new TextEffectSequence();
     public static final TextEffect BANNER = new TextEffectBanner();
     public static final TextEffect GRADIENT = new TextEffectGradient();
+    public static final TextEffect SHIFT = new TextEffectShift();
 
     public static final class TextEffectRainbow extends TextEffect {
         public static final String NAME = "rainbow";
@@ -48,9 +49,9 @@ public abstract class TextEffect implements TextFormat {
                 NamedTextColor.BLUE,
                 NamedTextColor.LIGHT_PURPLE
             };
-            TextComponent.Builder cb = Component.text();
+            TextComponent.Builder cb = text();
             for (int i = 0; i < in.length(); i += 1) {
-                cb.append(Component.text(in.charAt(i), colors[i % colors.length]));
+                cb.append(text(in.charAt(i), colors[i % colors.length]));
             }
             return cb.build();
         }
@@ -67,7 +68,7 @@ public abstract class TextEffect implements TextFormat {
         private final List<TextColor> colors;
 
         public TextEffectSequence() {
-            this(Collections.emptyList());
+            this(List.of());
         }
 
         @Override
@@ -89,12 +90,12 @@ public abstract class TextEffect implements TextFormat {
             if (colors.size() == 0) {
                 throw new IllegalArgumentException("colors.size = 0");
             }
-            TextComponent.Builder cb = Component.text();
+            TextComponent.Builder cb = text();
             for (int i = 0; i < in.length(); i += 1) {
                 TextColor color = colors.get(i % colors.size());
                 cb.append(color != null
-                          ? Component.text(in.charAt(i), color)
-                          : Component.text(in.charAt(i)));
+                          ? text(in.charAt(i), color)
+                          : text(in.charAt(i)));
             }
             return cb.build();
         }
@@ -109,7 +110,7 @@ public abstract class TextEffect implements TextFormat {
         private final List<TextColor> colors;
 
         public TextEffectBanner() {
-            this(Collections.emptyList());
+            this(List.of());
         }
 
         @Override
@@ -131,15 +132,15 @@ public abstract class TextEffect implements TextFormat {
             if (colors.size() == 0) {
                 throw new IllegalArgumentException("colors.size = 0");
             }
-            TextComponent.Builder cb = Component.text();
+            TextComponent.Builder cb = text();
             final int len = in.length();
             for (int i = 0; i < len; i += 1) {
                 double fraction = (((double) i + 0.5) / (double) len) * (double) colors.size();
                 int index = (int) Math.floor(fraction);
                 TextColor color = colors.get(Math.min(colors.size(), index)); // Just to be sure
                 cb.append(color != null
-                          ? Component.text(in.charAt(i), color)
-                          : Component.text(in.charAt(i)));
+                          ? text(in.charAt(i), color)
+                          : text(in.charAt(i)));
             }
             return cb.build();
         }
@@ -151,7 +152,7 @@ public abstract class TextEffect implements TextFormat {
         private final List<TextColor> colors;
 
         protected TextEffectGradient() {
-            this(Collections.emptyList());
+            this(List.of());
         }
 
         @Override
@@ -178,7 +179,7 @@ public abstract class TextEffect implements TextFormat {
                 throw new IllegalArgumentException("colors.size = 0");
             }
             final int len = in.length();
-            TextComponent.Builder comps = Component.text();
+            TextComponent.Builder comps = text();
             for (int i = 0; i < len; i += 1) {
                 String d = "" + in.charAt(i);
                 double percentage = (double) i / (double) (len - 1);
@@ -199,7 +200,7 @@ public abstract class TextEffect implements TextFormat {
                 TextColor color = TextColor.color(clampRGB((int) Math.round(r)),
                                                   clampRGB((int) Math.round(g)),
                                                   clampRGB((int) Math.round(b)));
-                comps.append(Component.text(d, color));
+                comps.append(text(d, color));
             }
             return comps.build();
         }
@@ -210,6 +211,7 @@ public abstract class TextEffect implements TextFormat {
         VALUES.add(SEQUENCE);
         VALUES.add(GRADIENT);
         VALUES.add(BANNER);
+        VALUES.add(SHIFT);
         for (TextEffect it : VALUES) {
             NAME_MAP.put(it.getName(), it);
         }
@@ -243,6 +245,13 @@ public abstract class TextEffect implements TextFormat {
     public abstract Component format(String in);
 
     /**
+     * Whether to animate the name.
+     */
+    public boolean isAnimated() {
+        return false;
+    }
+
+    /**
      * Overrides may accept space separated arguments.
      */
     public TextEffect with(String... args) {
@@ -261,6 +270,53 @@ public abstract class TextEffect implements TextFormat {
             }
         } else {
             return NamedTextColor.NAMES.value(in);
+        }
+    }
+
+    /**
+     * Shift through the color list.
+     */
+    @RequiredArgsConstructor
+    public static final class TextEffectShift extends TextEffect {
+        public static final String NAME = "shift";
+        private final List<TextColor> colors;
+
+        public TextEffectShift() {
+            this(List.of());
+        }
+
+        @Override
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public TextEffect with(String... args) {
+            int theSpeed = Integer.parseInt(args[0]);
+            List<TextColor> list = new ArrayList<>(args.length);
+            for (int i = 1; i < args.length; i += 1) {
+                TextColor c = parseTextColor(args[i]);
+                for (int j = 0; j < theSpeed; j += 1) {
+                    list.add(c);
+                }
+            }
+            return new TextEffectShift(list);
+        }
+
+        @Override
+        public Component format(String in) {
+            if (colors.size() == 0) {
+                throw new IllegalArgumentException("colors.size = 0");
+            }
+            long tick = System.currentTimeMillis() / 50L;
+            int frame = (int) (tick % (long) colors.size());
+            TextColor color = colors.get(frame);
+            return text(in, color);
+        }
+
+        @Override
+        public boolean isAnimated() {
+            return true;
         }
     }
 }

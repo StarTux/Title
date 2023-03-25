@@ -47,7 +47,10 @@ public final class Session {
     protected Component teamSuffix = empty(); // derived
     // Animation
     protected boolean animated = false;
+    protected TextEffect textEffect;
+    protected String rawPlayerName;
     protected Component rawDisplayName;
+    protected Component rawSuffix;
     protected Mytems mytemsPrefix;
     protected Mytems mytemsSuffix;
     protected Component titleTooltip;

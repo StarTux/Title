@@ -171,7 +171,12 @@ public final class Title implements SQLRow, Comparable<Title> {
         }
         TextColor textColor = NAMES.value(nameColor);
         if (textColor != null) return textColor;
-        return TextEffect.of(nameColor);
+        try {
+            return TextEffect.of(nameColor);
+        } catch (Exception e) {
+            TitlePlugin.getInstance().getLogger().warning("Invalid Text Effect: " + nameColor);
+            return null;
+        }
     }
 
     public boolean isEmptyTitle() {

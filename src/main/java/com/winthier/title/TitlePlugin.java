@@ -35,6 +35,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
@@ -126,12 +127,21 @@ public final class TitlePlugin extends JavaPlugin {
                         displayNameList.add(frame.hoverEvent(session.titleTooltip));
                         playerListList.add(frame);
                     }
-                    displayNameList.add(session.rawDisplayName);
-                    playerListList.add(session.rawDisplayName);
+                    if (session.textEffect != null) {
+                        Component displayName = session.textEffect.format(session.rawPlayerName);
+                        displayNameList.add(displayName);
+                        playerListList.add(displayName);
+                    } else {
+                        displayNameList.add(session.rawDisplayName);
+                        playerListList.add(session.rawDisplayName);
+                    }
                     if (session.mytemsSuffix != null) {
                         Component frame = session.mytemsSuffix.getCurrentAnimationFrame();
                         displayNameList.add(frame);
                         playerListList.add(frame);
+                    } else if (session.rawSuffix != null) {
+                        displayNameList.add(session.rawSuffix);
+                        playerListList.add(session.rawSuffix);
                     }
                     if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
                     session.displayName = join(noSeparators(), displayNameList);
@@ -204,13 +214,15 @@ public final class TitlePlugin extends JavaPlugin {
         Title title = session.getTitle();
         TextFormat nameColor = title.getNameTextFormat();
         SQLSuffix suffix = session.getSuffix();
-        session.teamPrefix = Component.empty();
-        session.teamSuffix = Component.empty();
+        session.teamPrefix = empty();
+        session.teamSuffix = empty();
         session.animated = false;
         session.rawDisplayName = null;
         session.mytemsPrefix = null;
         session.mytemsSuffix = null;
         session.titleTooltip = null;
+        session.rawPlayerName = name;
+        session.textEffect = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             session.displayName = text(name);
@@ -222,14 +234,14 @@ public final class TitlePlugin extends JavaPlugin {
             }
             return;
         }
-        TextComponent.Builder playerListBuilder = Component.text();
+        TextComponent.Builder playerListBuilder = text();
         if (session.playerListPrefix != null) {
             playerListBuilder.append(session.playerListPrefix);
         } else if (!title.isPrefix()) {
             playerListBuilder.append(tierForPlayerList(uuid));
         }
         if (nameColor == null && !title.isPrefix() && suffix == null) {
-            session.displayName = Component.text(name);
+            session.displayName = text(name);
             if (player != null) player.displayName(null);
         } else {
             List<Component> displayNameList = new ArrayList<>();
@@ -244,37 +256,39 @@ public final class TitlePlugin extends JavaPlugin {
                     session.teamPrefix = titleTag;
                 }
             }
-            final String playerName = suffix != null && suffix.isPartOfName()
+            session.rawPlayerName = suffix != null && suffix.isPartOfName()
                 ? name + suffix.getCharacter()
                 : name;
             if (nameColor instanceof TextColor) {
-                displayNameList.add(Component.text(playerName, (TextColor) nameColor));
-            } else if (nameColor instanceof TextEffect) {
-                TextEffect textEffect = (TextEffect) nameColor;
-                displayNameList.add(textEffect.format(playerName));
+                displayNameList.add(text(session.rawPlayerName, (TextColor) nameColor));
+            } else if (nameColor instanceof TextEffect textEffect) {
+                displayNameList.add(textEffect.format(session.rawPlayerName));
+                if (textEffect.isAnimated()) {
+                    session.textEffect = textEffect;
+                    session.animated = true;
+                }
             } else {
-                displayNameList.add(Component.text(playerName));
+                displayNameList.add(text(session.rawPlayerName));
             }
             if (suffix != null && !suffix.isPartOfName()) {
+                session.rawSuffix = suffix.getComponent();
                 Mytems mytemsSuffix = suffix.getMytems();
                 if (mytemsSuffix != null) {
                     session.animated = true;
                     session.mytemsSuffix = mytemsSuffix;
                     session.titleTooltip = title.getTooltip(uuid);
-                } else {
-                    displayNameList.add(suffix.getComponent());
                 }
             }
             session.rawDisplayName = join(noSeparators(), displayNameList);
             session.displayName = join(noSeparators(), displayNameList);
             if (player != null) player.displayName(session.displayName);
         }
-        playerListBuilder.append(Component.text().append(session.displayName).decoration(TextDecoration.ITALIC, false));
+        playerListBuilder.append(text().append(session.displayName).decoration(TextDecoration.ITALIC, false));
         if (session.playerListSuffix != null) {
             playerListBuilder.append(session.playerListSuffix);
         }
         if (suffix != null || session.playerListSuffix != null) {
-            TextComponent.Builder teamSuffixBuilder = Component.text();
+            TextComponent.Builder teamSuffixBuilder = text();
             if (suffix != null) teamSuffixBuilder.append(suffix.getComponent());
             if (session.playerListSuffix != null) teamSuffixBuilder.append(session.playerListSuffix);
             session.teamSuffix = teamSuffixBuilder.build();
