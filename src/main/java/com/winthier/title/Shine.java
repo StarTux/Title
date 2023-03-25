@@ -33,6 +33,7 @@ public enum Shine {
     SNOWFLAKE(0xCCFFFF, Mytems.SNOWFLAKE),
     DICE(0xAAAAAA, Mytems.DICE_ROLL),
     LIGHTNING(0x00FFFF, Mytems.LIGHTNING),
+    SUNSHINE(0xFFFF00),
     ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();
