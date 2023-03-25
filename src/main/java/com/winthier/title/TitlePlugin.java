@@ -315,12 +315,17 @@ public final class TitlePlugin extends JavaPlugin {
         Team team = scoreboard.getTeam(teamName);
         if (team == null) team = scoreboard.registerNewTeam(teamName);
         team.addEntry(owner.getName());
-        if (session.animated && session.mytemsSuffix != null) {
-            team.prefix(session.mytemsSuffix.getCurrentAnimationFrame());
+        // Team prefix and suffix for the player tag
+        if (session.animated && session.mytemsPrefix != null) {
+            team.prefix(session.mytemsPrefix.getCurrentAnimationFrame());
         } else {
             team.prefix(session.teamPrefix);
         }
-        team.suffix(session.teamSuffix);
+        if (session.animated && session.mytemsSuffix != null) {
+            team.suffix(session.mytemsSuffix.getCurrentAnimationFrame());
+        } else {
+            team.suffix(session.teamSuffix);
+        }
         try {
             team.color(session.color);
         } catch (NullPointerException npe) { }
