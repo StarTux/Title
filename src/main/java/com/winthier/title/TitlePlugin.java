@@ -126,6 +126,9 @@ public final class TitlePlugin extends JavaPlugin {
                         Component frame = session.mytemsPrefix.getCurrentAnimationFrame();
                         displayNameList.add(frame.hoverEvent(session.titleTooltip));
                         playerListList.add(frame);
+                    } else if (session.rawPrefix != null) {
+                        displayNameList.add(session.rawPrefix);
+                        playerListList.add(session.rawPrefix);
                     }
                     if (session.textEffect != null) {
                         Component displayName = session.textEffect.format(session.rawPlayerName);
@@ -223,6 +226,8 @@ public final class TitlePlugin extends JavaPlugin {
         session.titleTooltip = null;
         session.rawPlayerName = name;
         session.textEffect = null;
+        session.rawPrefix = null;
+        session.rawSuffix = null;
         if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
             && nameColor == null && !title.isPrefix() && suffix == null) {
             session.displayName = text(name);
@@ -253,7 +258,9 @@ public final class TitlePlugin extends JavaPlugin {
                 } else {
                     Component titleTag = title.getTitleTag(uuid);
                     displayNameList.add(titleTag);
-                    session.teamPrefix = titleTag;
+                    Component titleComponent = title.getTitleComponent();
+                    session.teamPrefix = titleTag; // name tag
+                    session.rawPrefix = titleTag; // chat and tab list
                 }
             }
             session.rawPlayerName = suffix != null && suffix.isPartOfName()

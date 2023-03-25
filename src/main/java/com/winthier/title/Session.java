@@ -43,13 +43,14 @@ public final class Session {
     protected Component playerListSuffix = null;
     protected NamedTextColor color = null;
     protected Vector lastFlyingShine;
-    protected Component teamPrefix = empty(); // derived
-    protected Component teamSuffix = empty(); // derived
+    protected Component teamPrefix = empty(); // derived, name tag
+    protected Component teamSuffix = empty(); // derived, name tag
     // Animation
     protected boolean animated = false;
     protected TextEffect textEffect;
     protected String rawPlayerName;
     protected Component rawDisplayName;
+    protected Component rawPrefix;
     protected Component rawSuffix;
     protected Mytems mytemsPrefix;
     protected Mytems mytemsSuffix;

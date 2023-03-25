@@ -18,6 +18,7 @@ public abstract class TextEffect implements TextFormat {
     private static final Map<String, TextEffect> NAME_MAP = new HashMap<>();
     public static final TextEffect RAINBOW = new TextEffectRainbow();
     public static final TextEffect SEQUENCE = new TextEffectSequence();
+    public static final TextEffect MARQUEE = new TextEffectMarquee();
     public static final TextEffect BANNER = new TextEffectBanner();
     public static final TextEffect GRADIENT = new TextEffectGradient();
     public static final TextEffect SHIFT = new TextEffectShift();
@@ -93,6 +94,63 @@ public abstract class TextEffect implements TextFormat {
             TextComponent.Builder cb = text();
             for (int i = 0; i < in.length(); i += 1) {
                 TextColor color = colors.get(i % colors.size());
+                cb.append(color != null
+                          ? text(in.charAt(i), color)
+                          : text(in.charAt(i)));
+            }
+            return cb.build();
+        }
+    }
+
+    /**
+     * A marquee is like a color sequence which crawls from left to
+     * right or right to left.
+     */
+    @RequiredArgsConstructor
+    public static final class TextEffectMarquee extends TextEffect {
+        public static final String NAME = "marquee";
+        private final int speed;
+        private final List<TextColor> colors;
+
+        public TextEffectMarquee() {
+            this(0, List.of());
+        }
+
+        @Override
+        public String getName() {
+            return NAME;
+        }
+
+        @Override
+        public TextEffect with(String... args) {
+            int theSpeed = Integer.parseInt(args[0]);
+            List<TextColor> list = new ArrayList<>(args.length);
+            for (int i = 1; i < args.length; i += 1) {
+                list.add(parseTextColor(args[i]));
+            }
+            return new TextEffectMarquee(theSpeed, list);
+        }
+
+        @Override
+        public boolean isAnimated() {
+            return true;
+        }
+
+        @Override
+        public Component format(String in) {
+            if (speed == 0) {
+                throw new IllegalArgumentException("speed = 0");
+            }
+            if (colors.size() == 0) {
+                throw new IllegalArgumentException("colors.size = 0");
+            }
+            long factor = (long) Math.abs(speed);
+            long tick = System.currentTimeMillis() / (50L * factor);
+            int offset = (int) (tick % (long) colors.size());
+            if (speed > 0) offset = colors.size() - 1 - offset;
+            TextComponent.Builder cb = text();
+            for (int i = 0; i < in.length(); i += 1) {
+                TextColor color = colors.get((i + offset) % colors.size());
                 cb.append(color != null
                           ? text(in.charAt(i), color)
                           : text(in.charAt(i)));
@@ -209,6 +267,7 @@ public abstract class TextEffect implements TextFormat {
     static {
         VALUES.add(RAINBOW);
         VALUES.add(SEQUENCE);
+        VALUES.add(MARQUEE);
         VALUES.add(GRADIENT);
         VALUES.add(BANNER);
         VALUES.add(SHIFT);
