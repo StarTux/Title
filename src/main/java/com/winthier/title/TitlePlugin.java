@@ -3,7 +3,6 @@ package com.winthier.title;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.perm.Perm;
 import com.cavetale.core.playercache.PlayerCache;
-import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.sql.SQLDatabase;
 import com.winthier.title.sql.Database;
@@ -24,18 +23,14 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
@@ -103,59 +98,7 @@ public final class TitlePlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             enter(player);
         }
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-                final long now = System.currentTimeMillis();
-                final long then = now - 5000L;
-                Set<UUID> online = Connect.get().getOnlinePlayers();
-                for (UUID uuid : online) findSession(uuid); // update lastUsed
-                for (UUID uuid : List.copyOf(sessions.keySet())) {
-                    Session session = sessions.get(uuid);
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player != null || online.contains(uuid)) {
-                        session.lastUsed = now;
-                    } else if (player == null && session.lastUsed < then && !online.contains(uuid)) {
-                        getLogger().info("Discard session: " + session.playerName);
-                        sessions.remove(uuid);
-                        continue;
-                    }
-                    if (session == null || !session.animated) continue;
-                    List<Component> displayNameList = new ArrayList<>();
-                    List<Component> playerListList = new ArrayList<>();
-                    if (session.playerListPrefix != null) playerListList.add(session.playerListPrefix);
-                    if (session.mytemsPrefix != null) {
-                        Component frame = session.mytemsPrefix.getCurrentAnimationFrame();
-                        displayNameList.add(frame.hoverEvent(session.titleTooltip));
-                        playerListList.add(frame);
-                    } else if (session.rawPrefix != null) {
-                        displayNameList.add(session.rawPrefix);
-                        playerListList.add(session.rawPrefix);
-                    }
-                    if (session.textEffect != null) {
-                        Component displayName = session.textEffect.format(session.rawPlayerName);
-                        displayNameList.add(displayName);
-                        playerListList.add(displayName);
-                    } else {
-                        displayNameList.add(session.rawDisplayName);
-                        playerListList.add(session.rawDisplayName);
-                    }
-                    if (session.mytemsSuffix != null) {
-                        Component frame = session.mytemsSuffix.getCurrentAnimationFrame();
-                        displayNameList.add(frame);
-                        playerListList.add(frame);
-                    } else if (session.rawSuffix != null) {
-                        displayNameList.add(session.rawSuffix);
-                        playerListList.add(session.rawSuffix);
-                    }
-                    if (session.playerListSuffix != null) playerListList.add(session.playerListSuffix);
-                    session.displayName = join(noSeparators(), displayNameList);
-                    session.playerListName = join(noSeparators(), playerListList);
-                    if (player != null) {
-                        player.displayName(session.displayName);
-                        player.playerListName(session.playerListName);
-                        updatePlayerScoreboards(player, session);
-                    }
-                }
-            }, 0L, 1L);
+        Bukkit.getScheduler().runTaskTimer(this, this::tickTitles, 0L, 1L);
     }
 
     @Override
@@ -197,117 +140,43 @@ public final class TitlePlugin extends JavaPlugin {
             });
     }
 
-    private static Component tierForPlayerList(UUID uuid) {
+    protected static Component tierForPlayerList(UUID uuid) {
         return join(noSeparators(), text("["), Glyph.toComponent("" + Perm.get().getLevel(uuid)), text("]"))
             .color(GRAY)
             .decoration(TextDecoration.ITALIC, false);
     }
 
-    public void updatePlayerName(Player player) {
-        updatePlayerName(player.getUniqueId());
-    }
-
     public void updatePlayerName(final UUID uuid) {
         Session session = findSession(uuid);
-        if (session == null) return;
-        final Player player = Bukkit.getPlayer(uuid);
-        final String name = player != null
-            ? player.getName()
-            : PlayerCache.nameForUuid(uuid);
-        Title title = session.getTitle();
-        TextFormat nameColor = title.getNameTextFormat();
-        SQLSuffix suffix = session.getSuffix();
-        session.teamPrefix = empty();
-        session.teamSuffix = empty();
-        session.animated = false;
-        session.rawDisplayName = null;
-        session.mytemsPrefix = null;
-        session.mytemsSuffix = null;
-        session.titleTooltip = null;
-        session.rawPlayerName = name;
-        session.textEffect = null;
-        session.rawPrefix = null;
-        session.rawSuffix = null;
-        if (session.playerListPrefix == null && session.playerListSuffix == null && session.color == null
-            && nameColor == null && !title.isPrefix() && suffix == null) {
-            session.displayName = text(name);
-            session.playerListName = join(noSeparators(), tierForPlayerList(uuid), text(name));
-            if (player != null) {
-                player.displayName(null);
-                player.playerListName(session.playerListName);
-                resetPlayerScoreboards(player);
+        if (session != null) session.update(Bukkit.getPlayer(uuid));
+    }
+
+    public void updatePlayerName(Player player) {
+        Session session = findSession(player);
+        if (session != null) session.update(player);
+    }
+
+    private void tickTitles() {
+        final long now = System.currentTimeMillis();
+        final long then = now - 5000L;
+        Set<UUID> online = Connect.get().getOnlinePlayers();
+        for (UUID uuid : online) findSession(uuid); // update lastUsed
+        for (Session session : List.copyOf(sessions.values())) {
+            Player player = Bukkit.getPlayer(session.uuid);
+            if (player != null || online.contains(session.uuid)) {
+                session.lastUsed = now;
+            } else if (player == null && session.lastUsed < then && !online.contains(session.uuid)) {
+                getLogger().info("Discard session: " + session.playerName);
+                sessions.remove(session.uuid);
+                continue;
             }
-            return;
-        }
-        TextComponent.Builder playerListBuilder = text();
-        if (session.playerListPrefix != null) {
-            playerListBuilder.append(session.playerListPrefix);
-        } else if (!title.isPrefix()) {
-            playerListBuilder.append(tierForPlayerList(uuid));
-        }
-        if (nameColor == null && !title.isPrefix() && suffix == null) {
-            session.displayName = text(name);
-            if (player != null) player.displayName(null);
-        } else {
-            List<Component> displayNameList = new ArrayList<>();
-            if (title.isPrefix()) {
-                Mytems mytemsPrefix = title.getMytems();
-                if (mytemsPrefix != null && mytemsPrefix.isAnimated()) {
-                    session.animated = true;
-                    session.mytemsPrefix = mytemsPrefix;
-                } else {
-                    Component titleTag = title.getTitleTag(uuid);
-                    displayNameList.add(titleTag);
-                    Component titleComponent = title.getTitleComponent();
-                    session.teamPrefix = titleTag; // name tag
-                    session.rawPrefix = titleTag; // chat and tab list
-                }
+            if (session.animated) {
+                session.process(player);
             }
-            session.rawPlayerName = suffix != null && suffix.isPartOfName()
-                ? name + suffix.getCharacter()
-                : name;
-            if (nameColor instanceof TextColor) {
-                displayNameList.add(text(session.rawPlayerName, (TextColor) nameColor));
-            } else if (nameColor instanceof TextEffect textEffect) {
-                displayNameList.add(textEffect.format(session.rawPlayerName));
-                if (textEffect.isAnimated()) {
-                    session.textEffect = textEffect;
-                    session.animated = true;
-                }
-            } else {
-                displayNameList.add(text(session.rawPlayerName));
-            }
-            if (suffix != null && !suffix.isPartOfName()) {
-                session.rawSuffix = suffix.getComponent();
-                Mytems mytemsSuffix = suffix.getMytems();
-                if (mytemsSuffix != null) {
-                    session.animated = true;
-                    session.mytemsSuffix = mytemsSuffix;
-                    session.titleTooltip = title.getTooltip(uuid);
-                }
-            }
-            session.rawDisplayName = join(noSeparators(), displayNameList);
-            session.displayName = join(noSeparators(), displayNameList);
-            if (player != null) player.displayName(session.displayName);
-        }
-        playerListBuilder.append(text().append(session.displayName).decoration(TextDecoration.ITALIC, false));
-        if (session.playerListSuffix != null) {
-            playerListBuilder.append(session.playerListSuffix);
-        }
-        if (suffix != null || session.playerListSuffix != null) {
-            TextComponent.Builder teamSuffixBuilder = text();
-            if (suffix != null) teamSuffixBuilder.append(suffix.getComponent());
-            if (session.playerListSuffix != null) teamSuffixBuilder.append(session.playerListSuffix);
-            session.teamSuffix = teamSuffixBuilder.build();
-        }
-        session.playerListName = playerListBuilder.build();
-        if (player != null) {
-            player.playerListName(session.playerListName);
-            updatePlayerScoreboards(player, session);
         }
     }
 
-    private void updatePlayerScoreboards(Player owner, Session session) {
+    protected void updatePlayerScoreboards(Player owner, Session session) {
         Scoreboard main = Bukkit.getScoreboardManager().getMainScoreboard();
         // updatePlayerScoreboard(owner, session, main);
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -323,18 +192,10 @@ public final class TitlePlugin extends JavaPlugin {
         if (team == null) team = scoreboard.registerNewTeam(teamName);
         team.addEntry(owner.getName());
         // Team prefix and suffix for the player tag
-        if (session.animated && session.mytemsPrefix != null) {
-            team.prefix(session.mytemsPrefix.getCurrentAnimationFrame());
-        } else {
-            team.prefix(session.teamPrefix);
-        }
-        if (session.animated && session.mytemsSuffix != null) {
-            team.suffix(session.mytemsSuffix.getCurrentAnimationFrame());
-        } else {
-            team.suffix(session.teamSuffix);
-        }
+        team.prefix(session.nameTagPrefix);
+        team.suffix(session.nameTagSuffix);
         try {
-            team.color(session.color);
+            team.color(session.teamColor);
         } catch (NullPointerException npe) { }
     }
 
@@ -372,8 +233,8 @@ public final class TitlePlugin extends JavaPlugin {
     public void setColor(Player player, NamedTextColor color) {
         Session session = findSession(player.getUniqueId());
         if (session == null) return;
-        if (Objects.equals(session.color, color)) return;
-        session.color = color;
+        if (Objects.equals(session.teamColor, color)) return;
+        session.teamColor = color;
         Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
     }
 

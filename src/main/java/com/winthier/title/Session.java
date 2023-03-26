@@ -1,6 +1,7 @@
 package com.winthier.title;
 
 import com.cavetale.core.connect.Connect;
+import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.mytems.Mytems;
 import com.winthier.title.sql.PlayerInfo;
 import com.winthier.title.sql.SQLPlayerSuffix;
@@ -17,13 +18,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextFormat;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
-import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 
 /**
  * A session is kept alive as long as a player stays logged in.
@@ -38,27 +44,20 @@ public final class Session {
     protected final Map<String, UnlockedInfo> unlockedRows = new HashMap<>();
     protected final Map<String, SQLPlayerSuffix> suffixRows = new HashMap<>();
     protected final Map<TitleCategory, UnlockedInfo> unlockedCategories = new EnumMap<>(TitleCategory.class);
-    // Cache
-    protected Component playerListPrefix = null;
-    protected Component playerListSuffix = null;
-    protected NamedTextColor color = null;
-    protected Vector lastFlyingShine;
-    protected Component teamPrefix = empty(); // derived, name tag
-    protected Component teamSuffix = empty(); // derived, name tag
-    // Animation
-    protected boolean animated = false;
-    protected TextEffect textEffect;
-    protected String rawPlayerName;
-    protected Component rawDisplayName;
-    protected Component rawPrefix;
-    protected Component rawSuffix;
-    protected Mytems mytemsPrefix;
-    protected Mytems mytemsSuffix;
-    protected Component titleTooltip;
     // Timing
     protected long lastUsed;
+    protected Cache cache;
+    protected boolean animated;
+    protected Vector lastFlyingShine;
+    // External, via API
+    protected Component playerListPrefix = null;
+    protected Component playerListSuffix = null;
+    protected NamedTextColor teamColor = null;
+    // Output
     @Getter protected Component displayName;
     @Getter protected Component playerListName;
+    @Getter protected Component nameTagPrefix; // team.prefix
+    @Getter protected Component nameTagSuffix; // team.sufix
 
     public Session(final TitlePlugin plugin, final UUID uuid, final String playerName, final PlayerInfo playerRow,
                    final List<UnlockedInfo> unlockedList, final List<SQLPlayerSuffix> suffixList) {
@@ -349,5 +348,123 @@ public final class Session {
 
     public void broadcastUpdate() {
         Connect.get().broadcastMessage("connect:player_update", uuid.toString());
+    }
+
+    /**
+     * Update the player appearance after a change was made to a
+     * title, badge, or rank.
+     * Fill the cache and determine if we need to animate this.
+     * A call to process() is implied.
+     */
+    protected void update(@Nullable Player player) {
+        final String name = player != null
+            ? player.getName()
+            : PlayerCache.nameForUuid(uuid);
+        this.cache = new Cache();
+        cache.title = getTitle();
+        cache.suffix = getSuffix();
+        this.animated = false;
+        // Prefix
+        this.cache.playerListPrefix = this.playerListPrefix;
+        if (cache.title.isPrefix()) {
+            Mytems mytems = cache.title.getMytems();
+            cache.titlePrefixComponent = cache.title.getTitleComponent();
+            cache.titlePrefixTooltip = cache.title.getTooltip();
+            if (mytems != null && mytems.isAnimated()) {
+                animated = true;
+                cache.titlePrefixMytems = mytems;
+            }
+        }
+        // Player Name (maybe with suffix)
+        cache.playerName = cache.suffix != null && cache.suffix.isPartOfName()
+            ? name + cache.suffix.getCharacter()
+            : name;
+        TextFormat textFormat = cache.title.getNameTextFormat();
+        if (textFormat instanceof TextEffect textEffect) {
+            cache.textEffect = textEffect;
+            animated = true;
+        } else if (textFormat instanceof TextColor textColor) {
+            cache.textColor = textColor;
+        }
+        // Suffix
+        if (cache.suffix != null) {
+            Mytems mytems = cache.suffix.getMytems();
+            cache.titleSuffixComponent = cache.suffix.getComponent();
+            if (mytems != null && mytems.isAnimated()) {
+                animated = true;
+                cache.titleSuffixMytems = mytems;
+            }
+        }
+        this.cache.playerListSuffix = this.playerListSuffix;
+        process(player);
+    }
+
+    /**
+     * Produce and assign the final title.  This is called once after
+     * update() and per tick if anything is animated.
+     * Fill and apply the following fields:
+     * - displayName
+     * - playerListName
+     * - playerTagPrefix
+     * - playerTagSuffix
+     */
+    protected void process(@Nullable Player player) {
+        if (cache == null) return;
+        List<Component> displayNameList = new ArrayList<>();
+        List<Component> playerListList = new ArrayList<>();
+        List<Component> nameTagPrefixList = new ArrayList<>();
+        List<Component> nameTagSuffixList = new ArrayList<>();
+        // Prefix
+        if (cache.playerListPrefix != null) {
+            playerListList.add(cache.playerListPrefix);
+        }
+        if (animated && cache.titlePrefixMytems != null) {
+            Component frame = cache.titlePrefixMytems.getCurrentAnimationFrame();
+            displayNameList.add(frame.hoverEvent(cache.titlePrefixTooltip));
+            playerListList.add(frame);
+            nameTagPrefixList.add(frame);
+        } else if (cache.titlePrefixComponent != null) {
+            displayNameList.add(cache.titlePrefixComponent.hoverEvent(cache.titlePrefixTooltip));
+            playerListList.add(cache.titlePrefixComponent);
+            nameTagPrefixList.add(cache.titlePrefixComponent);
+        }
+        // Name
+        final Component name;
+        if (cache.textEffect != null) {
+            // Might be animation
+            name = cache.textEffect.format(cache.playerName);
+        } else if (cache.textColor != null) {
+            name = text(cache.playerName, cache.textColor);
+        } else {
+            name = text(cache.playerName);
+        }
+        displayNameList.add(name);
+        playerListList.add(name);
+        // Suffix
+        if (animated && cache.titleSuffixMytems != null) {
+            Component frame = cache.titleSuffixMytems.getCurrentAnimationFrame();
+            displayNameList.add(frame);
+            playerListList.add(frame);
+            nameTagSuffixList.add(frame);
+        } else if (cache.titleSuffixComponent != null) {
+            if (!cache.suffix.isPartOfName()) {
+                displayNameList.add(cache.titleSuffixComponent);
+                playerListList.add(cache.titleSuffixComponent);
+            }
+            nameTagSuffixList.add(cache.titleSuffixComponent);
+        }
+        if (cache.playerListSuffix != null) {
+            playerListList.add(cache.playerListSuffix);
+        }
+        displayName = join(noSeparators(), displayNameList);
+        playerListName = join(noSeparators(), playerListList);
+        nameTagPrefix = join(noSeparators(), nameTagPrefixList);
+        nameTagSuffix = join(noSeparators(), nameTagSuffixList);
+        if (player != null) {
+            player.displayName(displayName);
+            player.playerListName(playerListName);
+            // playerTagPrefix and playerTagSuffix
+            plugin.updatePlayerScoreboards(player, this);
+        }
     }
 }

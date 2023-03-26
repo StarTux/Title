@@ -864,17 +864,23 @@ public final class TitlesCommand implements TabExecutor {
             lines.add(textOfChildren(text("Suffix: ", GRAY), session.playerRow.getSuffix() != null
                                      ? text(session.playerRow.getSuffix(), WHITE)
                                      : empty()));
-            lines.add(textOfChildren(text("Player List Prefix: ", GRAY), (session.playerListPrefix != null
+            lines.add(textOfChildren(text("Player List Prefix (api): ", GRAY), (session.playerListPrefix != null
                                                                           ? session.playerListPrefix
                                                                           : empty())));
-            lines.add(textOfChildren(text("Player List Suffix: ", GRAY), (session.playerListSuffix != null
+            lines.add(textOfChildren(text("Player List Suffix (api): ", GRAY), (session.playerListSuffix != null
                                                                           ? session.playerListSuffix
                                                                           : empty())));
-            lines.add(textOfChildren(text("Team Prefix: ", GRAY), session.teamPrefix));
-            lines.add(textOfChildren(text("Team Suffix: ", GRAY), session.teamSuffix));
-            lines.add(textOfChildren(text("Color: ", GRAY), text(session.color != null
-                                                                 ? NamedTextColor.NAMES.key(session.color)
-                                                                 : "none", WHITE)));
+            lines.add(textOfChildren(text("Team Color (api): ", GRAY), text(session.teamColor != null
+                                                                            ? NamedTextColor.NAMES.key(session.teamColor)
+                                                                            : "none", WHITE)));
+            lines.add(textOfChildren(text("Display Name: ", GRAY), (session.displayName != null
+                                                                    ? session.displayName
+                                                                    : text("-", GRAY))));
+            lines.add(textOfChildren(text("Player List Name: ", GRAY), (session.playerListName != null
+                                                                        ? session.playerListName
+                                                                        : text("-", GRAY))));
+            lines.add(textOfChildren(text("Name Tag Prefix: ", GRAY), session.nameTagPrefix));
+            lines.add(textOfChildren(text("Name Tag Suffix: ", GRAY), session.nameTagSuffix));
             lines.add(textOfChildren(text("Last Flying Shine: ", GRAY), (session.lastFlyingShine != null
                                                                          ? text("" + session.lastFlyingShine.getBlockX()
                                                                                 + " " + session.lastFlyingShine.getBlockY()
@@ -884,7 +890,7 @@ public final class TitlesCommand implements TabExecutor {
             lines.add(textOfChildren(text("Animated: ", GRAY), (session.animated
                                                                 ? text("Yes", GREEN)
                                                                 : text("No", DARK_GRAY))));
-            lines.add(textOfChildren(text("Last Used: ", GRAY), text(((System.currentTimeMillis() - session.lastUsed) / 1000L) + "s")));
+            lines.add(textOfChildren(text("Last Used: ", GRAY), text(((System.currentTimeMillis() - session.lastUsed) / 1000L) + "s ago")));
             sender.sendMessage(join(separator(newline()), lines));
             return true;
         } else {
