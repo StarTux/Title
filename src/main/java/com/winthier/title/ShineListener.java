@@ -1,6 +1,5 @@
 package com.winthier.title;
 
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -17,7 +16,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
@@ -121,19 +119,5 @@ public final class ShineListener implements Listener {
         }
         session.lastFlyingShine = vector;
         ShinePlace.of(location, 3.0).show(shine);
-    }
-
-    @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
-    private void onInventoryPickupItem(InventoryPickupItemEvent event) {
-        if (ShinePlace.ENTITIES.contains(event.getItem().getUniqueId())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    private void onEntityRemoveFromWorld(EntityRemoveFromWorldEvent event) {
-        if (ShinePlace.ENTITIES.contains(event.getEntity().getUniqueId())) {
-            Bukkit.getScheduler().runTask(plugin, () -> event.getEntity().remove());
-        }
     }
 }

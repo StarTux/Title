@@ -1,18 +1,19 @@
 package com.winthier.title;
 
 import com.cavetale.mytems.Mytems;
-import java.util.HashSet;
+import com.cavetale.mytems.util.Entities;
 import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
 import lombok.Value;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 @Value
 public final class ShinePlace {
@@ -22,7 +23,6 @@ public final class ShinePlace {
     private final Vector up;
     private final double scale;
     static Random random = new Random();
-    protected static final Set<UUID> ENTITIES = new HashSet<>();
 
     public static ShinePlace of(Location eye, double scale) {
         return of(eye, new Vector(0, 0, 0), scale);
@@ -101,38 +101,45 @@ public final class ShinePlace {
             case 6 -> Mytems.DICE_6;
             default -> Mytems.DICE_1;
             };
-            final Item entity = eye.getWorld().dropItem(eye, mytems.createIcon(), item -> {
-                    item.setPersistent(false);
-                    item.setCanMobPickup(false);
-                    item.setCanPlayerPickup(false);
-                    item.setPersistent(false);
-                    item.setOwner(java.util.UUID.randomUUID());
-                    item.setPickupDelay(32767);
-                    item.setInvulnerable(true);
+            final Vector3f bscale = new Vector3f(0.5f, 0.5f, 0.5f);
+            final AxisAngle4f rot = new AxisAngle4f(0.0f, 0.0f, 0.0f, 0.0f);
+            final ItemDisplay entity = eye.getWorld().spawn(eye.clone().add(0.0, 0.25, 0.0), ItemDisplay.class, e -> {
+                    e.setItemStack(mytems.createIcon());
+                    e.setPersistent(false);
+                    Entities.setTransient(e);
+                    e.setBillboard(ItemDisplay.Billboard.CENTER);
+                    e.setBrightness(new ItemDisplay.Brightness(15, 15));
+                    e.setTransformation(new Transformation(new Vector3f(0f, 0f, 0f), rot, bscale, rot));
+                    e.setShadowRadius(0.25f);
+                    e.setShadowStrength(0.5f);
                 });
             if (entity == null) return;
-            final UUID uuid = entity.getUniqueId();
-            ENTITIES.add(uuid);
-            final double y = eye.getY() - 1.0;
             new BukkitRunnable() {
                 int ticks = 0;
+                double vx = random.nextDouble() * 0.15;
+                double vy = 0.3;
+                double vz = random.nextDouble() * 0.15;
                 @Override public void run() {
                     if (entity == null || entity.isDead()) {
                         cancel();
-                        ENTITIES.remove(uuid);
                         return;
                     }
                     if (ticks > 100) {
                         entity.remove();
+                        cancel();
                         return;
                     }
-                    if (entity.getLocation().getY() <= y) {
-                        entity.setGravity(false);
-                        entity.setVelocity(entity.getVelocity().multiply(0.9));
+                    entity.teleport(entity.getLocation().add(vx, vy, vz));
+                    if (ticks < 5) {
+                        vy -= 0.1;
+                    } else {
+                        vy *= 0.9;
                     }
+                    vx *= 0.85;
+                    vz *= 0.85;
                     ticks += 1;
                 }
-            }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
+            }.runTaskTimer(TitlePlugin.getInstance(), 2L, 1L);
             break;
         }
         case SNOWFLAKE: {
@@ -164,45 +171,50 @@ public final class ShinePlace {
         case GOLDEN_HOOP:
         case DIAMOND_COIN:
         case RUBY_COIN: {
-            final Item entity = eye.getWorld().dropItem(eye, shine.mytems.createIcon(), item -> {
-                    item.setPersistent(false);
-                    item.setCanMobPickup(false);
-                    item.setCanPlayerPickup(false);
-                    item.setPersistent(false);
-                    item.setOwner(java.util.UUID.randomUUID());
-                    item.setPickupDelay(32767);
-                    item.setGlowing(true);
-                    item.setInvulnerable(true);
+            final Vector3f bscale = new Vector3f(0.5f, 0.5f, 0.5f);
+            final AxisAngle4f rot = new AxisAngle4f(0.0f, 0.0f, 0.0f, 0.0f);
+            final ItemDisplay entity = eye.getWorld().spawn(eye.clone().add(0.0, 0.25, 0.0), ItemDisplay.class, e -> {
+                    e.setItemStack(shine.mytems.createIcon());
+                    e.setPersistent(false);
+                    Entities.setTransient(e);
+                    e.setBillboard(ItemDisplay.Billboard.CENTER);
+                    e.setBrightness(new ItemDisplay.Brightness(15, 15));
+                    e.setGlowColorOverride(Color.fromRGB(shine.hex));
+                    e.setGlowing(true);
+                    e.setTransformation(new Transformation(new Vector3f(0f, 0f, 0f), rot, bscale, rot));
+                    e.setShadowRadius(0.25f);
+                    e.setShadowStrength(0.5f);
                 });
             if (entity == null) return;
-            final UUID uuid = entity.getUniqueId();
-            ENTITIES.add(uuid);
-            final double y = eye.getY() - 1.0;
             new BukkitRunnable() {
                 int ticks = 0;
-
+                double vx = random.nextDouble() * 0.15;
+                double vy = 0.3;
+                double vz = random.nextDouble() * 0.15;
                 @Override public void run() {
                     if (entity == null || entity.isDead()) {
                         cancel();
-                        ENTITIES.remove(uuid);
                         return;
                     }
                     if (ticks > 100) {
+                        entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation(),
+                                                        16, 0.15, 0.15, 0.15, 0.0,
+                                                        new Particle.DustOptions(Color.fromRGB(shine.hex), 1.0f));
                         entity.remove();
+                        cancel();
                         return;
                     }
-                    if (ticks % 10 == 0) {
-                        entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation().add(0.0, 0.25, 0.0),
-                                                        8, 0.125, 0.125, 0.125, 0.0,
-                                                        new Particle.DustOptions(Color.fromRGB(shine.hex), 0.75f));
+                    entity.teleport(entity.getLocation().add(vx, vy, vz));
+                    if (ticks < 5) {
+                        vy -= 0.1;
+                    } else {
+                        vy *= 0.89;
                     }
-                    if (entity.getLocation().getY() <= y) {
-                        entity.setGravity(false);
-                        entity.setVelocity(entity.getVelocity().multiply(0.9));
-                    }
+                    vx *= 0.85;
+                    vz *= 0.85;
                     ticks += 1;
                 }
-            }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
+            }.runTaskTimer(TitlePlugin.getInstance(), 2L, 1L);
             break;
         }
         case RAINBOW_BUTTERFLY: {

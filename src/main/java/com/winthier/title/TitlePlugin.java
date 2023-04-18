@@ -26,7 +26,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
@@ -106,11 +105,6 @@ public final class TitlePlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             exit(player);
         }
-        for (UUID uuid : ShinePlace.ENTITIES) {
-            Entity entity = Bukkit.getEntity(uuid);
-            if (entity != null) entity.remove();
-        }
-        ShinePlace.ENTITIES.clear();
     }
 
     protected void reloadAllData() {
