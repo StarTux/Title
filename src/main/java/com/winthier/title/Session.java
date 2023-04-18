@@ -48,6 +48,7 @@ public final class Session {
     protected long lastUsed;
     protected Cache cache;
     protected boolean animated;
+    protected long lastShineTime;
     protected Vector lastFlyingShine;
     // External, via API
     protected Component playerListPrefix = null;

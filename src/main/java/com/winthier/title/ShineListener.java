@@ -25,6 +25,7 @@ import org.bukkit.util.Vector;
 public final class ShineListener implements Listener {
     private final TitlePlugin plugin;
     private NamespacedKey shineKey;
+    private static final long COOLDOWN = 1000L;
 
     public ShineListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -52,6 +53,12 @@ public final class ShineListener implements Listener {
         }
         Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
+        // Check cooldown
+        final Session session = plugin.findSession(player);
+        if (session == null) return;
+        final long now = System.currentTimeMillis();
+        if (now - session.lastShineTime < COOLDOWN) return;
+        session.lastShineTime = now;
         Bukkit.getScheduler().runTask(plugin, () -> {
                 if (((Entity) player).isOnGround()) {
                     ShinePlace.of(to.clone().add(0, player.getEyeHeight(), 0), 2.0).show(shine);
@@ -72,6 +79,11 @@ public final class ShineListener implements Listener {
         Player player = (Player) proj.getShooter();
         Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
+        // Check cooldown
+        final Session session = plugin.findSession(player);
+        if (session == null) return;
+        final long now = System.currentTimeMillis();
+        if (now - session.lastShineTime < COOLDOWN) return;
         Block block = event.getHitBlock();
         if (block != null) {
             BlockFace face = event.getHitBlockFace();
@@ -86,6 +98,7 @@ public final class ShineListener implements Listener {
                 up = new Vector(0.0, 0.0, -1.0);
                 right = new Vector(1.0, 0.0, 0.0);
             }
+            session.lastShineTime = now;
             new ShinePlace(location, location, right, up, 2.0).show(shine);
             return;
         }
@@ -97,6 +110,7 @@ public final class ShineListener implements Listener {
             right = right.normalize().rotateAroundY(Math.PI * -0.5);
             Vector up = new Vector(0.0, 1.0, 0.0);
             Location location = proj.getLocation();
+            session.lastShineTime = now;
             new ShinePlace(location, location, right, up, 2.0).show(shine);
             return;
         }
@@ -107,17 +121,22 @@ public final class ShineListener implements Listener {
         if (plugin.shinesDisabled) return;
         Player player = event.getPlayer();
         if (!player.isGliding()) return;
-        Session session = plugin.findSession(player);
+        final Session session = plugin.findSession(player);
         if (session == null) return;
         Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
         Location location = player.getEyeLocation();
         Vector vector = location.toVector();
+        // Check cooldown
+        final long now = System.currentTimeMillis();
+        if (now - session.lastShineTime < COOLDOWN) return;
+        // Check distance
         Vector lastFlyingShine = session.lastFlyingShine;
-        if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 64.0) {
+        if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 256.0) {
             return;
         }
         session.lastFlyingShine = vector;
+        session.lastShineTime = now;
         ShinePlace.of(location, 3.0).show(shine);
     }
 }
