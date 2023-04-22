@@ -48,6 +48,56 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case BLUE_BUTTERFLY:
+        case CYAN_BUTTERFLY:
+        case GREEN_BUTTERFLY:
+        case ORANGE_BUTTERFLY:
+        case PINK_BUTTERFLY:
+        case PURPLE_BUTTERFLY:
+        case YELLOW_BUTTERFLY: {
+            final float bscale = 0.5f;
+            final AxisAngle4f rot = new AxisAngle4f(0.0f, 0.0f, 0.0f, 0.0f);
+            final int maxLife = 80;
+            for (int i = 0; i < 3; i += 1) {
+                final ItemDisplay entity = eye.getWorld().spawn(eye.clone().add(0.0, 0.25, 0.0), ItemDisplay.class, e -> {
+                        e.setItemStack(shine.mytems.createIcon());
+                        e.setPersistent(false);
+                        Entities.setTransient(e);
+                        e.setBillboard(ItemDisplay.Billboard.CENTER);
+                        e.setBrightness(new ItemDisplay.Brightness(15, 15));
+                        e.setTransformation(new Transformation(new Vector3f(0f, 0f, 0f), rot, new Vector3f(bscale, bscale, 0f), rot));
+                        e.setShadowRadius(0.25f);
+                        e.setShadowStrength(0.5f);
+                    });
+                if (entity == null) return;
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    final double speed = 0.1;
+                    double vx = random.nextDouble() * speed * (random.nextBoolean() ? 1.0 : -1.0);
+                    double vy = random.nextDouble() * speed * (random.nextBoolean() ? 1.0 : -1.0);
+                    double vz = random.nextDouble() * speed * (random.nextBoolean() ? 1.0 : -1.0);
+                    @Override public void run() {
+                        if (entity == null || entity.isDead()) {
+                            entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation(),
+                                                            16, 0.15, 0.15, 0.15, 0.0,
+                                                            new Particle.DustOptions(Color.fromRGB(shine.hex), 1.0f));
+                            cancel();
+                            return;
+                        }
+                        if (ticks > maxLife) {
+                            entity.remove();
+                            cancel();
+                            return;
+                        }
+                        entity.teleport(entity.getLocation().add(vx, vy, vz));
+                        float bscale2 = (float) (maxLife - ticks) * 0.01f * bscale;
+                        entity.setTransformation(new Transformation(new Vector3f(0f, 0f, 0f), rot, new Vector3f(bscale2, bscale2, 0f), rot));
+                        ticks += 1;
+                    }
+                }.runTaskTimer(TitlePlugin.getInstance(), 2L, 1L);
+            }
+            break;
+        }
         case SUNSHINE: {
             final double[][] f = {{-1.00, 1.00}, {0.08, 1.00}, {1.00,
             1.00}, {-0.85, 0.85}, {0.08, 0.85}, {0.85, 0.85}, {-0.69,

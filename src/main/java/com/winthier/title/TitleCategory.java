@@ -53,6 +53,7 @@ public enum TitleCategory {
     // Store
     SHINE(TitleGroup.STORE),
     FLAG(TitleGroup.STORE),
+    BUTTERFLY(TitleGroup.STORE),
     COIN(TitleGroup.STORE),
     DONATION(TitleGroup.STORE),
     // ?
