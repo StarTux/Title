@@ -20,7 +20,7 @@ public final class Database {
         return TitlePlugin.getInstance();
     }
 
-    private static SQLDatabase db() {
+    public static SQLDatabase db() {
         return TitlePlugin.getInstance().getDb();
     }
 

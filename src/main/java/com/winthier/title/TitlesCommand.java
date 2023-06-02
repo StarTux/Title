@@ -8,6 +8,7 @@ import com.cavetale.core.command.RemotePlayer;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.playercache.PlayerCache;
+import com.cavetale.mytems.Mytems;
 import com.winthier.title.html.HtmlExporter;
 import com.winthier.title.sql.Database;
 import com.winthier.title.sql.SQLSuffix;
@@ -32,6 +33,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import static com.cavetale.core.util.CamelCase.toCamelCase;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
@@ -158,6 +160,11 @@ public final class TitlesCommand implements TabExecutor {
             .description("Transfer all player titles")
             .completers(PlayerCache.NAME_COMPLETER, PlayerCache.NAME_COMPLETER)
             .senderCaller(this::transfer);
+        rootNode.addChild("createmytemstitleandsuffix").arguments("<mytems> <category>")
+            .description("Create title and suffix from mytems")
+            .completers(CommandArgCompleter.enumLowerList(Mytems.class),
+                        CommandArgCompleter.enumLowerList(TitleCategory.class))
+            .senderCaller(this::createMytemsTitleAndSuffix);
         // /titles suffix
         CommandNode suffixNode = rootNode.addChild("suffix")
             .description("Suffix commands");
@@ -1152,6 +1159,46 @@ public final class TitlesCommand implements TabExecutor {
         if (args.length != 0) return false;
         plugin.shinesDisabled = false;
         sender.sendMessage(text("Shines enabled!", AQUA));
+        return true;
+    }
+
+    /**
+     * Automation.
+     * Args: <mytems> <category>
+     */
+    private boolean createMytemsTitleAndSuffix(CommandSender sender, String[] args) {
+        if (args.length != 2) return false;
+        Mytems mytems = CommandArgCompleter.requireEnum(Mytems.class, args[0]);
+        Title title = new Title();
+        final String camel = toCamelCase("", mytems);
+        final String category = args[1];
+        final String desc = switch (mytems.category) {
+        case COUNTRY_FLAG, PRIDE_FLAGS -> "Flag purchased at store.cavetale.com";
+        default -> "Purchased at store.cavetale.com";
+        };
+        title.setName(camel);
+        title.setTitle(camel);
+        title.setDescription(desc);
+        title.setPriority(0);
+        title.setTitleJson(":" + mytems.id + ":");
+        title.setNameColor(null);
+        title.setPrefix(true);
+        title.setShine(null);
+        title.setCategory(category);
+        title.setSuffix(camel);
+        SQLSuffix suffix = new SQLSuffix();
+        suffix.setName(camel);
+        suffix.setFormat(":" + mytems.id + ":");
+        suffix.setPriority(0);
+        suffix.setCategory(category);
+        if (0 == Database.db().insertIgnore(title)) {
+            throw new CommandWarn("Could not insert title: " + camel);
+        }
+        if (0 == Database.db().insertIgnore(suffix)) {
+            throw new CommandWarn("Could not insert suffix: " + camel);
+        }
+        plugin.reloadAllData();
+        sender.sendMessage(text("Title and suffix created: " + camel, YELLOW));
         return true;
     }
 }
