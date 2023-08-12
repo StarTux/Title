@@ -55,6 +55,7 @@ public enum TitleCategory {
     FLAG(TitleGroup.STORE),
     PRIDE_FLAG(TitleGroup.STORE),
     COUNTRY_FLAG(TitleGroup.STORE),
+    FUN_FLAG(TitleGroup.STORE),
     BUTTERFLY(TitleGroup.STORE),
     COIN(TitleGroup.STORE),
     DONATION(TitleGroup.STORE),
