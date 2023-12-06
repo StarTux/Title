@@ -588,9 +588,9 @@ public final class TitlesCommand implements TabExecutor {
             if (online != null) {
                 List<Title> titles = category.getTitles();
                 Collections.sort(titles);
-                List<Component> messages = new ArrayList<>();
                 final int sz = titles.size();
-                messages.add(text(sz + " title" + (sz == 1 ? "" : "s") + " unlocked. Click to wear:", GREEN)
+                List<Component> messages = new ArrayList<>(sz + 1);
+                messages.add(text("Title" + (sz == 1 ? "" : "s") + " unlocked. Click to wear:", GREEN)
                              .hoverEvent(showText(text("/title", GRAY)))
                              .clickEvent(runCommand("/title")));
                 for (Title title : titles) {
@@ -621,8 +621,8 @@ public final class TitlesCommand implements TabExecutor {
                                               text(player.getName(), WHITE)));
             RemotePlayer online = Connect.get().getRemotePlayer(player.uuid);
             if (online != null) {
-                List<Component> messages = new ArrayList<>();
                 final int sz = titles.size();
+                List<Component> messages = new ArrayList<>(sz + 1);
                 messages.add(text("Title unlocked. Click to wear:", GREEN)
                              .hoverEvent(showText(text("/title", GRAY)))
                              .clickEvent(runCommand("/title")));

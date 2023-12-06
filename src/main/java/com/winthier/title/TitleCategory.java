@@ -12,6 +12,7 @@ public enum TitleCategory {
     EXTRA_RANK(TitleGroup.RANK),
     PLAYER_RANK(TitleGroup.RANK),
     STAFF_RANK(TitleGroup.RANK),
+    TIER(TitleGroup.RANK),
     // Events
     BINGO(TitleGroup.EVENT),
     BUILD(TitleGroup.EVENT),
