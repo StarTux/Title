@@ -324,19 +324,27 @@ public final class TitlesCommand implements TabExecutor {
         PlayerCache player = requirePlayerCache(args[0]);
         List<Title> titles = plugin.getPlayerTitles(player.uuid);
         Title selectedTitle = plugin.getPlayerTitle(player.uuid);
-        TextComponent.Builder cb = text();
-        cb.append(text("Titles of " + player.name + ":", YELLOW));
+        List<Component> components = new ArrayList<>();
         for (Title title: titles) {
-            cb.append(text(" "));
             if (selectedTitle != null && selectedTitle.getName().equals(title.getName())) {
-                cb.append(text("[", WHITE));
-                cb.append(button(title));
-                cb.append(text("]", WHITE));
+                components.add(textOfChildren(text("[", WHITE),
+                                              button(title),
+                                              text("]", WHITE)));
             } else {
-                cb.append(button(title));
+                components.add(button(title));
             }
         }
-        sender.sendMessage(cb.build());
+        sender.sendMessage(text(player.name + " has " + titles.size() + " titles:", YELLOW));
+        final int perLine = 5;
+        for (int i = 0; i < components.size(); i += perLine) {
+            List<Component> line = new ArrayList<>(perLine);
+            for (int j = 0; j < perLine; j += 1) {
+                final int index = i + j;
+                if (index >= components.size()) break;
+                line.add(components.get(index));
+            }
+            sender.sendMessage(join(separator(space()), line));
+        }
         return true;
     }
 
