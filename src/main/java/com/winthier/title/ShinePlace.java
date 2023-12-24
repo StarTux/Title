@@ -48,6 +48,32 @@ public final class ShinePlace {
 
     public void show(Shine shine) {
         switch (shine) {
+        case CHRISMAS_TREE: {
+            final double[][] f = {{-0.07, 1.00}, {0.07, 1.00}, {-0.07,
+            0.87}, {0.07, 0.87}, {-0.20, 0.73}, {0.20, 0.73}, {-0.33,
+            0.60}, {0.33, 0.60}, {-0.60, 0.47}, {-0.47, 0.47}, {0.47,
+            0.47}, {0.60, 0.47}, {-0.33, 0.33}, {0.33, 0.33}, {-0.47,
+            0.20}, {0.47, 0.20}, {-0.73, 0.07}, {-0.60, 0.07}, {0.60,
+            0.07}, {0.73, 0.07}, {-0.87, -0.07}, {-0.73, -0.07},
+            {0.73, -0.07}, {0.87, -0.07}, {-0.47, -0.20}, {0.47,
+            -0.20}, {-0.60, -0.33}, {0.60, -0.33}, {-0.87, -0.47},
+            {-0.73, -0.47}, {0.73, -0.47}, {0.87, -0.47}, {-1.00,
+            -0.60}, {-0.87, -0.60}, {0.87, -0.60}, {1.00, -0.60},
+            {-0.73, -0.73}, {-0.60, -0.73}, {-0.47, -0.73}, {-0.33,
+            -0.73}, {-0.20, -0.73}, {-0.07, -0.73}, {0.07, -0.73},
+            {0.20, -0.73}, {0.33, -0.73}, {0.47, -0.73}, {0.60,
+            -0.73}, {0.73, -0.73}, {-0.07, -0.87}, {0.07, -0.87},
+            {-0.20, -1.00}, {-0.07, -1.00}, {0.07, -1.00}, {0.20,
+            -1.00}};
+            Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(0xB11E31), 1.5f);
+            Particle.DustOptions green = new Particle.DustOptions(Color.fromRGB(0x3C8D0D), 1.5f);
+            for (int i = 0; i < f.length; i += 1) {
+                final double[] p = f[i];
+                final Particle.DustOptions dust = i % 2 == 0 ? red : green;
+                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+            }
+            break;
+        }
         case BLUE_BUTTERFLY:
         case CYAN_BUTTERFLY:
         case GREEN_BUTTERFLY:
