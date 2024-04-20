@@ -33,6 +33,7 @@ public enum TitleCategory {
     PARKOUR(TitleGroup.EVENT),
     PIT_OF_DOOM(TitleGroup.EVENT, "Pit of Doom"),
     PVP_ARENA(TitleGroup.EVENT, "PvP Arena"),
+    QUIDDITCH(TitleGroup.EVENT),
     QUIZ(TitleGroup.EVENT),
     RACE(TitleGroup.EVENT),
     RAID(TitleGroup.EVENT),
