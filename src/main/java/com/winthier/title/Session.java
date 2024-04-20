@@ -250,6 +250,8 @@ public final class Session {
                     set.add(name);
                 }
             }
+            // Implicitly unlock suffixes of the same name as the title.
+            set.add(title.getName());
         }
         List<SQLSuffix> result = new ArrayList<>(set.size());
         for (String name : set) {
