@@ -60,6 +60,7 @@ public enum TitleCategory {
     FUN_FLAG(TitleGroup.STORE),
     BUTTERFLY(TitleGroup.STORE),
     COIN(TitleGroup.STORE),
+    MOTHERS_DAY(TitleGroup.STORE),
     DONATION(TitleGroup.STORE),
     // ?
     LEGACY(TitleGroup.OTHER),
