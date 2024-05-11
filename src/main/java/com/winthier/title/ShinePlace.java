@@ -46,8 +46,38 @@ public final class ShinePlace {
         return up.clone();
     }
 
+    private static final Vector3f VECTOR_3F_ZERO = new Vector3f(0f, 0f, 0f);
+    private static final AxisAngle4f AXIS_ANGLE_4F_ZERO = new AxisAngle4f(0.0f, 0.0f, 0.0f, 0.0f);
+    public static final AxisAngle4f AXIS_ANGLE_4F_FLIP = new org.joml.AxisAngle4f((float) Math.PI, 0f, 1f, 0f);
+
     public void show(Shine shine) {
         switch (shine) {
+        case MOM: {
+            final float bscale = 2.0f;
+            final ItemDisplay entity = eye.getWorld().spawn(eye.clone().add(0.0, 0.25, 0.0), ItemDisplay.class, e -> {
+                    e.setItemStack(shine.mytems.createIcon());
+                    e.setPersistent(false);
+                    Entities.setTransient(e);
+                    e.setBrightness(new ItemDisplay.Brightness(15, 15));
+                    e.setTransformation(new Transformation(VECTOR_3F_ZERO, AXIS_ANGLE_4F_ZERO, new Vector3f(bscale, bscale, 0f), AXIS_ANGLE_4F_FLIP));
+                });
+                if (entity == null) return;
+                final int maxLife = 40;
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    @Override public void run() {
+                        if (!entity.isValid() || entity.isDead() || ticks > maxLife) {
+                            entity.remove();
+                            cancel();
+                            return;
+                        }
+                        final float bscale2 = ((float) (maxLife - ticks) / (float) maxLife) * bscale;
+                        entity.setTransformation(new Transformation(VECTOR_3F_ZERO, AXIS_ANGLE_4F_ZERO, new Vector3f(bscale2, bscale2, 0f), AXIS_ANGLE_4F_FLIP));
+                        ticks += 1;
+                    }
+                }.runTaskTimer(TitlePlugin.getInstance(), 1L, 1L);
+            break;
+        }
         case CHRISMAS_TREE: {
             final double[][] f = {{-0.07, 1.00}, {0.07, 1.00}, {-0.07,
             0.87}, {0.07, 0.87}, {-0.20, 0.73}, {0.20, 0.73}, {-0.33,

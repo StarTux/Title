@@ -42,6 +42,7 @@ public enum Shine {
     PURPLE_BUTTERFLY(0xD85FD8, Mytems.PURPLE_BUTTERFLY),
     YELLOW_BUTTERFLY(0xD8D85F, Mytems.YELLOW_BUTTERFLY),
     CHRISMAS_TREE(0x3C8D0D, Mytems.CHRISTMAS_TREE),
+    MOM(0xD32A2A, Mytems.MOM),
     ;
 
     public static final Map<String, Shine> KEY_MAP = new HashMap<>();

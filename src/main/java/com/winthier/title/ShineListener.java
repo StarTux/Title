@@ -92,11 +92,16 @@ public final class ShineListener implements Listener {
             Vector up;
             Vector right;
             if (face.getModY() == 0) {
+                // Against wall
                 up = new Vector(0.0, 1.0, 0.0);
                 right = face.getDirection().normalize().rotateAroundY(Math.PI * 0.5);
+                location.setDirection(face.getDirection());
             } else {
+                // Horizontal, facing up or down
                 up = new Vector(0.0, 0.0, -1.0);
                 right = new Vector(1.0, 0.0, 0.0);
+                location.setPitch(face.getModY() > 0 ? -90f : 90f);
+                location.setYaw(player.getLocation().getYaw() + 180f);
             }
             session.lastShineTime = now;
             new ShinePlace(location, location, right, up, 2.0).show(shine);
