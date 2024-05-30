@@ -100,7 +100,7 @@ public final class ShinePlace {
             for (int i = 0; i < f.length; i += 1) {
                 final double[] p = f[i];
                 final Particle.DustOptions dust = i % 2 == 0 ? red : green;
-                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+                showParticle(Particle.DUST, dust, 2, p[0], p[1]);
             }
             break;
         }
@@ -134,7 +134,7 @@ public final class ShinePlace {
                     double vz = random.nextDouble() * speed * (random.nextBoolean() ? 1.0 : -1.0);
                     @Override public void run() {
                         if (entity == null || entity.isDead()) {
-                            entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation(),
+                            entity.getWorld().spawnParticle(Particle.DUST, entity.getLocation(),
                                                             16, 0.15, 0.15, 0.15, 0.0,
                                                             new Particle.DustOptions(Color.fromRGB(shine.hex), 1.0f));
                             cancel();
@@ -170,7 +170,7 @@ public final class ShinePlace {
             -1.00}};
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0xFFFF00), 1.5f);
             for (double[] p : f) {
-                showParticle(Particle.REDSTONE, dust, 4, p[0], p[1]);
+                showParticle(Particle.DUST, dust, 4, p[0], p[1]);
             }
             break;
         }
@@ -267,7 +267,7 @@ public final class ShinePlace {
             -0.71}, {0.71, -0.71}, {-0.14, -0.86}, {0.00, -0.86},
             {0.14, -0.86}, {0.00, -1.00}};
             for (double[] p : points) {
-                showParticle(Particle.SNOWBALL, null, 2, 1.5 * p[0], 1.5 * p[1]);
+                showParticle(Particle.ITEM_SNOWBALL, null, 2, 1.5 * p[0], 1.5 * p[1]);
             }
             break;
         }
@@ -303,7 +303,7 @@ public final class ShinePlace {
                         return;
                     }
                     if (ticks > 100) {
-                        entity.getWorld().spawnParticle(Particle.REDSTONE, entity.getLocation(),
+                        entity.getWorld().spawnParticle(Particle.DUST, entity.getLocation(),
                                                         16, 0.15, 0.15, 0.15, 0.0,
                                                         new Particle.DustOptions(Color.fromRGB(shine.hex), 1.0f));
                         entity.remove();
@@ -346,7 +346,7 @@ public final class ShinePlace {
             for (double[] p : points) {
                 int rgb = 0xFFFFFF & java.awt.Color.HSBtoRGB(random.nextFloat(), 1.0f, 1.0f);
                 Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(rgb), 1.0f);
-                showParticle(Particle.REDSTONE, dust, 2, 0.8 * p[0], 0.8 * p[1]);
+                showParticle(Particle.DUST, dust, 2, 0.8 * p[0], 0.8 * p[1]);
             }
             break;
         }
@@ -371,7 +371,7 @@ public final class ShinePlace {
             };
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(128, 255, 0), 2.0f);
             for (double[] p : points) {
-                showParticle(Particle.REDSTONE, dust, 2, p[0] * 1.25, p[1] * 1.25);
+                showParticle(Particle.DUST, dust, 2, p[0] * 1.25, p[1] * 1.25);
             }
             break;
         }
@@ -428,7 +428,7 @@ public final class ShinePlace {
             };
             Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(0xFF8000), 1.0f);
             for (double[] p : points) {
-                showParticle(Particle.REDSTONE, dustOptions, 2, p[0], p[1]);
+                showParticle(Particle.DUST, dustOptions, 2, p[0], p[1]);
             }
             double[][] eyes = {
                 {-0.33, 0.33}, {0.33, 0.33}, {-0.47, 0.20}, {-0.33,
@@ -535,10 +535,10 @@ public final class ShinePlace {
             Particle.DustOptions da = new Particle.DustOptions(Color.fromRGB(0xffffff), 2.0f);
             Particle.DustOptions db = new Particle.DustOptions(Color.fromRGB(0x000000), 2.0f);
             for (double[] p : yin) {
-                showParticle(Particle.REDSTONE, da, 2, p[0], p[1]);
+                showParticle(Particle.DUST, da, 2, p[0], p[1]);
             }
             for (double[] p : yang) {
-                showParticle(Particle.REDSTONE, db, 2, p[0], p[1]);
+                showParticle(Particle.DUST, db, 2, p[0], p[1]);
             }
             break;
         }
@@ -556,9 +556,9 @@ public final class ShinePlace {
             Particle.DustOptions dust2 = new Particle.DustOptions(Color.fromRGB(0x228B22), 2.0f);
             for (double[] p : circle) {
                 if (random.nextInt(2) > 0) {
-                    showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+                    showParticle(Particle.DUST, dust, 2, p[0], p[1]);
                 } else {
-                    showParticle(Particle.REDSTONE, dust2, 2, p[0], p[1]);
+                    showParticle(Particle.DUST, dust2, 2, p[0], p[1]);
                 }
             }
             break;
@@ -575,7 +575,7 @@ public final class ShinePlace {
             int rgb = 0xFFFFFF & java.awt.Color.HSBtoRGB(random.nextFloat(), 1.0f, 1.0f);
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(rgb), 2.0f);
             for (double[] p : shape) {
-                showParticle(Particle.REDSTONE, dust, 2, 0.8 * p[0], 0.8 * p[1]);
+                showParticle(Particle.DUST, dust, 2, 0.8 * p[0], 0.8 * p[1]);
             }
             break;
         }
@@ -597,7 +597,7 @@ public final class ShinePlace {
             int rgb = 0xFFFFFF & java.awt.Color.HSBtoRGB(random.nextFloat(), 1.0f, 1.0f);
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(rgb), 2.0f);
             for (double[] p : shape) {
-                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+                showParticle(Particle.DUST, dust, 2, p[0], p[1]);
             }
             break;
         }
@@ -623,7 +623,7 @@ public final class ShinePlace {
             };
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0xFFFF00), 2.0f);
             for (double[] p : shape) {
-                showParticle(Particle.REDSTONE, dust, 2, p[0], p[1]);
+                showParticle(Particle.DUST, dust, 2, p[0], p[1]);
             }
             break;
         }
@@ -662,7 +662,7 @@ public final class ShinePlace {
                 int[] color = colors[i];
                 Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(color[0], color[1], color[2]), 2.0f);
                 for (double[] p : segment) {
-                    showParticle(Particle.REDSTONE, dust, 1, p[0], p[1]);
+                    showParticle(Particle.DUST, dust, 1, p[0], p[1]);
                 }
             }
             for (double[] p : clouds) {
@@ -686,7 +686,7 @@ public final class ShinePlace {
                 {0.14, -1.00}
             };
             for (double[] p : shamrockPoints) {
-                showParticle(Particle.VILLAGER_HAPPY, null, 4, 0.035, p[0], p[1]);
+                showParticle(Particle.HAPPY_VILLAGER, null, 4, 0.035, p[0], p[1]);
             }
             break;
         }
@@ -720,7 +720,7 @@ public final class ShinePlace {
             };
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0, 191, 255), 1.6f);
             for (double[] p : piPoints) {
-                showParticle(Particle.REDSTONE, dust, 1, p[0] * 0.8, p[1] * 0.8);
+                showParticle(Particle.DUST, dust, 1, p[0] * 0.8, p[1] * 0.8);
             }
             for (double[] p : circlePoints) {
                 showParticle(Particle.END_ROD, null, 1, p[0] * 1.2, p[1] * 1.2);
@@ -746,7 +746,7 @@ public final class ShinePlace {
             };
             Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(255, 255, 0), 2.0f);
             for (double[] p : points) {
-                showParticle(Particle.REDSTONE, dust, 2, p[0] * 1.25, p[1] * 1.25);
+                showParticle(Particle.DUST, dust, 2, p[0] * 1.25, p[1] * 1.25);
             }
             break;
         }
