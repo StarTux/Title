@@ -6,8 +6,8 @@ import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
 import com.cavetale.core.event.player.PluginPlayerEvent;
 import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
-import com.cavetale.core.font.DefaultFont;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -21,12 +21,14 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import static com.cavetale.core.font.DefaultFont.bookmarked;
 import static com.cavetale.core.font.Unicode.subscript;
 import static com.cavetale.mytems.util.Text.roman;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.changePage;
@@ -51,6 +53,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
         rootNode.addChild("default").denyTabCompletion()
             .description("Choose default title")
             .playerCaller(this::defaultTitle);
+        rootNode.addChild("my").denyTabCompletion()
+            .description("List your titles")
+            .playerCaller(this::my);
     }
 
     private Session requireSession(Player player) {
@@ -75,6 +80,36 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
     private void defaultTitle(Player player) {
         requireSession(player).resetTitle();
         player.sendMessage(text("Using default title", AQUA));
+    }
+
+    private void my(Player player) {
+        final List<Title> titles = requireSession(player).getTitles();
+        titles.sort(Comparator.comparing(Title::getName));
+        final UUID uuid = player.getUniqueId();
+        final ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        book.editMeta(BookMeta.class, meta -> {
+                meta.author(text("Cavetale"));
+                meta.title(text("Title"));
+                final int titlesPerPage = 14;
+                final List<Component> pages = new ArrayList<>((titles.size() - 1) / titlesPerPage + 1);
+                for (int i = 0; i < titles.size(); i += titlesPerPage) {
+                    final List<Component> lines = new ArrayList<>();
+                    for (int j = 0; j < titlesPerPage; j += 1) {
+                        final int k = i + j;
+                        if (k >= titles.size()) {
+                            break;
+                        }
+                        final Title title = titles.get(k);
+                        lines.add(bookmarked(color(0x000030), title.getTitleTag(uuid))
+                                  .hoverEvent(showText(title.getTooltip(uuid)))
+                                  .clickEvent(runCommand("/title " + title.getName())));
+                    }
+                    pages.add(join(separator(newline()), lines));
+                }
+                meta.pages(pages);
+            });
+        player.closeInventory();
+        player.openBook(book);
     }
 
     private List<String> complete(CommandContext context, CommandNode node, String arg) {
@@ -208,7 +243,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
         List<ComponentLike> linkComponents = new ArrayList<>();
         // Make the Group links
         List<PlayerTitleCollection.GroupCollection> groups = collection.allGroups();
+        int groupNumber = 0;
         for (int i = 0; i < groups.size(); i += 1) {
+            groupNumber = i + 1;
             final PlayerTitleCollection.GroupCollection group = groups.get(i);
             final int count = group.countUnlocked();
             groupCounts.put(group.getGroup(), count);
@@ -217,12 +254,17 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             if (max == 0) continue;
             // TOC
             BookLine line = new BookLine(join(noSeparators(),
-                                              text(subscript(roman(i + 1).toLowerCase()) + ". ", DARK_GRAY),
+                                              text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
                                               text(group.getGroup().getDisplayName(), DARK_BLUE)));
             groupLinks.put(group.getGroup(), line);
             lines.add(line);
         }
-        bookPages.addAll(BookPage.fromLines(List.of(text("Your Titles", DARK_AQUA, BOLD),
+        groupNumber += 1;
+        lines.add(new BookLine(textOfChildren(text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
+                                              text("Your Titles", DARK_GREEN))
+                               .hoverEvent(text("/title my", GRAY))
+                               .clickEvent(runCommand("/title my"))));
+        bookPages.addAll(BookPage.fromLines(List.of(text("All Titles", DARK_AQUA, BOLD),
                                                     text("(" + collection.countUnlocked() + "/" + collection.count() + ")", GRAY),
                                                     empty()),
                                             lines, null, null)); // clear lines
@@ -259,11 +301,11 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 // Category Header
                 for (PlayerTitleCollection.CollectedTitle title : category.allTitles()) {
                     if (!title.isUnlocked()) {
-                        lines.add(new BookLine(DefaultFont.bookmarked(color(0xBEB8AA), gray(title.getTitle().getTitleComponent(uuid)))
+                        lines.add(new BookLine(bookmarked(color(0xBEB8AA), gray(title.getTitle().getTitleComponent(uuid)))
                                                .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
                                                .clickEvent(runCommand("/title " + title.getTitle().getName()))));
                     } else {
-                        lines.add(new BookLine(DefaultFont.bookmarked(color(0x000030), title.getTitle().getTitleComponent(uuid))
+                        lines.add(new BookLine(bookmarked(color(0x000030), title.getTitle().getTitleComponent(uuid))
                                                .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
                                                .clickEvent(runCommand("/title " + title.getTitle().getName()))));
                     }
