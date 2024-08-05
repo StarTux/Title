@@ -12,6 +12,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -28,6 +29,7 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.textOfChildren;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.changePage;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
@@ -146,26 +148,34 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             .detail(Detail.NAME, title.getName()).callEvent();
     }
 
+    @AllArgsConstructor
+    private static final class BookLine {
+        private static final BookLine EMPTY = new BookLine(empty());
+        private Component component;
+    }
+
     @RequiredArgsConstructor
     private static final class BookPage {
         private final List<Component> header;
-        private final List<Component> lines;
+        private final List<BookLine> lines;
         private TitleGroup group;
         private TitleCategory category;
 
         private Component build() {
-            List<ComponentLike> components = new ArrayList<>(header.size() + lines.size());
+            List<ComponentLike> components = new ArrayList<>(lines.size());
             components.addAll(header);
-            components.addAll(lines);
+            for (BookLine line : lines) {
+                components.add(line.component);
+            }
             return join(separator(newline()), components);
         }
 
-        private static List<BookPage> fromLines(List<Component> header, List<Component> lines, TitleGroup group, TitleCategory category) {
+        private static List<BookPage> fromLines(List<Component> header, List<BookLine> lines, TitleGroup group, TitleCategory category) {
             final int lineCount = lines.size();
             final int linesPerPage = 14 - header.size();
             List<BookPage> pages = new ArrayList<>((lineCount - 1) / linesPerPage + 1);
             for (int i = 0; i < lineCount; i += linesPerPage) {
-                List<Component> subLines = List.copyOf(lines.subList(i, Math.min(lines.size(), i + linesPerPage)));
+                List<BookLine> subLines = List.copyOf(lines.subList(i, Math.min(lines.size(), i + linesPerPage)));
                 BookPage page = new BookPage(header, subLines);
                 pages.add(page);
             }
@@ -223,9 +233,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
     private void list(Player player) {
         PlayerTitleCollection collection = PlayerTitleCollection.of(requireSession(player));
         List<BookPage> bookPages = new ArrayList<>();
-        List<Component> lines = new ArrayList<>(); // collect, frequently cleared
-        Map<TitleGroup, Component> groupLinks = new EnumMap<>(TitleGroup.class);
-        Map<TitleCategory, Component> categoryLinks = new EnumMap<>(TitleCategory.class);
+        List<BookLine> lines = new ArrayList<>(); // collect, frequently cleared
+        Map<TitleGroup, BookLine> groupLinks = new EnumMap<>(TitleGroup.class);
+        Map<TitleCategory, BookLine> categoryLinks = new EnumMap<>(TitleCategory.class);
         Map<TitleGroup, Integer> groupCounts = new EnumMap<>(TitleGroup.class);
         Map<TitleCategory, Integer> categoryCounts = new EnumMap<>(TitleCategory.class);
         Map<TitleGroup, Integer> groupMax = new EnumMap<>(TitleGroup.class);
@@ -243,16 +253,17 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             groupMax.put(group.getGroup(), max);
             if (max == 0) continue;
             // TOC
-            final Component line = textOfChildren(text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
-                                                  text(group.getGroup().getDisplayName(), DARK_BLUE));
+            BookLine line = new BookLine(join(noSeparators(),
+                                              text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
+                                              text(group.getGroup().getDisplayName(), DARK_BLUE)));
             groupLinks.put(group.getGroup(), line);
             lines.add(line);
         }
         groupNumber += 1;
-        lines.add(textOfChildren(text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
-                                 text("Your Titles", DARK_GREEN))
-                  .hoverEvent(text("/title my", GRAY))
-                  .clickEvent(runCommand("/title my")));
+        lines.add(new BookLine(textOfChildren(text(subscript(roman(groupNumber).toLowerCase()) + ". ", DARK_GRAY),
+                                              text("Your Titles", DARK_GREEN))
+                               .hoverEvent(text("/title my", GRAY))
+                               .clickEvent(runCommand("/title my"))));
         bookPages.addAll(BookPage.fromLines(List.of(text("All Titles", DARK_AQUA, BOLD),
                                                     text("(" + collection.countUnlocked() + "/" + collection.count() + ")", GRAY),
                                                     empty()),
@@ -270,8 +281,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 categoryMax.put(category.getCategory(), max);
                 if (max == 0) continue;
                 // TOC
-                final Component line = textOfChildren(text(subscript((i + 1) + ") "), DARK_GRAY),
-                                                      text(category.getCategory().getShorthand(), DARK_BLUE));
+                BookLine line = new BookLine(join(noSeparators(),
+                                                  text(subscript((i + 1) + ") "), DARK_GRAY),
+                                                  text(category.getCategory().getShorthand(), DARK_BLUE)));
                 categoryLinks.put(category.getCategory(), line);
                 lines.add(line);
             }
@@ -289,13 +301,13 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                 // Category Header
                 for (PlayerTitleCollection.CollectedTitle title : category.allTitles()) {
                     if (!title.isUnlocked()) {
-                        lines.add(bookmarked(color(0xBEB8AA), gray(title.getTitle().getTitleComponent(uuid)))
-                                  .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
-                                  .clickEvent(runCommand("/title " + title.getTitle().getName())));
+                        lines.add(new BookLine(bookmarked(color(0xBEB8AA), gray(title.getTitle().getTitleComponent(uuid)))
+                                               .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
+                                               .clickEvent(runCommand("/title " + title.getTitle().getName()))));
                     } else {
-                        lines.add(bookmarked(color(0x000030), title.getTitle().getTitleComponent(uuid))
-                                  .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
-                                  .clickEvent(runCommand("/title " + title.getTitle().getName())));
+                        lines.add(new BookLine(bookmarked(color(0x000030), title.getTitle().getTitleComponent(uuid))
+                                               .hoverEvent(showText(title.getTitle().getTooltip(uuid)))
+                                               .clickEvent(runCommand("/title " + title.getTitle().getName()))));
                     }
                 }
                 bookPages.addAll(BookPage.fromLines(List.of(text(category.getCategory().getShorthand(), DARK_AQUA, UNDERLINED)
@@ -312,31 +324,31 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             final int pageNo = i + 1;
             BookPage page = bookPages.get(i);
             if (page.group != null) {
-                Component link = groupLinks.get(page.group);
+                BookLine link = groupLinks.get(page.group);
                 if (link != null) {
                     final int count = groupCounts.get(page.group);
                     final int max = groupMax.get(page.group);
-                    groupLinks.put(page.group, link
-                                   .hoverEvent(join(separator(newline()),
-                                                    text(page.group.getDisplayName(), BLUE),
-                                                    text("Group", DARK_GRAY, ITALIC),
-                                                    text("Page " + pageNo, GRAY),
-                                                    text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
-                                   .clickEvent(changePage(i + 1)));
+                    link.component = link.component
+                        .hoverEvent(join(separator(newline()),
+                                         text(page.group.getDisplayName(), BLUE),
+                                         text("Group", DARK_GRAY, ITALIC),
+                                         text("Page " + pageNo, GRAY),
+                                         text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
+                        .clickEvent(changePage(i + 1));
                 }
             }
             if (page.category != null) {
-                Component link = categoryLinks.get(page.category);
+                BookLine link = categoryLinks.get(page.category);
                 if (link != null) {
                     final int count = categoryCounts.get(page.category);
                     final int max = categoryMax.get(page.category);
-                    categoryLinks.put(page.category, link
-                                      .hoverEvent(join(separator(newline()),
-                                                       text(page.category.getDisplayName(), BLUE),
-                                                       text("Category", DARK_GRAY, ITALIC),
-                                                       text("Page " + pageNo, DARK_GRAY),
-                                                       text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
-                                      .clickEvent(changePage(i + 1)));
+                    link.component = link.component
+                        .hoverEvent(join(separator(newline()),
+                                         text(page.category.getDisplayName(), BLUE),
+                                         text("Category", DARK_GRAY, ITALIC),
+                                         text("Page " + pageNo, DARK_GRAY),
+                                         text(count + "/" + max + (max == 1 ? " Title" : " Titles"), GRAY)))
+                        .clickEvent(changePage(i + 1));
                 }
             }
         }
