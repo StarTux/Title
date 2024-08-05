@@ -148,6 +148,10 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
             .detail(Detail.NAME, title.getName()).callEvent();
     }
 
+    /**
+     * We need this class in order to add links to the lines in the
+     * TOC after the fact!
+     */
     @AllArgsConstructor
     private static final class BookLine {
         private static final BookLine EMPTY = new BookLine(empty());
