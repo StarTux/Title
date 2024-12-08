@@ -55,8 +55,12 @@ public final class TitlePlugin extends JavaPlugin {
     protected boolean shinesDisabled = false;
 
     @Override
-    public void onEnable() {
+    public void onLoad() {
         instance = this;
+    }
+
+    @Override
+    public void onEnable() {
         db = new SQLDatabase(this);
         db.registerTables(List.of(PlayerInfo.class,
                                   Title.class,
@@ -98,6 +102,7 @@ public final class TitlePlugin extends JavaPlugin {
             enter(player);
         }
         Bukkit.getScheduler().runTaskTimer(this, this::tickTitles, 0L, 1L);
+        new MenuListener().enable();
     }
 
     @Override

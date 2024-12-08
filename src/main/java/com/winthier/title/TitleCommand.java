@@ -90,10 +90,14 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
         book.editMeta(BookMeta.class, meta -> {
                 meta.author(text("Cavetale"));
                 meta.title(text("Title"));
-                final int titlesPerPage = 14;
+                final int titlesPerPage = 12;
                 final List<Component> pages = new ArrayList<>((titles.size() - 1) / titlesPerPage + 1);
                 for (int i = 0; i < titles.size(); i += titlesPerPage) {
                     final List<Component> lines = new ArrayList<>();
+                    lines.add(text("Your Titles", DARK_AQUA, BOLD)
+                              .hoverEvent(showText(text("/title", GRAY)))
+                              .clickEvent(runCommand("/title")));
+                    lines.add(empty());
                     for (int j = 0; j < titlesPerPage; j += 1) {
                         final int k = i + j;
                         if (k >= titles.size()) {
@@ -268,7 +272,9 @@ public final class TitleCommand extends AbstractCommand<TitlePlugin> {
                                               text("Your Titles", DARK_GREEN))
                                .hoverEvent(text("/title my", GRAY))
                                .clickEvent(runCommand("/title my"))));
-        bookPages.addAll(BookPage.fromLines(List.of(text("All Titles", DARK_AQUA, BOLD),
+        bookPages.addAll(BookPage.fromLines(List.of(text("All Titles", DARK_AQUA, BOLD)
+                                                    .hoverEvent(showText(text("/menu", GRAY)))
+                                                    .clickEvent(runCommand("/menu")),
                                                     text("(" + collection.countUnlocked() + "/" + collection.count() + ")", GRAY),
                                                     empty()),
                                             lines, null, null)); // clear lines
