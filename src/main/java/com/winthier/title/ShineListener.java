@@ -18,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
@@ -45,6 +46,7 @@ public final class ShineListener implements Listener {
         if (plugin.shinesDisabled) return;
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.SPECTATOR) return;
+        if (event.getCause() == TeleportCause.COMMAND) return;
         Location from = event.getFrom();
         final Location to = event.getTo();
         if (Objects.equals(from.getWorld(), to.getWorld())) {
