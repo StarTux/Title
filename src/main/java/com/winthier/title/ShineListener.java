@@ -1,5 +1,6 @@
 package com.winthier.title;
 
+import com.cavetale.core.connect.NetworkServer;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 @RequiredArgsConstructor
@@ -42,9 +44,11 @@ public final class ShineListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    void onPlayerTeleport(PlayerTeleportEvent event) {
+    private void onPlayerTeleport(PlayerTeleportEvent event) {
         if (plugin.shinesDisabled) return;
         Player player = event.getPlayer();
+        if (player.isInvisible()) return;
+        if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) return;
         if (player.getGameMode() == GameMode.SPECTATOR) return;
         if (event.getCause() == TeleportCause.COMMAND) return;
         Location from = event.getFrom();
@@ -70,9 +74,20 @@ public final class ShineListener implements Listener {
             });
     }
 
+    /**
+     * Show shine on arrow hit.
+     */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    void onProjectileHit(ProjectileHitEvent event) {
+    private void onProjectileHit(ProjectileHitEvent event) {
         if (plugin.shinesDisabled) return;
+        switch (NetworkServer.current()) {
+        // Blinding shines in players' faces can be an unfair
+        // advantage for the shooter
+        case PVP_ARENA: return;
+        case SURVIVAL_GAMES: return;
+        case CAPTURE_THE_FLAG: return;
+        default: break;
+        }
         if (!(event.getEntity() instanceof AbstractArrow)) return;
         Projectile proj = event.getEntity();
         if (proj.getPersistentDataContainer().has(shineKey, PersistentDataType.BYTE)) return;
@@ -123,10 +138,20 @@ public final class ShineListener implements Listener {
         }
     }
 
+    /**
+     * Show shine while Elytra gliding.
+     */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    void onPlayerMove(PlayerMoveEvent event) {
+    private void onPlayerMove(PlayerMoveEvent event) {
         if (plugin.shinesDisabled) return;
-        Player player = event.getPlayer();
+        switch (NetworkServer.current()) {
+        // Shine is too distracting in Elytra races
+        case RACE: return;
+        default: break;
+        }
+        final Player player = event.getPlayer();
+        if (player.isInvisible()) return;
+        if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) return;
         if (!player.isGliding()) return;
         final Session session = plugin.findSession(player);
         if (session == null) return;
