@@ -47,6 +47,7 @@ public enum TitleCategory {
     VERTIGO(TitleGroup.EVENT),
     WINDICATOR(TitleGroup.EVENT),
     // Seasonal
+    SPRING(TitleGroup.SEASONAL),
     EASTER(TitleGroup.SEASONAL),
     HALLOWEEN(TitleGroup.SEASONAL),
     MAYPOLE(TitleGroup.SEASONAL),
