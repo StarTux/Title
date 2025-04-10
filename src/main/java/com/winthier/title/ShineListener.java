@@ -125,7 +125,7 @@ public final class ShineListener implements Listener {
             return;
         }
         Entity entity = event.getHitEntity();
-        if (entity != null) {
+        if (entity != null && !(entity instanceof Player)) {
             Vector right = entity.getLocation().toVector().subtract(proj.getLocation().toVector());
             right = right.setY(0);
             if (right.length() < 0.1) return;
