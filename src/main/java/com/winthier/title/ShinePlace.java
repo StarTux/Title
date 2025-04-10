@@ -471,7 +471,7 @@ public final class ShinePlace {
                 {0.46, -0.15}, {0.77, -0.15}, {0.85, -0.15}
             };
             for (double[] p : points) {
-                showParticle(Particle.FALLING_DUST, Material.GOLD_BLOCK.createBlockData(), 4, 0.05, p[0] * 1.6, p[1] * 1.6);
+                showParticle(Particle.FALLING_DUST, Material.GOLD_BLOCK.createBlockData(), 3, 0.05, p[0] * 1.4, p[1] * 1.4);
             }
             break;
         }
