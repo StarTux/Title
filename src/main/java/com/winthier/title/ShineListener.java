@@ -16,6 +16,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -51,11 +52,14 @@ public final class ShineListener implements Listener {
         if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) return;
         if (player.getGameMode() == GameMode.SPECTATOR) return;
         if (event.getCause() == TeleportCause.COMMAND) return;
-        Location from = event.getFrom();
+        final boolean isEnderPearl = event.getCause() == TeleportCause.ENDER_PEARL;
+        final Location from = event.getFrom();
         final Location to = event.getTo();
-        if (Objects.equals(from.getWorld(), to.getWorld())) {
-            double distance = from.distanceSquared(to);
-            if (distance < 4.0) return;
+        final boolean isCrossWorld = !Objects.equals(from.getWorld(), to.getWorld());
+        if (!isEnderPearl && !isCrossWorld) return;
+        if (!isCrossWorld) {
+            final double distance = from.distanceSquared(to);
+            if (distance < 4 * 4) return;
         }
         Shine shine = plugin.getPlayerShine(player);
         if (shine == null) return;
@@ -139,6 +143,19 @@ public final class ShineListener implements Listener {
     }
 
     /**
+     * We set the last flying shine vector to where the player starts
+     * gliding so the first shine appears at a decent distance.
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    private void onEntityToggleGlide(EntityToggleGlideEvent event) {
+        if (!event.isGliding()) return;
+        if (!(event.getEntity() instanceof Player player)) return;
+        final Session session = plugin.findSession(player);
+        if (session == null) return;
+        session.lastFlyingShine = player.getLocation().toVector();
+    }
+
+    /**
      * Show shine while Elytra gliding.
      */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -164,7 +181,7 @@ public final class ShineListener implements Listener {
         if (now - session.lastShineTime < COOLDOWN) return;
         // Check distance
         Vector lastFlyingShine = session.lastFlyingShine;
-        if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 256.0) {
+        if (lastFlyingShine != null && lastFlyingShine.distanceSquared(vector) < 24 * 24) {
             return;
         }
         session.lastFlyingShine = vector;
