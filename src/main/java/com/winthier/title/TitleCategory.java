@@ -22,6 +22,7 @@ public enum TitleCategory {
     COLORFALL(TitleGroup.EVENT),
     DUNGEON_RUSH(TitleGroup.EVENT),
     ENDERBALL(TitleGroup.EVENT),
+    ENDERGOLF(TitleGroup.EVENT),
     EXTREME_GRASS_GROWING(TitleGroup.EVENT, "Extreme Grass Growing", "EGG"),
     FISHING(TitleGroup.EVENT),
     HIDE_AND_SEEK(TitleGroup.EVENT, "Hide and Seek"),
