@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -359,7 +358,7 @@ public final class Session {
      * Fill the cache and determine if we need to animate this.
      * A call to process() is implied.
      */
-    protected void update(@Nullable Player player) {
+    protected void update(Player player) {
         final String name = player != null
             ? player.getName()
             : PlayerCache.nameForUuid(uuid);
@@ -411,7 +410,7 @@ public final class Session {
      * - playerTagPrefix
      * - playerTagSuffix
      */
-    protected void process(@Nullable Player player) {
+    protected void process(Player player) {
         if (cache == null) return;
         List<Component> displayNameList = new ArrayList<>();
         List<Component> playerListList = new ArrayList<>();
