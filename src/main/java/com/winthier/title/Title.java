@@ -16,7 +16,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import static com.cavetale.mytems.util.Text.ITEM_LORE_WIDTH;
@@ -139,9 +138,9 @@ public final class Title implements SQLRow, Comparable<Title> {
         if (!prefix) {
             lines.add(getTitleComponent(owner));
         } else {
-            TextFormat textFormat = getNameTextFormat();
-            TextColor titleColor = textFormat != null && textFormat instanceof TextColor
-                ? (TextColor) textFormat
+            final TextColor textColor = getTextColor();
+            final TextColor titleColor = textColor != null
+                ? textColor
                 : TextColor.color(0xffffff);
             lines.add(join(noSeparators(),
                            getTitleComponent(owner),
@@ -160,7 +159,7 @@ public final class Title implements SQLRow, Comparable<Title> {
         return getTooltip(null);
     }
 
-    public TextFormat getNameTextFormat() {
+    public TextColor getTextColor() {
         if (nameColor == null) return null;
         if (nameColor.startsWith("#")) {
             try {
@@ -169,8 +168,16 @@ public final class Title implements SQLRow, Comparable<Title> {
                 TitlePlugin.getInstance().getLogger().warning("Invalid color code: " + nameColor);
             }
         }
-        TextColor textColor = NAMES.value(nameColor);
-        if (textColor != null) return textColor;
+        return NAMES.value(nameColor); // May yield null
+    }
+
+    /**
+     * This is a legacy. We call this only if getTextColor yields
+     * null.  If so, we can assume that this is supposed to refer to a
+     * TextEffect.
+     */
+    public TextEffect getTextEffect() {
+        if (nameColor == null) return null;
         try {
             return TextEffect.of(nameColor);
         } catch (Exception e) {

@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextFormat;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import static net.kyori.adventure.text.Component.join;
@@ -381,11 +380,12 @@ public final class Session {
         cache.playerName = cache.suffix != null && cache.suffix.isPartOfName()
             ? name + cache.suffix.getCharacter()
             : name;
-        TextFormat textFormat = cache.title.getNameTextFormat();
-        if (textFormat instanceof TextEffect textEffect) {
+        final TextColor textColor = cache.title.getTextColor();
+        final TextEffect textEffect = textColor != null ? null : cache.title.getTextEffect();
+        if (textEffect != null) {
             cache.textEffect = textEffect;
             animated = true;
-        } else if (textFormat instanceof TextColor textColor) {
+        } else if (textColor != null) {
             cache.textColor = textColor;
         }
         // Suffix

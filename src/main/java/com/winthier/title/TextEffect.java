@@ -10,10 +10,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextFormat;
 import static net.kyori.adventure.text.Component.text;
 
-public abstract class TextEffect implements TextFormat {
+public abstract class TextEffect {
     private static final List<TextEffect> VALUES = new ArrayList<>();
     private static final Map<String, TextEffect> NAME_MAP = new HashMap<>();
     public static final TextEffect RAINBOW = new TextEffectRainbow();
