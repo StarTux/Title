@@ -15,11 +15,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
@@ -48,6 +51,8 @@ public final class TitlePlugin extends JavaPlugin {
     private SQLDatabase db;
     // Cache
     private Map<UUID, Session> sessions = new HashMap<>();
+    private final Set<UUID> loadingSessions = new HashSet<>();
+    private final Map<UUID, String> requestedReloads = new HashMap<>();
     private final List<Title> titles = new ArrayList<>();
     private final Map<String, SQLSuffix> suffixes = new HashMap<>();
     private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
@@ -252,19 +257,33 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     protected void enter(final UUID uuid, final String name) {
-        db.scheduleAsyncTask(() -> {
-                db.insertIgnore(new PlayerInfo(uuid));
-                PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", uuid).findUnique();
-                if (playerRow == null) {
-                    throw new IllegalStateException(name + ": playerRow=null");
+        if (!loadingSessions.add(uuid)) {
+            // An explicit refresh may describe a change made after the current read.
+            requestedReloads.put(uuid, name);
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> loadSession(uuid, name), db::scheduleAsyncTask)
+            .whenCompleteAsync((session, error) -> {
+                loadingSessions.remove(uuid);
+                if (error != null) {
+                    getLogger().log(Level.WARNING, "Failed to load title session for " + uuid, error);
                 }
-                List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
-                List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
-                Bukkit.getScheduler().runTask(this, () -> {
-                        sessions.put(uuid, new Session(this, uuid, name, playerRow, unlockedRows, suffixRows));
-                        updatePlayerName(uuid);
-                    });
-            });
+                if (requestedReloads.containsKey(uuid)) {
+                    enter(uuid, requestedReloads.remove(uuid));
+                } else if (session != null) {
+                    sessions.put(uuid, session);
+                    updatePlayerName(uuid);
+                }
+            }, task -> Bukkit.getScheduler().runTask(this, task));
+    }
+
+    private Session loadSession(final UUID uuid, final String name) {
+        db.insertIgnore(new PlayerInfo(uuid));
+        final PlayerInfo playerRow = db.find(PlayerInfo.class).eq("uuid", uuid).findUnique();
+        if (playerRow == null) throw new IllegalStateException(name + ": playerRow=null");
+        final List<UnlockedInfo> unlockedRows = db.find(UnlockedInfo.class).eq("player", uuid).findList();
+        final List<SQLPlayerSuffix> suffixRows = db.find(SQLPlayerSuffix.class).eq("player", uuid).findList();
+        return new Session(this, uuid, name, playerRow, unlockedRows, suffixRows);
     }
 
     protected void exit(Player player) {
@@ -279,7 +298,7 @@ public final class TitlePlugin extends JavaPlugin {
         Session session = sessions.get(uuid);
         if (session != null) {
             session.lastUsed = System.currentTimeMillis();
-        } else {
+        } else if (!loadingSessions.contains(uuid)) {
             enter(uuid, PlayerCache.nameForUuid(uuid));
         }
         return session;
@@ -482,7 +501,7 @@ public final class TitlePlugin extends JavaPlugin {
     public boolean lockPlayerSuffix(UUID uuid, String suffixName) {
         Session session = findSession(uuid);
         if (session != null) return session.lockSuffix(suffixName);
-        boolean result = 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).delete();
+        final boolean result = 0 != db.find(SQLPlayerSuffix.class).eq("player", uuid).eq("suffix", suffixName).delete();
         if (result) broadcastUpdate(uuid);
         return result;
     }

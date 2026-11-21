@@ -557,10 +557,17 @@ public final class TitlesCommand implements TabExecutor {
         if (!plugin.resetPlayerTitle(player.uuid)) {
             throw new CommandWarn("Resetting title of " + player.name + " failed!");
         }
-        sender.sendMessage(text()
-                           .append(text("Reset title of " + player.name + " to ", YELLOW))
-                           .append(plugin.getPlayerTitle(player.uuid).getTitleComponent())
-                           .build());
+        final Title title = plugin.getPlayerTitle(player.uuid);
+        if (title == null) {
+            sender.sendMessage(text("Reset title of " + player.name, YELLOW));
+        } else {
+            sender.sendMessage(
+                textOfChildren(
+                    text("Reset title of " + player.name + " to ", YELLOW),
+                    title.getTitleComponent()
+                )
+            );
+        }
         return true;
     }
 

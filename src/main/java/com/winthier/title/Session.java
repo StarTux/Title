@@ -22,7 +22,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import static net.kyori.adventure.text.Component.join;
@@ -153,7 +152,8 @@ public final class Session {
             Title selectedTitle = plugin.getTitle(selectedTitleName);
             if (selectedTitle != null) return selectedTitle;
         }
-        return getTitles().get(0);
+        final List<Title> titles = getTitles();
+        return titles.isEmpty() ? null : titles.get(0);
     }
 
     // Nullable
@@ -165,8 +165,8 @@ public final class Session {
         if (selectedShine != null) {
             return selectedShine;
         }
-        Title title = getTitle();
-        return title.parseShine();
+        final Title title = getTitle();
+        return title != null ? title.parseShine() : null;
     }
 
     public boolean hasTitle(Title title) {
@@ -367,7 +367,7 @@ public final class Session {
         this.animated = false;
         // Prefix
         this.cache.playerListPrefix = this.playerListPrefix;
-        if (cache.title.isPrefix()) {
+        if (cache.title != null && cache.title.isPrefix()) {
             Mytems mytems = cache.title.getMytems();
             cache.titlePrefixComponent = cache.title.getTitleComponent();
             cache.titlePrefixTooltip = cache.title.getTooltip();
@@ -380,13 +380,12 @@ public final class Session {
         cache.playerName = cache.suffix != null && cache.suffix.isPartOfName()
             ? name + cache.suffix.getCharacter()
             : name;
-        final TextColor textColor = cache.title.getTextColor();
-        final TextEffect textEffect = textColor != null ? null : cache.title.getTextEffect();
-        if (textEffect != null) {
-            cache.textEffect = textEffect;
-            animated = true;
-        } else if (textColor != null) {
-            cache.textColor = textColor;
+        if (cache.title != null) {
+            cache.textColor = cache.title.getTextColor();
+            if (cache.textColor == null) {
+                cache.textEffect = cache.title.getTextEffect();
+                if (cache.textEffect != null) animated = true;
+            }
         }
         // Suffix
         if (cache.suffix != null) {
