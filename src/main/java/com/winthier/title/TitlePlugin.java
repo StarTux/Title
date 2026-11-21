@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
@@ -53,6 +54,10 @@ public final class TitlePlugin extends JavaPlugin {
     private Map<UUID, Session> sessions = new HashMap<>();
     private final Set<UUID> loadingSessions = new HashSet<>();
     private final Map<UUID, String> requestedReloads = new HashMap<>();
+    // Local login settings supplied by other plugins.
+    @Getter(AccessLevel.NONE) private final Map<UUID, Component> playerListPrefixes = new HashMap<>();
+    @Getter(AccessLevel.NONE) private final Map<UUID, Component> playerListSuffixes = new HashMap<>();
+    @Getter(AccessLevel.NONE) private final Map<UUID, NamedTextColor> teamColors = new HashMap<>();
     private final List<Title> titles = new ArrayList<>();
     private final Map<String, SQLSuffix> suffixes = new HashMap<>();
     private final Map<String, List<SQLSuffix>> suffixCategories = new HashMap<>();
@@ -198,9 +203,7 @@ public final class TitlePlugin extends JavaPlugin {
         // Team prefix and suffix for the player tag
         team.prefix(session.nameTagPrefix);
         team.suffix(session.nameTagSuffix);
-        try {
-            team.color(session.teamColor);
-        } catch (NullPointerException npe) { }
+        team.color(getTeamColor(owner.getUniqueId()));
     }
 
     protected void resetPlayerScoreboards(Player owner) {
@@ -218,28 +221,41 @@ public final class TitlePlugin extends JavaPlugin {
         if (team != null) team.unregister();
     }
 
-    public void setPlayerListSuffix(Player player, Component suffix) {
-        Session session = findSession(player.getUniqueId());
-        if (session == null) return;
-        if (Objects.equals(session.playerListSuffix, suffix)) return;
-        session.playerListSuffix = suffix;
-        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
+    Component getPlayerListSuffix(final UUID uuid) {
+        return playerListSuffixes.get(uuid);
     }
 
-    public void setPlayerListPrefix(Player player, Component prefix) {
-        Session session = findSession(player.getUniqueId());
-        if (session == null) return;
-        if (Objects.equals(session.playerListPrefix, prefix)) return;
-        session.playerListPrefix = prefix;
-        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
+    Component getPlayerListPrefix(final UUID uuid) {
+        return playerListPrefixes.get(uuid);
     }
 
-    public void setColor(Player player, NamedTextColor color) {
-        Session session = findSession(player.getUniqueId());
-        if (session == null) return;
-        if (Objects.equals(session.teamColor, color)) return;
-        session.teamColor = color;
-        Bukkit.getScheduler().runTask(this, () -> updatePlayerName(player));
+    NamedTextColor getTeamColor(final UUID uuid) {
+        return teamColors.get(uuid);
+    }
+
+    /** Public API. Set the tab-list suffix for this login, or pass null to clear it. */
+    public void setPlayerListSuffix(final Player player, final Component suffix) {
+        setOverride(player, playerListSuffixes, suffix);
+    }
+
+    /** Public API. Set the tab-list prefix for this login, or pass null to clear it. */
+    public void setPlayerListPrefix(final Player player, final Component prefix) {
+        setOverride(player, playerListPrefixes, prefix);
+    }
+
+    /** Public API. Set the team color for this login, or pass null to clear it. */
+    public void setColor(final Player player, final NamedTextColor color) {
+        setOverride(player, teamColors, color);
+    }
+
+    private <T> void setOverride(final Player player, final Map<UUID, T> overrides, final T value) {
+        final UUID uuid = player.getUniqueId();
+        if (Bukkit.getPlayer(uuid) != player) return;
+        final T previous = value == null ? overrides.remove(uuid) : overrides.put(uuid, value);
+        if (Objects.equals(previous, value)) return;
+        Bukkit.getScheduler().runTask(this, () -> {
+                if (Bukkit.getPlayer(uuid) == player) updatePlayerName(player);
+            });
     }
 
     protected void enter(final Player player) {
@@ -287,6 +303,12 @@ public final class TitlePlugin extends JavaPlugin {
     }
 
     protected void exit(Player player) {
+        final UUID uuid = player.getUniqueId();
+        playerListPrefixes.remove(uuid);
+        playerListSuffixes.remove(uuid);
+        teamColors.remove(uuid);
+        final Session session = sessions.get(uuid);
+        if (session != null) session.process(null);
         player.playerListName(null);
     }
 

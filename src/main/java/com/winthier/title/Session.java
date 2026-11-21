@@ -21,7 +21,6 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import static net.kyori.adventure.text.Component.join;
@@ -47,10 +46,6 @@ public final class Session {
     protected boolean animated;
     protected long lastShineTime;
     protected Vector lastFlyingShine;
-    // External, via API
-    protected Component playerListPrefix = null;
-    protected Component playerListSuffix = null;
-    protected NamedTextColor teamColor = null;
     // Output
     @Getter protected Component displayName;
     @Getter protected Component playerListName;
@@ -366,7 +361,6 @@ public final class Session {
         cache.suffix = getSuffix();
         this.animated = false;
         // Prefix
-        this.cache.playerListPrefix = this.playerListPrefix;
         if (cache.title != null && cache.title.isPrefix()) {
             Mytems mytems = cache.title.getMytems();
             cache.titlePrefixComponent = cache.title.getTitleComponent();
@@ -396,7 +390,6 @@ public final class Session {
                 cache.titleSuffixMytems = mytems;
             }
         }
-        this.cache.playerListSuffix = this.playerListSuffix;
         process(player);
     }
 
@@ -416,8 +409,9 @@ public final class Session {
         List<Component> nameTagPrefixList = new ArrayList<>();
         List<Component> nameTagSuffixList = new ArrayList<>();
         // Prefix
-        if (cache.playerListPrefix != null) {
-            playerListList.add(cache.playerListPrefix);
+        final Component playerListPrefix = plugin.getPlayerListPrefix(uuid);
+        if (playerListPrefix != null) {
+            playerListList.add(playerListPrefix);
         }
         if (animated && cache.titlePrefixMytems != null) {
             Component frame = cache.titlePrefixMytems.getCurrentAnimationFrame();
@@ -454,8 +448,9 @@ public final class Session {
             }
             nameTagSuffixList.add(cache.titleSuffixComponent);
         }
-        if (cache.playerListSuffix != null) {
-            playerListList.add(cache.playerListSuffix);
+        final Component playerListSuffix = plugin.getPlayerListSuffix(uuid);
+        if (playerListSuffix != null) {
+            playerListList.add(playerListSuffix);
         }
         displayName = join(noSeparators(), displayNameList);
         playerListName = join(noSeparators(), playerListList);

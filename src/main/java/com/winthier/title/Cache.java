@@ -15,7 +15,6 @@ import net.kyori.adventure.text.format.TextColor;
 public final class Cache {
     protected Title title;
     protected SQLSuffix suffix;
-    protected Component playerListPrefix;
 
     protected Mytems titlePrefixMytems; // animated
     protected Component titlePrefixComponent;
@@ -27,6 +26,4 @@ public final class Cache {
 
     protected Mytems titleSuffixMytems; // animated
     protected Component titleSuffixComponent;
-
-    protected Component playerListSuffix;
 }

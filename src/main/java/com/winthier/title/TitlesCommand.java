@@ -886,14 +886,13 @@ public final class TitlesCommand implements TabExecutor {
             lines.add(textOfChildren(text("Suffix: ", GRAY), session.playerRow.getSuffix() != null
                                      ? text(session.playerRow.getSuffix(), WHITE)
                                      : empty()));
-            lines.add(textOfChildren(text("Player List Prefix (api): ", GRAY), (session.playerListPrefix != null
-                                                                          ? session.playerListPrefix
-                                                                          : empty())));
-            lines.add(textOfChildren(text("Player List Suffix (api): ", GRAY), (session.playerListSuffix != null
-                                                                          ? session.playerListSuffix
-                                                                          : empty())));
-            lines.add(textOfChildren(text("Team Color (api): ", GRAY), text(session.teamColor != null
-                                                                            ? NamedTextColor.NAMES.key(session.teamColor)
+            final Component prefix = plugin.getPlayerListPrefix(player.uuid);
+            final Component suffix = plugin.getPlayerListSuffix(player.uuid);
+            final NamedTextColor teamColor = plugin.getTeamColor(player.uuid);
+            lines.add(textOfChildren(text("Player List Prefix (api): ", GRAY), prefix != null ? prefix : empty()));
+            lines.add(textOfChildren(text("Player List Suffix (api): ", GRAY), suffix != null ? suffix : empty()));
+            lines.add(textOfChildren(text("Team Color (api): ", GRAY), text(teamColor != null
+                                                                            ? NamedTextColor.NAMES.key(teamColor)
                                                                             : "none", WHITE)));
             lines.add(textOfChildren(text("Display Name: ", GRAY), (session.displayName != null
                                                                     ? session.displayName
